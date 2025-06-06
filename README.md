@@ -25,7 +25,7 @@ Innerocket uses WebRTC's data channels which are encrypted by default. No file d
 
 ### Prerequisites
 
-- Node.js (v16 or newer)
+- Node.js (v20 or newer)
 - pnpm
 
 ### Installation
