@@ -96,7 +96,7 @@ export function QRCodeHandler({
               <img
                 src={qrCodeDataURL}
                 alt="QR Code"
-                className="border border-gray-200 rounded-md shadow-sm"
+                className="border border-gray-200 rounded-md shadow-sm select-none pointer-events-none"
               />
               <p className="mt-2 text-sm text-gray-500 break-all max-w-full">
                 {qrValue}
