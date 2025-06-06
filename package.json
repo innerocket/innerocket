@@ -1,0 +1,34 @@
+{
+  "name": "innerocket",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@tailwindcss/oxide",
+      "esbuild"
+    ]
+  },
+  "dependencies": {
+    "@tailwindcss/vite": "^4.1.8",
+    "lucide-react": "^0.512.0",
+    "peerjs": "^1.5.1",
+    "preact": "^10.26.5",
+    "preact-router": "^4.1.2",
+    "simple-peer": "^9.11.1",
+    "tailwindcss": "^4.1.8",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "@preact/preset-vite": "^2.10.1",
+    "@types/simple-peer": "^9.11.8",
+    "@types/uuid": "^9.0.8",
+    "typescript": "~5.8.3",
+    "vite": "^6.3.5"
+  }
+}
