@@ -1,5 +1,5 @@
 import { useState } from 'preact/hooks';
-import { Copy } from 'lucide-react';
+import { Copy, Check } from 'lucide-react';
 import { usePeer } from '../contexts/PeerContext';
 
 interface PeerConnectionProps {
@@ -9,6 +9,7 @@ interface PeerConnectionProps {
 export function PeerConnection({ onConnect }: PeerConnectionProps) {
   const { peerId } = usePeer();
   const [peerIdInput, setPeerIdInput] = useState('');
+  const [copySuccess, setCopySuccess] = useState(false);
 
   const handleConnect = () => {
     if (peerIdInput.trim() && peerIdInput !== peerId) {
@@ -19,6 +20,8 @@ export function PeerConnection({ onConnect }: PeerConnectionProps) {
 
   const copyMyPeerId = () => {
     navigator.clipboard.writeText(peerId);
+    setCopySuccess(true);
+    setTimeout(() => setCopySuccess(false), 2000);
   };
 
   return (
@@ -35,14 +38,28 @@ export function PeerConnection({ onConnect }: PeerConnectionProps) {
           </code>
           <button
             onClick={copyMyPeerId}
-            className="ml-2 p-2 text-blue-600 hover:text-blue-800"
+            className={`ml-2 p-2 ${
+              copySuccess
+                ? 'text-green-600'
+                : 'text-blue-600 hover:text-blue-800'
+            }`}
             aria-label="Copy to clipboard"
           >
-            <Copy className="h-5 w-5" stroke="currentColor" />
+            {copySuccess ? (
+              <Check className="h-5 w-5" stroke="currentColor" />
+            ) : (
+              <Copy className="h-5 w-5" stroke="currentColor" />
+            )}
           </button>
         </div>
         <p className="text-xs text-gray-500">
-          Share this ID with others to let them connect to you
+          {copySuccess ? (
+            <span className="text-green-600 font-medium">
+              ID copied to clipboard!
+            </span>
+          ) : (
+            'Share this ID with others to let them connect to you'
+          )}
         </p>
       </div>
 
