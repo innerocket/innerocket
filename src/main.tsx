@@ -1,5 +1,11 @@
 import { render } from 'preact';
 import './index.css';
-import { App } from './app.tsx';
+import { App } from './app';
+import { PeerProvider } from './contexts/PeerContext';
 
-render(<App />, document.getElementById('app')!);
+render(
+  <PeerProvider>
+    <App />
+  </PeerProvider>,
+  document.getElementById('app')!
+);

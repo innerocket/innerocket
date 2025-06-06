@@ -22,9 +22,9 @@ export class WebRTCService {
   private discoveredPeers: Map<string, Peer> = new Map();
   private myPeerId: string;
 
-  constructor() {
-    // Generate a random peer ID
-    this.myPeerId = uuidv4();
+  constructor(peerId?: string) {
+    // Use provided peerId or generate a new one if not provided
+    this.myPeerId = peerId || uuidv4();
 
     // Initialize PeerJS
     this.peer = new PeerJS(this.myPeerId, {

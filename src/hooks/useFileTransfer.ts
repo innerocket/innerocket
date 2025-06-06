@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from 'preact/hooks';
 import type { FileTransfer, FileTransferRequest } from '../types';
 import { WebRTCService } from '../utils/webrtc';
+import { usePeer } from '../contexts/PeerContext';
 
 // LocalStorage keys
 const TRANSFERS_STORAGE_KEY = 'innerocket_transfers';
 
 export function useFileTransfer() {
+  const { peerId } = usePeer();
   const [fileTransfers, setFileTransfers] = useState<FileTransfer[]>(() => {
     // Load saved transfers from localStorage
     const savedTransfers = localStorage.getItem(TRANSFERS_STORAGE_KEY);
@@ -20,7 +22,7 @@ export function useFileTransfer() {
   >([]);
   const [connectedPeers, setConnectedPeers] = useState<string[]>([]);
 
-  const webRTCService = useMemo(() => new WebRTCService(), []);
+  const webRTCService = useMemo(() => new WebRTCService(peerId), [peerId]);
 
   // Save transfers to localStorage whenever they change
   useEffect(() => {
@@ -365,14 +367,12 @@ export function useFileTransfer() {
     URL.revokeObjectURL(url);
   };
 
-  const getMyPeerId = () => webRTCService.getMyPeerId();
-
   return {
-    myPeerId: getMyPeerId(),
+    myPeerId: peerId,
     connectedPeers,
     fileTransfers,
-    receivedFiles,
     incomingRequests,
+    receivedFiles,
     connectToPeer,
     disconnectFromPeer,
     sendFile,
