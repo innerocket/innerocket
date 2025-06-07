@@ -1,6 +1,7 @@
 import { Peer as PeerJS } from 'peerjs';
 import { v4 as uuidv4 } from 'uuid';
 import type { FileMetadata, FileTransferRequest, Peer } from '../types';
+import { calculateChecksum } from './checksum';
 
 export class WebRTCService {
   private peer: PeerJS;
@@ -136,27 +137,36 @@ export class WebRTCService {
     }
   }
 
-  public sendFileRequest(peerId: string, file: File) {
+  public async sendFileRequest(peerId: string, file: File) {
     const conn = this.connections.get(peerId);
     if (!conn) {
       console.error('No connection to peer:', peerId);
       return;
     }
 
-    const metadata: FileMetadata = {
-      id: uuidv4(),
-      name: file.name,
-      size: file.size,
-      type: file.type,
-    };
+    // Calculate checksum for the file
+    try {
+      const checksum = await calculateChecksum(file);
 
-    conn.send({
-      type: 'file-request',
-      metadata,
-      name: 'Anonymous', // You can set a name here
-    });
+      const metadata: FileMetadata = {
+        id: uuidv4(),
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        checksum: checksum,
+      };
 
-    return metadata;
+      conn.send({
+        type: 'file-request',
+        metadata,
+        name: 'Anonymous', // You can set a name here
+      });
+
+      return metadata;
+    } catch (error) {
+      console.error('Error calculating checksum:', error);
+      return null;
+    }
   }
 
   public sendFile(peerId: string, file: File, metadata: FileMetadata) {

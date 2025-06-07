@@ -72,6 +72,18 @@ export function App() {
           'error'
         );
       }
+
+      // If an integrity check failed, show a notification
+      if (
+        transfer.status === 'integrity_error' &&
+        prevTransfer &&
+        prevTransfer.status !== 'integrity_error'
+      ) {
+        showNotification(
+          `Integrity check failed for "${transfer.fileName}". The file may be corrupted.`,
+          'error'
+        );
+      }
     });
 
     prevFileTransfers.current = fileTransfers;

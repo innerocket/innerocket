@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'preact/hooks';
 import type { FileTransfer, FileTransferRequest } from '../types';
 import { WebRTCService } from '../utils/webrtc';
 import { usePeer } from '../contexts/PeerContext';
+import { verifyChecksum } from '../utils/checksum';
 
 // LocalStorage keys
 const TRANSFERS_STORAGE_KEY = 'innerocket_transfers';
@@ -85,7 +86,7 @@ export function useFileTransfer() {
       });
     });
 
-    webRTCService.setOnFileTransferComplete((_, metadata) => {
+    webRTCService.setOnFileTransferComplete(async (_, metadata) => {
       // Combine chunks and create blob
       const chunks = fileChunks.get(metadata.id) || [];
 
@@ -93,8 +94,36 @@ export function useFileTransfer() {
         type: metadata.type || 'application/octet-stream',
       });
 
+      // Verify file integrity if checksum is available
+      let isIntegrityValid = true;
+      if (metadata.checksum) {
+        isIntegrityValid = await verifyChecksum(blob, metadata.checksum);
+      }
+
+      if (!isIntegrityValid) {
+        // Update transfer status to integrity error
+        setFileTransfers((prev) => {
+          const index = prev.findIndex((t) => t.id === metadata.id);
+          if (index === -1) return prev;
+
+          const newTransfers = [...prev];
+          newTransfers[index] = {
+            ...newTransfers[index],
+            progress: 100,
+            status: 'integrity_error',
+          };
+
+          return newTransfers;
+        });
+
+        // Clean up chunks
+        fileChunks.delete(metadata.id);
+
+        return; // Don't save the corrupted file
+      }
+
       // Store received file in IndexedDB
-      saveFileToIndexedDB(metadata.id, blob, metadata.name);
+      saveFileToIndexedDB(metadata.id, blob, metadata.name, metadata.checksum);
 
       // Store received file in memory for immediate use
       setReceivedFiles((prev) => {
@@ -113,6 +142,7 @@ export function useFileTransfer() {
           ...newTransfers[index],
           progress: 100,
           status: 'completed',
+          checksum: metadata.checksum,
         };
 
         return newTransfers;
@@ -137,7 +167,8 @@ export function useFileTransfer() {
   const saveFileToIndexedDB = (
     fileId: string,
     blob: Blob,
-    fileName: string
+    fileName: string,
+    checksum?: string
   ) => {
     const dbName = 'innerocket-files';
     const request = indexedDB.open(dbName, 1);
@@ -159,6 +190,7 @@ export function useFileTransfer() {
         blob: blob,
         fileName: fileName,
         timestamp: Date.now(),
+        checksum: checksum,
       });
 
       transaction.oncomplete = () => {
@@ -274,31 +306,45 @@ export function useFileTransfer() {
   };
 
   const sendFile = (peerId: string, file: File) => {
-    const metadata = webRTCService.sendFileRequest(peerId, file);
+    try {
+      const metadataPromise = webRTCService.sendFileRequest(peerId, file);
 
-    if (!metadata) return null;
+      metadataPromise.then((metadata) => {
+        if (!metadata) {
+          console.error('Failed to initiate file transfer');
+          return null;
+        }
 
-    const transferId = metadata.id;
+        // Create a new transfer entry
+        const transferId = metadata.id;
+        setFileTransfers((prev) => [
+          ...prev,
+          {
+            id: transferId,
+            fileName: file.name,
+            fileSize: file.size,
+            fileType: file.type,
+            sender: webRTCService.getMyPeerId(),
+            receiver: peerId,
+            progress: 0,
+            status: 'pending',
+            createdAt: Date.now(),
+            checksum: metadata.checksum,
+          },
+        ]);
 
-    // Create a new file transfer
-    const fileTransfer: FileTransfer = {
-      id: transferId,
-      fileName: file.name,
-      fileSize: file.size,
-      fileType: file.type,
-      sender: webRTCService.getMyPeerId(),
-      receiver: peerId,
-      progress: 0,
-      status: 'pending',
-      createdAt: Date.now(),
-    };
+        // Start sending the file
+        webRTCService.sendFile(peerId, file, metadata);
 
-    setFileTransfers((prev) => [...prev, fileTransfer]);
+        return transferId;
+      });
 
-    // Start sending the file
-    webRTCService.sendFile(peerId, file, metadata);
-
-    return transferId;
+      // Return the ID from the initial metadata
+      return metadataPromise.then((m) => m?.id);
+    } catch (error) {
+      console.error('Error sending file:', error);
+      return null;
+    }
   };
 
   const acceptFileTransfer = (request: FileTransferRequest) => {
@@ -387,40 +433,34 @@ export function useFileTransfer() {
   };
 
   const downloadFile = (fileId: string) => {
-    // First try to get from memory
-    let file = receivedFiles.get(fileId);
-
-    // If not in memory, try to get from IndexedDB
-    if (!file) {
-      const dbName = 'innerocket-files';
-      const request = indexedDB.open(dbName, 1);
-
-      request.onsuccess = (event) => {
-        const db = (event.target as IDBOpenDBRequest).result;
-        const transaction = db.transaction(['files'], 'readonly');
-        const store = transaction.objectStore('files');
-        const getRequest = store.get(fileId);
-
-        getRequest.onsuccess = () => {
-          if (getRequest.result) {
-            const fileData = getRequest.result;
-            initiateDownload(fileData.blob, fileData.fileName);
-          }
-        };
-
-        transaction.oncomplete = () => {
-          db.close();
-        };
-      };
-
+    // Find the transfer
+    const transfer = fileTransfers.find((t) => t.id === fileId);
+    if (!transfer) {
+      console.error('Transfer not found:', fileId);
       return;
     }
 
-    // Get file name from transfers
-    const transfer = fileTransfers.find((t) => t.id === fileId);
-    if (!transfer) return;
+    // Check if the file has integrity errors
+    if (transfer.status === 'integrity_error') {
+      console.error('Cannot download file with integrity errors:', fileId);
+      return;
+    }
 
-    initiateDownload(file, transfer.fileName);
+    // First try to get from memory
+    const fileFromMemory = receivedFiles.get(fileId);
+    if (fileFromMemory) {
+      initiateDownload(fileFromMemory, transfer.fileName);
+      return;
+    }
+
+    // If not in memory, try to get from IndexedDB
+    getFile(fileId).then((result) => {
+      if (result) {
+        initiateDownload(result.blob, result.fileName);
+      } else {
+        console.error('File not found:', fileId);
+      }
+    });
   };
 
   const initiateDownload = (blob: Blob, fileName: string) => {

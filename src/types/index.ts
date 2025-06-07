@@ -11,8 +11,14 @@ export interface FileTransfer {
   sender: string;
   receiver: string;
   progress: number;
-  status: 'pending' | 'transferring' | 'completed' | 'failed';
+  status:
+    | 'pending'
+    | 'transferring'
+    | 'completed'
+    | 'failed'
+    | 'integrity_error';
   createdAt: number;
+  checksum?: string;
 }
 
 export interface FileMetadata {
@@ -20,6 +26,7 @@ export interface FileMetadata {
   name: string;
   size: number;
   type: string;
+  checksum?: string;
 }
 
 export interface FileTransferRequest {
