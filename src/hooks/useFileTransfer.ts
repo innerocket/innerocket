@@ -860,6 +860,68 @@ export function useFileTransfer() {
     };
   };
 
+  /**
+   * Clears all file transfer history and saved files
+   */
+  const clearFileHistory = () => {
+    // Clear localStorage
+    localStorage.removeItem(TRANSFERS_STORAGE_KEY);
+
+    // Clear state
+    setFileTransfers([]);
+    setReceivedFiles(new Map());
+
+    // Clear IndexedDB files
+    const filesDbName = 'innerocket-files';
+    const filesRequest = indexedDB.open(filesDbName, 1);
+
+    filesRequest.onsuccess = (event) => {
+      const db = (event.target as IDBOpenDBRequest).result;
+      const transaction = db.transaction(['files'], 'readwrite');
+      const store = transaction.objectStore('files');
+
+      // Clear all records
+      const clearRequest = store.clear();
+
+      clearRequest.onerror = () => {
+        console.error('Error clearing files from IndexedDB');
+      };
+
+      transaction.oncomplete = () => {
+        db.close();
+      };
+    };
+
+    filesRequest.onerror = () => {
+      console.error('Error opening files database for clearing');
+    };
+
+    // Clear temporary chunks too
+    const chunksDbName = 'innerocket-temp-chunks';
+    const chunksRequest = indexedDB.open(chunksDbName, 1);
+
+    chunksRequest.onsuccess = (event) => {
+      const db = (event.target as IDBOpenDBRequest).result;
+      const transaction = db.transaction(['chunks'], 'readwrite');
+      const store = transaction.objectStore('chunks');
+
+      // Clear all records
+      const clearRequest = store.clear();
+
+      clearRequest.onerror = () => {
+        console.error('Error clearing chunks from IndexedDB');
+      };
+
+      transaction.oncomplete = () => {
+        db.close();
+      };
+    };
+
+    chunksRequest.onerror = () => {
+      console.error('Error opening chunks database for clearing');
+    };
+  };
+
   return {
     myPeerId: peerId,
     connectedPeers,
@@ -874,5 +936,6 @@ export function useFileTransfer() {
     downloadFile,
     previewFile,
     getFileType,
+    clearFileHistory,
   };
 }
