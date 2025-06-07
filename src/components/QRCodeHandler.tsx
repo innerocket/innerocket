@@ -2,6 +2,7 @@ import { useState, useEffect } from 'preact/hooks';
 import QRCode from 'qrcode';
 import { QrReader } from 'react-qr-reader';
 import { v4 as uuidv4 } from 'uuid';
+import { Button } from './ui';
 
 type QRCodeHandlerProps = {
   initialValue?: string;
@@ -59,83 +60,95 @@ export function QRCodeHandler({
   };
 
   return (
-    <div className="qr-code-handler">
+    <div className="qr-code-handler space-y-6">
       {(mode === 'generate' || mode === 'both') && (
-        <div className="qr-generator mb-6">
-          <h3 className="text-lg font-medium text-gray-800 mb-3">QR Code</h3>
-
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Value
-            </label>
-            <div className="flex">
-              <input
-                type="text"
-                value={qrValue}
-                onChange={(e) =>
-                  !readOnly && setQrValue((e.target as HTMLInputElement).value)
-                }
-                className="flex-1 min-w-0 block w-full px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                readOnly={readOnly}
-              />
-              {!readOnly && (
-                <button
-                  onClick={generateNewUUID}
-                  className="ml-3 inline-flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                >
-                  Generate UUID
-                </button>
-              )}
+        <div className="qr-generator">
+          <div className="w-full p-4 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                QR Code
+              </h3>
             </div>
+
+            <div className="mb-4">
+              <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                Value
+              </label>
+              <div className="flex gap-3">
+                <input
+                  type="text"
+                  value={qrValue}
+                  onChange={(e) =>
+                    !readOnly &&
+                    setQrValue((e.target as HTMLInputElement).value)
+                  }
+                  className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                  readOnly={readOnly}
+                />
+                {!readOnly && (
+                  <Button onClick={generateNewUUID} variant="primary">
+                    Generate UUID
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            {qrCodeDataURL && (
+              <div className="qr-display flex flex-col items-center mt-4">
+                <div className="p-4 bg-white border border-gray-200 rounded-lg dark:bg-gray-700 dark:border-gray-600">
+                  <img
+                    src={qrCodeDataURL}
+                    alt="QR Code"
+                    className="select-none pointer-events-none"
+                  />
+                </div>
+                <p className="mt-3 text-sm text-gray-500 dark:text-gray-400 break-all max-w-full">
+                  {qrValue}
+                </p>
+              </div>
+            )}
           </div>
-
-          {qrCodeDataURL && (
-            <div className="qr-display mt-4 flex flex-col items-center">
-              <img
-                src={qrCodeDataURL}
-                alt="QR Code"
-                className="border border-gray-200 rounded-md select-none pointer-events-none"
-              />
-              <p className="mt-2 text-sm text-gray-500 break-all max-w-full">
-                {qrValue}
-              </p>
-            </div>
-          )}
         </div>
       )}
 
       {(mode === 'scan' || mode === 'both') && (
-        <div className="qr-scanner mt-8">
-          <h3 className="text-lg font-medium text-gray-800 mb-3">
-            QR Code Scanner
-          </h3>
-
-          <button
-            onClick={toggleScanner}
-            className="mb-4 inline-flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-          >
-            {isScannerActive ? 'Stop Scanner' : 'Start Scanner'}
-          </button>
-
-          {isScannerActive && (
-            <div className="scanner-container border border-gray-300 rounded-md overflow-hidden">
-              <QrReader
-                constraints={{ facingMode: 'environment' }}
-                onResult={handleScan}
-                scanDelay={500}
-                className="w-full max-w-sm mx-auto"
-              />
+        <div className="qr-scanner">
+          <div className="w-full p-4 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                QR Code Scanner
+              </h3>
+              <Button
+                onClick={toggleScanner}
+                variant={isScannerActive ? 'danger' : 'success'}
+                size="sm"
+              >
+                {isScannerActive ? 'Stop Scanner' : 'Start Scanner'}
+              </Button>
             </div>
-          )}
 
-          {scanResult && (
-            <div className="scan-result mt-4 p-4 bg-gray-50 border border-gray-200 rounded-md">
-              <h4 className="text-sm font-medium text-gray-700">
-                Scan Result:
-              </h4>
-              <p className="text-sm break-all mt-1">{scanResult}</p>
-            </div>
-          )}
+            {isScannerActive && (
+              <div className="scanner-container mb-4 border border-gray-300 rounded-lg overflow-hidden dark:border-gray-600">
+                <QrReader
+                  constraints={{ facingMode: 'environment' }}
+                  onResult={handleScan}
+                  scanDelay={500}
+                  className="w-full max-w-sm mx-auto"
+                />
+              </div>
+            )}
+
+            {scanResult && (
+              <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg dark:bg-gray-700 dark:border-gray-600">
+                <h4 className="mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                  Scan Result:
+                </h4>
+                <p className="text-sm break-all text-gray-700 dark:text-gray-300">
+                  {scanResult}
+                </p>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

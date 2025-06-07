@@ -70,7 +70,7 @@ export function ConnectedPeers({
               </div>
             </div>
             {showQRCode === peerId && (
-              <div className="py-3">
+              <div className="py-3 px-4">
                 <QRCodeHandler
                   mode="generate"
                   initialValue={peerId}
