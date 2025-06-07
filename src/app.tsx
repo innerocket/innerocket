@@ -203,6 +203,11 @@ export function App() {
     setShowHelp(!showHelp);
   };
 
+  const handleCloseFileSender = () => {
+    setSelectedPeerId(null);
+    showNotification('File sender closed', 'info');
+  };
+
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900">
       <main className="max-w-6xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
@@ -313,7 +318,11 @@ export function App() {
         )}
       </main>
 
-      <FileSender currentPeerId={selectedPeerId} onSendFile={handleSendFile} />
+      <FileSender
+        currentPeerId={selectedPeerId}
+        onSendFile={handleSendFile}
+        onClose={handleCloseFileSender}
+      />
 
       <NotificationContainer
         notifications={notifications}

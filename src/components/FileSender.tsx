@@ -1,13 +1,18 @@
 import { useRef, useState } from 'preact/hooks';
-import { CloudUpload } from 'lucide-react';
+import { CloudUpload, X } from 'lucide-react';
 import { Button } from './ui';
 
 interface FileSenderProps {
   currentPeerId: string | null;
   onSendFile: (file: File) => void;
+  onClose?: () => void;
 }
 
-export function FileSender({ currentPeerId, onSendFile }: FileSenderProps) {
+export function FileSender({
+  currentPeerId,
+  onSendFile,
+  onClose,
+}: FileSenderProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
@@ -36,7 +41,18 @@ export function FileSender({ currentPeerId, onSendFile }: FileSenderProps) {
 
   return (
     <div className="fixed bottom-0 left-0 right-0 w-full bg-white border-t border-gray-200 dark:bg-gray-800 dark:border-gray-700">
-      <div className="container mx-auto max-w-4xl p-4">
+      <div className="container mx-auto max-w-4xl p-4 relative">
+        {onClose && (
+          <button
+            onClick={onClose}
+            type="button"
+            className="absolute top-2 right-2 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 inline-flex items-center dark:hover:bg-gray-600 dark:hover:text-white"
+            aria-label="Close"
+          >
+            <X size={20} />
+            <span className="sr-only">Close</span>
+          </button>
+        )}
         <div className="flex items-center gap-4">
           <input
             ref={fileInputRef}
