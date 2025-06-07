@@ -1,5 +1,6 @@
 import { useRef, useState } from 'preact/hooks';
 import { CloudUpload } from 'lucide-react';
+import { Button, Card } from './ui';
 
 interface FileSenderProps {
   currentPeerId: string | null;
@@ -34,7 +35,7 @@ export function FileSender({ currentPeerId, onSendFile }: FileSenderProps) {
   }
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white shadow-lg p-4 border-t border-gray-200">
+    <Card className="fixed bottom-0 left-0 right-0 border-t border-gray-200">
       <div className="container mx-auto max-w-4xl flex items-center">
         <input
           ref={fileInputRef}
@@ -69,15 +70,16 @@ export function FileSender({ currentPeerId, onSendFile }: FileSenderProps) {
             )}
           </div>
         </label>
-        <button
+        <Button
           onClick={handleSendFile}
           disabled={!selectedFile}
-          className="ml-4 px-6 py-3 bg-blue-600 text-white font-medium rounded-lg disabled:bg-gray-300 disabled:cursor-not-allowed hover:bg-blue-700 transition-colors"
+          className="ml-4"
+          size="lg"
         >
           Send File
-        </button>
+        </Button>
       </div>
-    </div>
+    </Card>
   );
 }
 

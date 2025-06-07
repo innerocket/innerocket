@@ -1,5 +1,6 @@
 import type { FileTransfer } from '../types';
 import { ChevronRight, ChevronLeft, Eye } from 'lucide-react';
+import { Card, Badge, Button, getStatusBadgeVariant } from './ui';
 
 interface FileTransferListProps {
   transfers: FileTransfer[];
@@ -14,10 +15,9 @@ export function FileTransferList({
 }: FileTransferListProps) {
   if (transfers.length === 0) {
     return (
-      <div className="bg-white shadow-md rounded-lg p-6 mb-6">
-        <h2 className="text-xl font-bold text-gray-800 mb-2">File Transfers</h2>
+      <Card title="File Transfers">
         <p className="text-gray-500 text-sm">No file transfers yet.</p>
-      </div>
+      </Card>
     );
   }
 
@@ -32,8 +32,7 @@ export function FileTransferList({
   });
 
   return (
-    <div className="bg-white shadow-md rounded-lg p-6 mb-6">
-      <h2 className="text-xl font-bold text-gray-800 mb-4">File Transfers</h2>
+    <Card title="File Transfers">
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
@@ -118,13 +117,11 @@ export function FileTransferList({
                   )}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <span
-                    className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(
-                      transfer.status
-                    )}`}
-                  >
-                    {transfer.status}
-                  </span>
+                  <Badge
+                    variant={getStatusBadgeVariant(transfer.status)}
+                    label={transfer.status}
+                    rounded
+                  />
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="w-full bg-gray-200 rounded-full h-2.5">
@@ -144,20 +141,17 @@ export function FileTransferList({
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                   {transfer.status === 'completed' && (
                     <div className="flex space-x-2">
-                      <button
+                      <Button
                         onClick={() => onPreview(transfer.id)}
-                        className="px-3 py-1 bg-blue-100 text-blue-800 rounded-md hover:bg-blue-200 transition-colors flex items-center"
-                        title="Preview file"
+                        variant="info"
+                        size="sm"
+                        icon={<Eye size={16} />}
                       >
-                        <Eye size={16} className="mr-1" />
                         Preview
-                      </button>
-                      <button
-                        onClick={() => onDownload(transfer.id)}
-                        className="px-3 py-1 bg-indigo-100 text-indigo-800 rounded-md hover:bg-indigo-200 transition-colors"
-                      >
+                      </Button>
+                      <Button onClick={() => onDownload(transfer.id)} size="sm">
                         Download
-                      </button>
+                      </Button>
                     </div>
                   )}
                 </td>
@@ -166,7 +160,7 @@ export function FileTransferList({
           </tbody>
         </table>
       </div>
-    </div>
+    </Card>
   );
 }
 
@@ -178,21 +172,4 @@ function formatFileSize(bytes: number): string {
   const i = Math.floor(Math.log(bytes) / Math.log(k));
 
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-}
-
-function getStatusColor(status: string): string {
-  switch (status) {
-    case 'pending':
-      return 'bg-yellow-100 text-yellow-800';
-    case 'transferring':
-      return 'bg-blue-100 text-blue-800';
-    case 'completed':
-      return 'bg-green-100 text-green-800';
-    case 'failed':
-      return 'bg-red-100 text-red-800';
-    case 'integrity_error':
-      return 'bg-orange-100 text-orange-800';
-    default:
-      return 'bg-gray-100 text-gray-800';
-  }
 }
