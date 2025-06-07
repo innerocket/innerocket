@@ -1,6 +1,7 @@
 import { useState } from 'preact/hooks';
-import { Copy, Check } from 'lucide-react';
+import { Copy, Check, QrCode, ScanLine } from 'lucide-react';
 import { usePeer } from '../contexts/PeerContext';
+import { QRCodeHandler } from './QRCodeHandler';
 
 interface PeerConnectionProps {
   onConnect: (peerId: string) => void;
@@ -10,6 +11,8 @@ export function PeerConnection({ onConnect }: PeerConnectionProps) {
   const { peerId } = usePeer();
   const [peerIdInput, setPeerIdInput] = useState('');
   const [copySuccess, setCopySuccess] = useState(false);
+  const [showQRCode, setShowQRCode] = useState(false);
+  const [showQRScanner, setShowQRScanner] = useState(false);
 
   const handleConnect = () => {
     if (peerIdInput.trim() && peerIdInput !== peerId) {
@@ -22,6 +25,22 @@ export function PeerConnection({ onConnect }: PeerConnectionProps) {
     navigator.clipboard.writeText(peerId);
     setCopySuccess(true);
     setTimeout(() => setCopySuccess(false), 2000);
+  };
+
+  const toggleQRCode = () => {
+    setShowQRCode(!showQRCode);
+    if (showQRScanner) setShowQRScanner(false);
+  };
+
+  const toggleQRScanner = () => {
+    setShowQRScanner(!showQRScanner);
+    if (showQRCode) setShowQRCode(false);
+  };
+
+  const handleScan = (data: string) => {
+    if (data && data !== peerId) {
+      setPeerIdInput(data);
+    }
   };
 
   return (
@@ -51,6 +70,17 @@ export function PeerConnection({ onConnect }: PeerConnectionProps) {
               <Copy className="h-5 w-5" stroke="currentColor" />
             )}
           </button>
+          <button
+            onClick={toggleQRCode}
+            className={`ml-2 p-2 ${
+              showQRCode
+                ? 'text-green-600'
+                : 'text-blue-600 hover:text-blue-800'
+            }`}
+            aria-label="Show QR Code"
+          >
+            <QrCode className="h-5 w-5" stroke="currentColor" />
+          </button>
         </div>
         <p className="text-xs text-gray-500">
           {copySuccess ? (
@@ -61,23 +91,54 @@ export function PeerConnection({ onConnect }: PeerConnectionProps) {
             'Share this ID with others to let them connect to you'
           )}
         </p>
+
+        {showQRCode && (
+          <div className="mt-4">
+            <QRCodeHandler
+              mode="generate"
+              initialValue={peerId}
+              readOnly={true}
+            />
+          </div>
+        )}
       </div>
 
-      <div className="flex items-center">
-        <input
-          type="text"
-          value={peerIdInput}
-          onChange={(e) => setPeerIdInput((e.target as HTMLInputElement).value)}
-          placeholder="Enter peer ID to connect"
-          className="flex-1 border rounded-l px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-        <button
-          onClick={handleConnect}
-          disabled={!peerIdInput.trim() || peerIdInput === peerId}
-          className="bg-blue-600 text-white px-4 py-2 rounded-r hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
-        >
-          Connect
-        </button>
+      <div className="flex flex-col space-y-4">
+        <div className="flex items-center">
+          <input
+            type="text"
+            value={peerIdInput}
+            onChange={(e) =>
+              setPeerIdInput((e.target as HTMLInputElement).value)
+            }
+            placeholder="Enter peer ID to connect"
+            className="flex-1 border rounded-l px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <button
+            onClick={handleConnect}
+            disabled={!peerIdInput.trim() || peerIdInput === peerId}
+            className="bg-blue-600 text-white px-4 py-2 rounded-r hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+          >
+            Connect
+          </button>
+          <button
+            onClick={toggleQRScanner}
+            className={`ml-2 p-2 border border-gray-300 rounded ${
+              showQRScanner
+                ? 'bg-blue-100 text-blue-800'
+                : 'bg-white text-blue-600 hover:bg-gray-100'
+            }`}
+            aria-label="Scan QR Code"
+          >
+            <ScanLine className="h-5 w-5" stroke="currentColor" />
+          </button>
+        </div>
+
+        {showQRScanner && (
+          <div className="mt-2">
+            <QRCodeHandler mode="scan" onScan={handleScan} />
+          </div>
+        )}
       </div>
     </div>
   );
