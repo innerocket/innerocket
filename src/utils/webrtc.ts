@@ -2,9 +2,33 @@ import { Peer as PeerJS } from 'peerjs';
 import { v4 as uuidv4 } from 'uuid';
 import type { FileMetadata, FileTransferRequest, Peer } from '../types';
 import { calculateChecksum } from './checksum';
+import { createFileChunkWorker } from './workerLoader';
 
 // Configuration constants
-const DEFAULT_CHUNK_SIZE = 256 * 1024; // Increased to 256KB (was 16KB)
+const DEFAULT_CHUNK_SIZE = 1024 * 1024; // 1MB
+const MAX_CHUNK_SIZE = 4 * 1024 * 1024; // 4MB for very fast connections
+const LARGE_FILE_THRESHOLD = 100 * 1024 * 1024; // 100MB
+
+// Add adaptive chunk sizing based on connection quality
+function getOptimalChunkSize(
+  fileSize: number,
+  connectionQuality: 'slow' | 'medium' | 'fast' = 'medium'
+): number {
+  if (fileSize < 1024 * 1024) {
+    // Files smaller than 1MB
+    return 256 * 1024; // Use smaller chunks for tiny files
+  }
+
+  switch (connectionQuality) {
+    case 'slow':
+      return 512 * 1024; // 512KB for slow connections
+    case 'fast':
+      return MAX_CHUNK_SIZE; // 4MB for fast connections
+    case 'medium':
+    default:
+      return DEFAULT_CHUNK_SIZE; // 1MB for medium connections
+  }
+}
 
 export class WebRTCService {
   private peer: PeerJS;
@@ -17,7 +41,9 @@ export class WebRTCService {
     peerId: string,
     chunk: ArrayBuffer,
     metadata: FileMetadata,
-    progress: number
+    progress: number,
+    chunkSize?: number,
+    transferSpeed?: number
   ) => void = () => {};
   private onFileTransferComplete: (
     peerId: string,
@@ -30,12 +56,19 @@ export class WebRTCService {
     // Use provided peerId or generate a new one if not provided
     this.myPeerId = peerId || uuidv4();
 
-    // Initialize PeerJS
+    // Initialize PeerJS with optimized configuration
     this.peer = new PeerJS(this.myPeerId, {
       // Using public PeerJS server for simplicity
       // In production, you might want to use your own server
       // but only for signaling, not for transferring files
       debug: 2,
+      config: {
+        iceServers: [
+          { urls: 'stun:stun.l.google.com:19302' },
+          { urls: 'stun:global.stun.twilio.com:3478' },
+        ],
+        iceCandidatePoolSize: 10,
+      },
     });
 
     this.setupEventListeners();
@@ -90,7 +123,14 @@ export class WebRTCService {
         from: { id: peerId, name: data.name },
       });
     } else if (data.type === 'file-chunk') {
-      this.onFileChunk(peerId, data.chunk, data.metadata, data.progress);
+      this.onFileChunk(
+        peerId,
+        data.chunk,
+        data.metadata,
+        data.progress,
+        data.chunkSize,
+        data.transferSpeed
+      );
     } else if (data.type === 'file-complete') {
       this.onFileTransferComplete(peerId, data.metadata);
     }
@@ -179,9 +219,25 @@ export class WebRTCService {
       return;
     }
 
-    const chunkSize = DEFAULT_CHUNK_SIZE;
+    // Use web worker for large files
+    if (file.size > LARGE_FILE_THRESHOLD && typeof Worker !== 'undefined') {
+      this.sendFileWithWorker(conn, file, metadata);
+    } else {
+      this.sendFileStandard(conn, file, metadata);
+    }
+  }
+
+  private sendFileStandard(conn: any, file: File, metadata: FileMetadata) {
+    // Start with default chunk size
+    let chunkSize = getOptimalChunkSize(file.size, 'medium');
+    let connectionQuality: 'slow' | 'medium' | 'fast' = 'medium';
     const reader = new FileReader();
     let offset = 0;
+    let lastSendTime = 0;
+    let transferRates: number[] = [];
+    let consecutiveSlowChunks = 0;
+    let consecutiveFastChunks = 0;
+    let currentTransferSpeed = 0;
 
     const sendChunk = () => {
       if (offset >= file.size) {
@@ -200,7 +256,10 @@ export class WebRTCService {
     reader.onload = (e) => {
       if (!e.target) return;
 
+      const now = Date.now();
       const chunk = e.target.result;
+      if (!(chunk instanceof ArrayBuffer)) return;
+
       const progress = Math.min(100, Math.floor((offset / file.size) * 100));
 
       // Send the chunk
@@ -209,15 +268,69 @@ export class WebRTCService {
         chunk,
         metadata,
         progress,
+        chunkSize,
+        transferSpeed: currentTransferSpeed,
       });
+
+      // Measure transfer rate if not the first chunk
+      if (lastSendTime > 0 && chunk) {
+        const timeTaken = now - lastSendTime; // ms
+        const bytesPerMs = chunk.byteLength / timeTaken;
+        const mbps = (bytesPerMs * 1000) / (1024 * 1024);
+        currentTransferSpeed = mbps;
+
+        // Keep last 5 transfer rates for averaging
+        transferRates.push(mbps);
+        if (transferRates.length > 5) transferRates.shift();
+
+        // Calculate average transfer rate
+        const avgMbps =
+          transferRates.reduce((sum, rate) => sum + rate, 0) /
+          transferRates.length;
+
+        // Dynamically adjust chunk size based on transfer rate
+        if (avgMbps > 8) {
+          // Very fast connection (>8 MB/s)
+          consecutiveFastChunks++;
+          consecutiveSlowChunks = 0;
+          if (consecutiveFastChunks >= 3 && chunkSize < MAX_CHUNK_SIZE) {
+            chunkSize = Math.min(chunkSize * 1.5, MAX_CHUNK_SIZE);
+            connectionQuality = 'fast';
+            consecutiveFastChunks = 0;
+          }
+        } else if (avgMbps < 1) {
+          // Slow connection (<1 MB/s)
+          consecutiveSlowChunks++;
+          consecutiveFastChunks = 0;
+          if (consecutiveSlowChunks >= 2 && chunkSize > 256 * 1024) {
+            chunkSize = Math.max(chunkSize / 1.5, 256 * 1024);
+            connectionQuality = 'slow';
+            consecutiveSlowChunks = 0;
+          }
+        } else {
+          // Medium connection, use default chunk size
+          connectionQuality = 'medium';
+          chunkSize = DEFAULT_CHUNK_SIZE;
+          consecutiveFastChunks = 0;
+          consecutiveSlowChunks = 0;
+        }
+      }
 
       // Update offset for next chunk
       offset += chunkSize;
+      lastSendTime = now;
 
-      // Add a small delay between chunks to prevent overwhelming the connection
-      // Use longer delay for larger files
-      const delayBetweenChunks = file.size > 100 * 1024 * 1024 ? 50 : 10; // 50ms delay for files > 100MB
-      setTimeout(sendChunk, delayBetweenChunks);
+      // Optimize the delay between chunks based on transfer rate
+      const nextChunkDelay =
+        file.size > 100 * 1024 * 1024
+          ? connectionQuality === 'slow'
+            ? 50
+            : 10 // For files > 100MB
+          : connectionQuality === 'slow'
+          ? 25
+          : 0; // For smaller files, use minimal or no delay
+
+      setTimeout(sendChunk, nextChunkDelay);
     };
 
     reader.onerror = (error) => {
@@ -225,6 +338,129 @@ export class WebRTCService {
     };
 
     sendChunk();
+  }
+
+  private sendFileWithWorker(conn: any, file: File, metadata: FileMetadata) {
+    try {
+      // Create web worker from external file
+      const worker = createFileChunkWorker();
+
+      // Initial parameters
+      let chunkSize = getOptimalChunkSize(file.size, 'medium');
+      let offset = 0;
+      let lastSendTime = 0;
+      let transferRates: number[] = [];
+      let connectionQuality: 'slow' | 'medium' | 'fast' = 'medium';
+      let currentTransferSpeed = 0;
+
+      // Set up worker message handler
+      worker.onmessage = (e) => {
+        const data = e.data;
+
+        if (data.type === 'chunk') {
+          const now = Date.now();
+          const chunk = data.chunk;
+          const progress = data.progress;
+
+          // Send the chunk
+          conn.send({
+            type: 'file-chunk',
+            chunk,
+            metadata,
+            progress,
+            chunkSize,
+            transferSpeed: currentTransferSpeed,
+          });
+
+          // Process transfer rate
+          if (lastSendTime > 0) {
+            const timeTaken = now - lastSendTime;
+            const bytesPerMs = chunk.byteLength / timeTaken;
+            currentTransferSpeed = (bytesPerMs * 1000) / (1024 * 1024);
+
+            // Ask worker to calculate next optimal chunk size
+            worker.postMessage({
+              action: 'adjustSize',
+              timeTaken,
+              lastChunkSize: chunk.byteLength,
+              transferRates,
+              chunkSize,
+              maxChunkSize: MAX_CHUNK_SIZE,
+            });
+          }
+
+          // Update for next chunk
+          offset = data.nextOffset;
+          lastSendTime = now;
+
+          // If we're done, complete the transfer
+          if (offset >= file.size) {
+            // File transfer complete
+            conn.send({
+              type: 'file-complete',
+              metadata,
+            });
+
+            // Clean up worker
+            worker.terminate();
+            return;
+          }
+
+          // Request next chunk after a delay based on connection quality
+          const nextChunkDelay =
+            file.size > 100 * 1024 * 1024
+              ? connectionQuality === 'slow'
+                ? 50
+                : 10 // For files > 100MB
+              : connectionQuality === 'slow'
+              ? 25
+              : 0; // For smaller files, use minimal or no delay
+
+          setTimeout(() => {
+            worker.postMessage({
+              action: 'process',
+              file,
+              chunkSize,
+              offset,
+              maxChunkSize: MAX_CHUNK_SIZE,
+            });
+          }, nextChunkDelay);
+        } else if (data.type === 'sizeAdjusted') {
+          // Update chunk size and connection quality
+          chunkSize = data.newChunkSize;
+          connectionQuality = data.connectionQuality;
+          transferRates = data.transferRates;
+        } else if (data.type === 'error') {
+          console.error('Worker error:', data.error);
+          // Fallback to standard method if worker fails
+          this.sendFileStandard(conn, file, metadata);
+          worker.terminate();
+        }
+      };
+
+      // Set up error handler
+      worker.onerror = (error) => {
+        console.error('Worker error:', error);
+        // Fallback to standard method if worker fails
+        this.sendFileStandard(conn, file, metadata);
+        worker.terminate();
+      };
+
+      // Start the process
+      worker.postMessage({
+        action: 'process',
+        file,
+        chunkSize,
+        offset,
+        maxChunkSize: MAX_CHUNK_SIZE,
+      });
+    } catch (error) {
+      console.error(
+        'Failed to create worker, falling back to standard method:',
+        error
+      );
+      this.sendFileStandard(conn, file, metadata);
+    }
   }
 
   public acceptFileTransfer(peerId: string, metadata: FileMetadata) {
@@ -280,7 +516,9 @@ export class WebRTCService {
       peerId: string,
       chunk: ArrayBuffer,
       metadata: FileMetadata,
-      progress: number
+      progress: number,
+      chunkSize?: number,
+      transferSpeed?: number
     ) => void
   ) {
     this.onFileChunk = callback;

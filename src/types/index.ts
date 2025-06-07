@@ -20,6 +20,8 @@ export interface FileTransfer {
     | 'verifying';
   createdAt: number;
   checksum?: string;
+  transferSpeed?: number; // Transfer speed in MB/s
+  chunkSize?: number; // Current chunk size in bytes
 }
 
 export interface FileMetadata {
