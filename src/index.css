@@ -1,1 +1,5 @@
 @import 'tailwindcss';
+
+* {
+  overscroll-behavior-y: none !important;
+}
