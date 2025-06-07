@@ -16,7 +16,8 @@ export interface FileTransfer {
     | 'transferring'
     | 'completed'
     | 'failed'
-    | 'integrity_error';
+    | 'integrity_error'
+    | 'verifying';
   createdAt: number;
   checksum?: string;
 }

@@ -87,21 +87,116 @@ export function useFileTransfer() {
     });
 
     webRTCService.setOnFileTransferComplete(async (_, metadata) => {
-      // Combine chunks and create blob
-      const chunks = fileChunks.get(metadata.id) || [];
+      try {
+        // Combine chunks and create blob
+        const chunks = fileChunks.get(metadata.id) || [];
 
-      const blob = new Blob(chunks, {
-        type: metadata.type || 'application/octet-stream',
-      });
+        const blob = new Blob(chunks, {
+          type: metadata.type || 'application/octet-stream',
+        });
 
-      // Verify file integrity if checksum is available
-      let isIntegrityValid = true;
-      if (metadata.checksum) {
-        isIntegrityValid = await verifyChecksum(blob, metadata.checksum);
-      }
+        // Verify file integrity if checksum is available
+        let isIntegrityValid = true;
+        let retryCount = 0;
+        const MAX_RETRIES = 2;
 
-      if (!isIntegrityValid) {
-        // Update transfer status to integrity error
+        if (metadata.checksum) {
+          // First update status to show we're verifying
+          setFileTransfers((prev) => {
+            const index = prev.findIndex((t) => t.id === metadata.id);
+            if (index === -1) return prev;
+
+            const newTransfers = [...prev];
+            newTransfers[index] = {
+              ...newTransfers[index],
+              progress: 100,
+              status: 'verifying', // New state to indicate integrity check is in progress
+            };
+
+            return newTransfers;
+          });
+
+          // Try verification with retries for large files
+          while (retryCount <= MAX_RETRIES) {
+            try {
+              console.log(
+                `Verifying file integrity (attempt ${retryCount + 1}/${
+                  MAX_RETRIES + 1
+                })...`
+              );
+              isIntegrityValid = await verifyChecksum(blob, metadata.checksum);
+              if (isIntegrityValid) {
+                console.log('Integrity check passed!');
+                break;
+              }
+
+              // If verification failed but we have retries left
+              if (retryCount < MAX_RETRIES) {
+                console.warn(
+                  `Integrity check failed, retry ${
+                    retryCount + 1
+                  }/${MAX_RETRIES}`
+                );
+                retryCount++;
+              } else {
+                console.error('All integrity check attempts failed');
+                break;
+              }
+            } catch (error) {
+              console.error('Error during integrity check:', error);
+              if (retryCount < MAX_RETRIES) {
+                console.warn(
+                  `Integrity check error, retry ${
+                    retryCount + 1
+                  }/${MAX_RETRIES}`
+                );
+                retryCount++;
+              } else {
+                isIntegrityValid = false;
+                break;
+              }
+            }
+          }
+        }
+
+        if (!isIntegrityValid) {
+          // Update transfer status to integrity error
+          setFileTransfers((prev) => {
+            const index = prev.findIndex((t) => t.id === metadata.id);
+            if (index === -1) return prev;
+
+            const newTransfers = [...prev];
+            newTransfers[index] = {
+              ...newTransfers[index],
+              progress: 100,
+              status: 'integrity_error',
+            };
+
+            return newTransfers;
+          });
+
+          // Clean up chunks
+          fileChunks.delete(metadata.id);
+
+          return; // Don't save the corrupted file
+        }
+
+        // Store received file in IndexedDB
+        saveFileToIndexedDB(
+          metadata.id,
+          blob,
+          metadata.name,
+          metadata.checksum
+        );
+
+        // Store received file in memory for immediate use
+        setReceivedFiles((prev) => {
+          const newFiles = new Map(prev);
+          newFiles.set(metadata.id, blob);
+          return newFiles;
+        });
+
+        // Update transfer status
         setFileTransfers((prev) => {
           const index = prev.findIndex((t) => t.id === metadata.id);
           if (index === -1) return prev;
@@ -110,7 +205,8 @@ export function useFileTransfer() {
           newTransfers[index] = {
             ...newTransfers[index],
             progress: 100,
-            status: 'integrity_error',
+            status: 'completed',
+            checksum: metadata.checksum,
           };
 
           return newTransfers;
@@ -118,38 +214,27 @@ export function useFileTransfer() {
 
         // Clean up chunks
         fileChunks.delete(metadata.id);
+      } catch (error) {
+        console.error('Error processing completed file transfer:', error);
 
-        return; // Don't save the corrupted file
+        // Update transfer status to failed if there was an error
+        setFileTransfers((prev) => {
+          const index = prev.findIndex((t) => t.id === metadata.id);
+          if (index === -1) return prev;
+
+          const newTransfers = [...prev];
+          newTransfers[index] = {
+            ...newTransfers[index],
+            progress: 100,
+            status: 'failed',
+          };
+
+          return newTransfers;
+        });
+
+        // Clean up chunks
+        fileChunks.delete(metadata.id);
       }
-
-      // Store received file in IndexedDB
-      saveFileToIndexedDB(metadata.id, blob, metadata.name, metadata.checksum);
-
-      // Store received file in memory for immediate use
-      setReceivedFiles((prev) => {
-        const newFiles = new Map(prev);
-        newFiles.set(metadata.id, blob);
-        return newFiles;
-      });
-
-      // Update transfer status
-      setFileTransfers((prev) => {
-        const index = prev.findIndex((t) => t.id === metadata.id);
-        if (index === -1) return prev;
-
-        const newTransfers = [...prev];
-        newTransfers[index] = {
-          ...newTransfers[index],
-          progress: 100,
-          status: 'completed',
-          checksum: metadata.checksum,
-        };
-
-        return newTransfers;
-      });
-
-      // Clean up chunks
-      fileChunks.delete(metadata.id);
     });
 
     // Load previously completed files from IndexedDB

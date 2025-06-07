@@ -74,6 +74,18 @@ export function App() {
         );
       }
 
+      // If a transfer enters verification phase
+      if (
+        transfer.status === 'verifying' &&
+        prevTransfer &&
+        prevTransfer.status !== 'verifying'
+      ) {
+        showNotification(
+          `Verifying integrity of "${transfer.fileName}"...`,
+          'info'
+        );
+      }
+
       // If an integrity check failed, show a notification
       if (
         transfer.status === 'integrity_error' &&

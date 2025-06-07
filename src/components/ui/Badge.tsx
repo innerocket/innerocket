@@ -69,6 +69,8 @@ export function getStatusBadgeVariant(
       return 'danger';
     case 'integrity_error':
       return 'danger';
+    case 'verifying':
+      return 'info';
     default:
       return 'secondary';
   }

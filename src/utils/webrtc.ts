@@ -3,6 +3,9 @@ import { v4 as uuidv4 } from 'uuid';
 import type { FileMetadata, FileTransferRequest, Peer } from '../types';
 import { calculateChecksum } from './checksum';
 
+// Configuration constants
+const DEFAULT_CHUNK_SIZE = 256 * 1024; // Increased to 256KB (was 16KB)
+
 export class WebRTCService {
   private peer: PeerJS;
   private connections: Map<string, any> = new Map();
@@ -176,7 +179,7 @@ export class WebRTCService {
       return;
     }
 
-    const chunkSize = 16384; // 16KB chunks
+    const chunkSize = DEFAULT_CHUNK_SIZE;
     const reader = new FileReader();
     let offset = 0;
 
@@ -198,15 +201,23 @@ export class WebRTCService {
       if (!e.target) return;
 
       const chunk = e.target.result;
+      const progress = Math.min(100, Math.floor((offset / file.size) * 100));
+
+      // Send the chunk
       conn.send({
         type: 'file-chunk',
         chunk,
         metadata,
-        progress: Math.min(100, Math.floor((offset / file.size) * 100)),
+        progress,
       });
 
+      // Update offset for next chunk
       offset += chunkSize;
-      setTimeout(sendChunk, 0);
+
+      // Add a small delay between chunks to prevent overwhelming the connection
+      // Use longer delay for larger files
+      const delayBetweenChunks = file.size > 100 * 1024 * 1024 ? 50 : 10; // 50ms delay for files > 100MB
+      setTimeout(sendChunk, delayBetweenChunks);
     };
 
     reader.onerror = (error) => {
