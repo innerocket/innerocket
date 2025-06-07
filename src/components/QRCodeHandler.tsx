@@ -62,9 +62,7 @@ export function QRCodeHandler({
     <div className="qr-code-handler">
       {(mode === 'generate' || mode === 'both') && (
         <div className="qr-generator mb-6">
-          <h3 className="text-lg font-medium text-gray-800 mb-3">
-            QR Code Generator
-          </h3>
+          <h3 className="text-lg font-medium text-gray-800 mb-3">QR Code</h3>
 
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">
