@@ -1,14 +1,16 @@
 import type { FileTransfer } from '../types';
-import { ChevronRight, ChevronLeft } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Eye } from 'lucide-react';
 
 interface FileTransferListProps {
   transfers: FileTransfer[];
   onDownload: (fileId: string) => void;
+  onPreview: (fileId: string) => void;
 }
 
 export function FileTransferList({
   transfers,
   onDownload,
+  onPreview,
 }: FileTransferListProps) {
   if (transfers.length === 0) {
     return (
@@ -141,12 +143,22 @@ export function FileTransferList({
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                   {transfer.status === 'completed' && (
-                    <button
-                      onClick={() => onDownload(transfer.id)}
-                      className="px-3 py-1 bg-indigo-100 text-indigo-800 rounded-md hover:bg-indigo-200 transition-colors"
-                    >
-                      Download
-                    </button>
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => onPreview(transfer.id)}
+                        className="px-3 py-1 bg-blue-100 text-blue-800 rounded-md hover:bg-blue-200 transition-colors flex items-center"
+                        title="Preview file"
+                      >
+                        <Eye size={16} className="mr-1" />
+                        Preview
+                      </button>
+                      <button
+                        onClick={() => onDownload(transfer.id)}
+                        className="px-3 py-1 bg-indigo-100 text-indigo-800 rounded-md hover:bg-indigo-200 transition-colors"
+                      >
+                        Download
+                      </button>
+                    </div>
                   )}
                 </td>
               </tr>

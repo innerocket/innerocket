@@ -122,7 +122,7 @@ export function useFileTransfer() {
       fileChunks.delete(metadata.id);
     });
 
-    // Load previously completed transfers from IndexedDB
+    // Load previously completed files from IndexedDB
     loadCompletedFiles();
 
     return () => {
@@ -319,6 +319,73 @@ export function useFileTransfer() {
     );
   };
 
+  const getFile = async (
+    fileId: string
+  ): Promise<{ blob: Blob; fileName: string } | null> => {
+    // First try to get from memory
+    let file = receivedFiles.get(fileId);
+
+    if (file) {
+      // Get file name from transfers
+      const transfer = fileTransfers.find((t) => t.id === fileId);
+      if (!transfer) return null;
+
+      return { blob: file, fileName: transfer.fileName };
+    }
+
+    // If not in memory, try to get from IndexedDB
+    return new Promise((resolve) => {
+      const dbName = 'innerocket-files';
+      const request = indexedDB.open(dbName, 1);
+
+      request.onsuccess = (event) => {
+        const db = (event.target as IDBOpenDBRequest).result;
+        const transaction = db.transaction(['files'], 'readonly');
+        const store = transaction.objectStore('files');
+        const getRequest = store.get(fileId);
+
+        getRequest.onsuccess = () => {
+          if (getRequest.result) {
+            const fileData = getRequest.result;
+            resolve({ blob: fileData.blob, fileName: fileData.fileName });
+          } else {
+            resolve(null);
+          }
+        };
+
+        getRequest.onerror = () => {
+          console.error('Error getting file from IndexedDB');
+          resolve(null);
+        };
+
+        transaction.oncomplete = () => {
+          db.close();
+        };
+      };
+
+      request.onerror = () => {
+        console.error('Error opening IndexedDB');
+        resolve(null);
+      };
+    });
+  };
+
+  const previewFile = async (fileId: string): Promise<string | null> => {
+    const fileData = await getFile(fileId);
+    if (!fileData) return null;
+
+    const { blob } = fileData;
+
+    // Create a preview URL for the file
+    return URL.createObjectURL(blob);
+  };
+
+  const getFileType = (fileId: string): string | null => {
+    const transfer = fileTransfers.find((t) => t.id === fileId);
+    if (!transfer) return null;
+    return transfer.fileType;
+  };
+
   const downloadFile = (fileId: string) => {
     // First try to get from memory
     let file = receivedFiles.get(fileId);
@@ -467,5 +534,7 @@ export function useFileTransfer() {
     acceptFileTransfer,
     rejectFileTransfer,
     downloadFile,
+    previewFile,
+    getFileType,
   };
 }

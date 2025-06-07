@@ -5,6 +5,7 @@ import { ConnectedPeers } from './components/ConnectedPeers';
 import { FileTransferList } from './components/FileTransferList';
 import { FileRequests } from './components/FileRequests';
 import { FileSender } from './components/FileSender';
+import { FilePreview } from './components/FilePreview';
 import { NotificationContainer } from './components/Notification';
 import type {
   NotificationItem,
@@ -26,11 +27,15 @@ export function App() {
     acceptFileTransfer,
     rejectFileTransfer,
     downloadFile,
+    previewFile,
+    getFileType,
   } = useFileTransfer();
 
   const [selectedPeerId, setSelectedPeerId] = useState<string | null>(null);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const prevFileTransfers = useRef(fileTransfers);
+  const [previewFileId, setPreviewFileId] = useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   // Monitor file transfers for status changes
   useEffect(() => {
@@ -71,6 +76,24 @@ export function App() {
 
     prevFileTransfers.current = fileTransfers;
   }, [fileTransfers, peerId]);
+
+  // Clean up preview URL when component unmounts
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, []);
+
+  // Clean up previous preview URL when a new one is set
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
 
   const showNotification = (message: string, type: NotificationType) => {
     const id = uuidv4();
@@ -137,6 +160,32 @@ export function App() {
     }
   };
 
+  const handlePreviewFile = async (fileId: string) => {
+    const transfer = fileTransfers.find((t) => t.id === fileId);
+    if (!transfer) return;
+
+    // Set the file ID first to show the loading state
+    setPreviewFileId(fileId);
+
+    // Fetch the preview URL
+    const url = await previewFile(fileId);
+
+    if (url) {
+      setPreviewUrl(url);
+    } else {
+      showNotification(`Unable to preview "${transfer.fileName}"`, 'error');
+      setPreviewFileId(null);
+    }
+  };
+
+  const handleClosePreview = () => {
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
+    setPreviewUrl(null);
+    setPreviewFileId(null);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <main className="max-w-4xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
@@ -161,6 +210,7 @@ export function App() {
             <FileTransferList
               transfers={fileTransfers}
               onDownload={handleDownloadFile}
+              onPreview={handlePreviewFile}
             />
           </div>
         </div>
@@ -201,6 +251,18 @@ export function App() {
         notifications={notifications}
         onRemove={removeNotification}
       />
+
+      {previewFileId && (
+        <FilePreview
+          fileName={
+            fileTransfers.find((t) => t.id === previewFileId)?.fileName ||
+            'Unknown file'
+          }
+          fileType={getFileType(previewFileId) || 'application/octet-stream'}
+          previewUrl={previewUrl}
+          onClose={handleClosePreview}
+        />
+      )}
     </div>
   );
 }
