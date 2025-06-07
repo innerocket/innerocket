@@ -1,4 +1,5 @@
 import type { JSX } from 'preact';
+import { cloneElement } from 'preact';
 import { Loader } from 'lucide-react';
 import { tv, type VariantProps } from 'tailwind-variants';
 
@@ -19,9 +20,9 @@ const iconButton = tv({
         'bg-transparent text-gray-600 hover:bg-gray-100 focus:ring-gray-500',
     },
     size: {
-      sm: 'p-1',
-      md: 'p-2',
-      lg: 'p-3',
+      sm: 'p-1 h-8 w-8',
+      md: 'p-2 h-10 w-10',
+      lg: 'p-3 h-12 w-12',
     },
     rounded: {
       true: 'rounded-full',
@@ -79,9 +80,16 @@ export function IconButton({
 
   const iconClasses = iconSize({ size });
 
-  // Create the icon with appropriate size
+  // Clone the icon element with the appropriate size class
   const sizedIcon = isLoading ? (
     <Loader className={`animate-spin ${iconClasses}`} />
+  ) : // Clone the icon element and add size class
+  typeof icon === 'object' && icon !== null && 'type' in icon ? (
+    cloneElement(icon as JSX.Element, {
+      className: `${
+        (icon as JSX.Element).props?.className || ''
+      } ${iconClasses}`.trim(),
+    })
   ) : (
     <span className={iconClasses}>{icon}</span>
   );

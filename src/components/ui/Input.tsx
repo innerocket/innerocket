@@ -30,8 +30,16 @@ const inputStyles = tv({
   },
 });
 
+const iconWrapper = tv({
+  base: 'flex items-center justify-center h-full w-10 flex-shrink-0',
+});
+
+const leftIconWrapper = tv({
+  base: 'absolute inset-y-0 left-0 flex items-center pointer-events-none',
+});
+
 const rightIconWrapper = tv({
-  base: 'absolute inset-y-0 right-0 pr-3 flex items-center',
+  base: 'absolute inset-y-0 right-0 flex items-center',
   variants: {
     clickable: {
       true: 'cursor-pointer',
@@ -83,8 +91,10 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         )}
         <div className={inputWrapperClasses}>
           {icon && (
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <span className="text-gray-500 sm:text-sm">{icon}</span>
+            <div className={leftIconWrapper()}>
+              <div className={iconWrapper()}>
+                <span className="text-gray-500">{icon}</span>
+              </div>
             </div>
           )}
           <input ref={ref} className={inputClasses} {...props} />
@@ -93,7 +103,9 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
               className={rightIconWrapper({ clickable: !!onRightIconClick })}
               onClick={onRightIconClick}
             >
-              <span className="text-gray-500 sm:text-sm">{rightIcon}</span>
+              <div className={iconWrapper()}>
+                <span className="text-gray-500">{rightIcon}</span>
+              </div>
             </div>
           )}
         </div>
