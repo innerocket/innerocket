@@ -1,5 +1,44 @@
 import type { JSX } from 'preact';
 import { forwardRef } from 'preact/compat';
+import { tv } from 'tailwind-variants';
+
+const inputWrapper = tv({
+  base: 'relative',
+  variants: {
+    fullWidth: {
+      true: 'w-full',
+    },
+  },
+});
+
+const inputStyles = tv({
+  base: 'px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
+  variants: {
+    error: {
+      true: 'border-red-300 text-red-900 placeholder-red-300 focus:ring-red-500 focus:border-red-500',
+      false: 'border-gray-300',
+    },
+    icon: {
+      true: 'pl-10',
+    },
+    rightIcon: {
+      true: 'pr-10',
+    },
+    fullWidth: {
+      true: 'w-full',
+    },
+  },
+});
+
+const rightIconWrapper = tv({
+  base: 'absolute inset-y-0 right-0 pr-3 flex items-center',
+  variants: {
+    clickable: {
+      true: 'cursor-pointer',
+      false: 'pointer-events-none',
+    },
+  },
+});
 
 export interface InputProps extends JSX.HTMLAttributes<HTMLInputElement> {
   label?: string;
@@ -26,17 +65,17 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     },
     ref
   ) => {
-    const inputWrapperClasses = `relative ${fullWidth ? 'w-full' : ''}`;
-    const inputClasses = `px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-      error
-        ? 'border-red-300 text-red-900 placeholder-red-300 focus:ring-red-500 focus:border-red-500'
-        : 'border-gray-300'
-    } ${icon ? 'pl-10' : ''} ${rightIcon ? 'pr-10' : ''} ${
-      fullWidth ? 'w-full' : ''
-    } ${className}`;
+    const inputWrapperClasses = inputWrapper({ fullWidth });
+    const inputClasses = inputStyles({
+      error: !!error,
+      icon: !!icon,
+      rightIcon: !!rightIcon,
+      fullWidth,
+      className: className as string,
+    });
 
     return (
-      <div className={`${fullWidth ? 'w-full' : ''}`}>
+      <div className={fullWidth ? 'w-full' : ''}>
         {label && (
           <label className="block text-sm font-medium text-gray-700 mb-1">
             {label}
@@ -51,9 +90,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           <input ref={ref} className={inputClasses} {...props} />
           {rightIcon && (
             <div
-              className={`absolute inset-y-0 right-0 pr-3 flex items-center ${
-                onRightIconClick ? 'cursor-pointer' : 'pointer-events-none'
-              }`}
+              className={rightIconWrapper({ clickable: !!onRightIconClick })}
               onClick={onRightIconClick}
             >
               <span className="text-gray-500 sm:text-sm">{rightIcon}</span>
