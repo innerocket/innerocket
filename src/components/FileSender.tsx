@@ -1,6 +1,6 @@
 import { useRef, useState } from 'preact/hooks';
 import { CloudUpload } from 'lucide-react';
-import { Button, Card } from './ui';
+import { Button } from './ui';
 
 interface FileSenderProps {
   currentPeerId: string | null;
