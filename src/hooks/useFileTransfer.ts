@@ -357,14 +357,102 @@ export function useFileTransfer() {
   };
 
   const initiateDownload = (blob: Blob, fileName: string) => {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = fileName;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    // Special handling for .mov files and other video formats
+    if (
+      fileName.toLowerCase().endsWith('.mov') ||
+      blob.type.startsWith('video/')
+    ) {
+      try {
+        // Force the correct MIME type for QuickTime (.mov) files
+        const mimeType = fileName.toLowerCase().endsWith('.mov')
+          ? 'video/quicktime'
+          : blob.type || 'video/mp4';
+
+        // Create a new blob with proper type headers to ensure browser handles it correctly
+        const newBlob = new Blob([blob], { type: mimeType });
+        const url = URL.createObjectURL(newBlob);
+
+        // Try the download attribute method first
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = fileName;
+        a.setAttribute('data-downloadurl', [mimeType, fileName, url].join(':'));
+
+        // Append to body and trigger download
+        document.body.appendChild(a);
+
+        // Use setTimeout to ensure browser has time to register the element
+        setTimeout(() => {
+          a.click();
+
+          // Clean up after download starts
+          setTimeout(() => {
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+          }, 200);
+        }, 0);
+      } catch (error) {
+        console.error('Error downloading video file:', error);
+
+        // Fallback for older browsers: try opening in new window and manually saving
+        try {
+          const url = URL.createObjectURL(blob);
+          const win = window.open(url, '_blank');
+
+          // Add instructions to manually save if window was opened
+          if (win) {
+            win.document.title = 'Download ' + fileName;
+            // Create UI using DOM manipulation instead of document.write
+            const doc = win.document;
+            doc.body.style.margin = '0';
+            doc.body.style.padding = '10px';
+            doc.body.style.fontFamily = 'sans-serif';
+
+            const p = doc.createElement('p');
+            p.textContent = `Right-click on the video below and select "Save Video As..." to download ${fileName}`;
+
+            const video = doc.createElement('video');
+            video.controls = true;
+            video.autoplay = true;
+            video.style.maxWidth = '100%';
+            video.style.maxHeight = '80vh';
+
+            const source = doc.createElement('source');
+            source.src = url;
+            source.type = blob.type || 'video/mp4';
+
+            const fallbackText = doc.createTextNode(
+              'Your browser does not support the video tag.'
+            );
+
+            video.appendChild(source);
+            video.appendChild(fallbackText);
+
+            doc.body.appendChild(p);
+            doc.body.appendChild(video);
+          }
+
+          // Cleanup object URL after a delay
+          setTimeout(() => URL.revokeObjectURL(url), 60000); // Keep alive for 1 minute
+        } catch (secondError) {
+          console.error('Fallback download also failed:', secondError);
+          alert(
+            'Download failed. Please try again or use a different browser.'
+          );
+        }
+      }
+    } else {
+      // Standard method for other file types
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
   };
 
   return {
