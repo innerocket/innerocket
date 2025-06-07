@@ -3,23 +3,30 @@ import { Loader } from 'lucide-react';
 import { tv, type VariantProps } from 'tailwind-variants';
 
 const button = tv({
-  base: 'inline-flex items-center justify-center font-medium rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2',
+  base: 'inline-flex items-center justify-center font-medium rounded-lg transition-colors focus:outline-none focus:ring-4',
   variants: {
     variant: {
-      primary: 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500',
+      primary:
+        'text-white bg-blue-700 hover:bg-blue-800 focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800',
       secondary:
-        'bg-gray-200 text-gray-800 hover:bg-gray-300 focus:ring-gray-500',
+        'text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-gray-200 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700',
       success:
-        'bg-green-600 text-white hover:bg-green-700 focus:ring-green-500',
-      danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
+        'text-white bg-green-700 hover:bg-green-800 focus:ring-green-300 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800',
+      danger:
+        'text-white bg-red-700 hover:bg-red-800 focus:ring-red-300 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900',
       warning:
-        'bg-yellow-500 text-white hover:bg-yellow-600 focus:ring-yellow-500',
-      info: 'bg-indigo-100 text-indigo-800 hover:bg-indigo-200 focus:ring-indigo-500',
+        'text-white bg-yellow-400 hover:bg-yellow-500 focus:ring-yellow-300 dark:bg-yellow-600 dark:hover:bg-yellow-700 dark:focus:ring-yellow-800',
+      info: 'text-white bg-blue-700 hover:bg-blue-800 focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800',
+      light:
+        'text-gray-900 bg-white border border-gray-300 hover:bg-gray-100 focus:ring-gray-200 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700',
+      dark: 'text-white bg-gray-800 hover:bg-gray-900 focus:ring-gray-300 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700',
     },
     size: {
-      sm: 'px-3 py-1 text-sm',
-      md: 'px-4 py-2',
-      lg: 'px-6 py-3 text-lg',
+      xs: 'px-3 py-2 text-xs',
+      sm: 'px-3 py-2 text-sm',
+      md: 'px-5 py-2.5 text-sm',
+      lg: 'px-5 py-3 text-base',
+      xl: 'px-6 py-3.5 text-base',
     },
     fullWidth: {
       true: 'w-full',
@@ -64,10 +71,11 @@ export function Button({
     <button
       className={buttonClasses}
       disabled={disabled || isLoading}
+      type="button"
       {...props}
     >
       {isLoading && (
-        <Loader className="animate-spin -ml-1 mr-2 h-4 w-4 text-current" />
+        <Loader className="inline w-4 h-4 mr-3 text-current animate-spin" />
       )}
       {icon && !isLoading && <span className="mr-2">{icon}</span>}
       {children}

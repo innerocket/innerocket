@@ -81,7 +81,7 @@ export function QRCodePage({
         QR Code Connection
       </h2>
 
-      <div className="bg-white shadow-md rounded-lg p-6 mb-6">
+      <div className="bg-white rounded-lg p-6 mb-6">
         <h3 className="text-xl font-bold text-gray-800 mb-4">Your QR Code</h3>
         <p className="mb-4 text-gray-600">
           Share this QR code with others to let them connect to you. It contains
@@ -90,7 +90,7 @@ export function QRCodePage({
         <QRCodeHandler mode="generate" initialValue={peerId} readOnly={true} />
       </div>
 
-      <div className="bg-white shadow-md rounded-lg p-6 mb-6">
+      <div className="bg-white rounded-lg p-6 mb-6">
         <h3 className="text-xl font-bold text-gray-800 mb-4">Scan QR Code</h3>
         <p className="mb-4 text-gray-600">
           Scan someone else's QR code to connect with them.
@@ -110,7 +110,7 @@ export function QRCodePage({
               <button
                 onClick={handleConnect}
                 disabled={isConnecting || !scannedValue}
-                className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                className="inline-flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-gray-300 disabled:cursor-not-allowed"
               >
                 {isConnecting ? 'Connecting...' : 'Connect to This Peer'}
               </button>
@@ -118,13 +118,13 @@ export function QRCodePage({
               <div className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2">
                 <button
                   onClick={onSwitchToFileTransfer}
-                  className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                  className="inline-flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
                 >
                   Go to File Transfer
                 </button>
                 <button
                   onClick={handleSendFiles}
-                  className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  className="inline-flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                 >
                   Send Files to This Peer
                 </button>

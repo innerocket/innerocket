@@ -5,16 +5,21 @@ const badge = tv({
   base: 'inline-flex items-center text-xs font-medium px-2.5 py-0.5',
   variants: {
     variant: {
-      primary: 'bg-blue-100 text-blue-800',
-      secondary: 'bg-gray-100 text-gray-800',
-      success: 'bg-green-100 text-green-800',
-      danger: 'bg-red-100 text-red-800',
-      warning: 'bg-yellow-100 text-yellow-800',
-      info: 'bg-indigo-100 text-indigo-800',
+      primary: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
+      secondary:
+        'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
+      success:
+        'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
+      danger: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
+      warning:
+        'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
+      info: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
+      light: 'bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
+      dark: 'bg-gray-700 text-gray-300 dark:bg-gray-700 dark:text-gray-300',
     },
     rounded: {
       true: 'rounded-full',
-      false: 'rounded',
+      false: 'rounded-lg',
     },
   },
   defaultVariants: {

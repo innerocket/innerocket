@@ -21,51 +21,48 @@ export function ConnectedPeers({
 
   if (peers.length === 0) {
     return (
-      <div className="bg-white shadow-md rounded-lg p-6 mb-6">
-        <h2 className="text-xl font-bold text-gray-800 mb-2">
-          Connected Peers
-        </h2>
-        <p className="text-gray-500 text-sm">
-          No peers connected. Use the form above to connect to a peer.
-        </p>
+      <div className="p-4 mb-4 text-sm text-gray-500 rounded-lg border border-gray-200 bg-gray-50 dark:bg-gray-700 dark:border-gray-700 dark:text-gray-300">
+        No peers connected. Use the form above to connect to a peer.
       </div>
     );
   }
 
   return (
-    <div className="bg-white shadow-md rounded-lg p-6 mb-6">
-      <h2 className="text-xl font-bold text-gray-800 mb-4">Connected Peers</h2>
-      <ul className="divide-y divide-gray-200">
+    <div className="border border-gray-200 rounded-lg dark:border-gray-700">
+      <ul className="divide-y divide-gray-200 dark:divide-gray-700">
         {peers.map((peerId) => (
           <li key={peerId}>
-            <div className="py-3 flex justify-between items-center">
+            <div className="py-3 px-4 flex justify-between items-center">
               <div className="flex-1 truncate">
-                <code className="text-sm bg-gray-100 px-2 py-1 rounded">
+                <code className="text-sm bg-gray-100 px-2 py-1 rounded dark:bg-gray-700 dark:text-gray-300">
                   {peerId}
                 </code>
               </div>
               <div className="flex space-x-2">
                 <button
                   onClick={() => toggleQRCode(peerId)}
+                  type="button"
                   className={`${
                     showQRCode === peerId
-                      ? 'text-green-600'
-                      : 'text-blue-600 hover:text-blue-800'
-                  } p-2`}
+                      ? 'text-green-500 dark:text-green-400'
+                      : 'text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-500'
+                  } p-2 rounded-lg`}
                   aria-label="Show QR Code"
                 >
                   <QrCode className="h-5 w-5" stroke="currentColor" />
                 </button>
                 <button
                   onClick={() => onSendFile(peerId)}
-                  className="text-blue-600 hover:text-blue-800 p-2"
+                  type="button"
+                  className="text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-500 p-2 rounded-lg"
                   aria-label="Send file"
                 >
                   <FilePlus className="h-5 w-5" stroke="currentColor" />
                 </button>
                 <button
                   onClick={() => onDisconnect(peerId)}
-                  className="text-red-600 hover:text-red-800 p-2"
+                  type="button"
+                  className="text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-500 p-2 rounded-lg"
                   aria-label="Disconnect"
                 >
                   <X className="h-5 w-5" stroke="currentColor" />

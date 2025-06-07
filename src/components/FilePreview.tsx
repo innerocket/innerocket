@@ -26,19 +26,25 @@ export function FilePreview({
 
   if (!previewUrl) {
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg p-6 max-w-4xl w-full max-h-[90vh] flex flex-col">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold text-gray-800">{fileName}</h2>
+      <div className="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 p-4 overflow-x-hidden overflow-y-auto dark:bg-gray-900 dark:bg-opacity-80">
+        <div className="relative w-full max-w-4xl max-h-[90vh] flex flex-col bg-white rounded-lg dark:bg-gray-800">
+          <div className="flex items-center justify-between p-4 border-b rounded-t dark:border-gray-600">
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-white truncate">
+              {fileName}
+            </h3>
             <button
               onClick={onClose}
-              className="text-gray-500 hover:text-gray-700"
+              type="button"
+              className="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center dark:hover:bg-gray-600 dark:hover:text-white"
             >
-              <X size={24} />
+              <X size={20} />
+              <span className="sr-only">Close</span>
             </button>
           </div>
-          <div className="flex-1 flex items-center justify-center">
-            <p className="text-gray-500">Unable to preview this file.</p>
+          <div className="flex-1 flex items-center justify-center p-6">
+            <p className="text-gray-500 dark:text-gray-400">
+              Unable to preview this file.
+            </p>
           </div>
         </div>
       </div>
@@ -46,24 +52,26 @@ export function FilePreview({
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 max-w-4xl w-full max-h-[90vh] flex flex-col">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold text-gray-800 truncate">
+    <div className="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 p-4 overflow-x-hidden overflow-y-auto dark:bg-gray-900 dark:bg-opacity-80">
+      <div className="relative w-full max-w-4xl max-h-[90vh] flex flex-col bg-white rounded-lg dark:bg-gray-800">
+        <div className="flex items-center justify-between p-4 border-b rounded-t dark:border-gray-600">
+          <h3 className="text-xl font-semibold text-gray-900 dark:text-white truncate">
             {fileName}
-          </h2>
+          </h3>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700"
+            type="button"
+            className="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center dark:hover:bg-gray-600 dark:hover:text-white"
           >
-            <X size={24} />
+            <X size={20} />
+            <span className="sr-only">Close</span>
           </button>
         </div>
 
-        <div className="flex-1 overflow-auto flex items-center justify-center">
+        <div className="flex-1 overflow-auto flex items-center justify-center p-6">
           {isLoading && (
             <div className="flex items-center justify-center h-full">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+              <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-solid border-current border-e-transparent align-[-0.125em] text-blue-600 motion-reduce:animate-[spin_1.5s_linear_infinite] dark:text-blue-500"></div>
             </div>
           )}
 
@@ -114,10 +122,10 @@ export function FilePreview({
             !fileType.startsWith('audio/') &&
             fileType !== 'application/pdf' && (
               <div className="text-center p-8">
-                <div className="bg-gray-100 rounded-lg p-6 inline-block mb-4">
+                <div className="bg-gray-100 rounded-lg p-6 inline-block mb-4 dark:bg-gray-700">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    className="h-16 w-16 text-gray-400 mx-auto"
+                    className="h-16 w-16 text-gray-400 mx-auto dark:text-gray-300"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -130,10 +138,10 @@ export function FilePreview({
                     />
                   </svg>
                 </div>
-                <p className="text-gray-600 mb-2">
+                <p className="mb-2 text-gray-600 dark:text-gray-300">
                   Preview not available for this file type.
                 </p>
-                <p className="text-gray-500 text-sm">
+                <p className="text-sm text-gray-500 dark:text-gray-400">
                   {fileType || 'Unknown type'}
                 </p>
               </div>

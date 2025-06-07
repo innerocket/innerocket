@@ -29,17 +29,17 @@ export function Notification({
     };
   }, [duration, onClose]);
 
-  const getBgColor = () => {
+  const getStyles = () => {
     switch (type) {
       case 'success':
-        return 'bg-green-100 border-green-500 text-green-700';
+        return 'text-green-800 bg-green-50 border-green-300 dark:border-green-800 dark:bg-gray-800 dark:text-green-400';
       case 'error':
-        return 'bg-red-100 border-red-500 text-red-700';
+        return 'text-red-800 bg-red-50 border-red-300 dark:border-red-800 dark:bg-gray-800 dark:text-red-400';
       case 'warning':
-        return 'bg-yellow-100 border-yellow-500 text-yellow-700';
+        return 'text-yellow-800 bg-yellow-50 border-yellow-300 dark:border-yellow-800 dark:bg-gray-800 dark:text-yellow-300';
       case 'info':
       default:
-        return 'bg-blue-100 border-blue-500 text-blue-700';
+        return 'text-blue-800 bg-blue-50 border-blue-300 dark:border-blue-800 dark:bg-gray-800 dark:text-blue-400';
     }
   };
 
@@ -63,24 +63,26 @@ export function Notification({
         isVisible ? 'opacity-100' : 'opacity-0'
       }`}
     >
-      <div className={`border-l-4 p-4 rounded-md shadow-md ${getBgColor()}`}>
-        <div className="flex items-start">
-          <div className="flex-shrink-0 mr-3">{getIcon()}</div>
-          <div className="flex-1">
-            <p className="text-sm">{message}</p>
-          </div>
-          <div className="ml-3">
-            <button
-              onClick={() => {
-                setIsVisible(false);
-                setTimeout(onClose, 300);
-              }}
-              className="text-gray-400 hover:text-gray-600 focus:outline-none"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
+      <div
+        className={`flex items-center p-4 mb-4 border rounded-lg ${getStyles()}`}
+        role="alert"
+      >
+        <div className="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 mr-3">
+          {getIcon()}
         </div>
+        <div className="text-sm font-normal">{message}</div>
+        <button
+          type="button"
+          onClick={() => {
+            setIsVisible(false);
+            setTimeout(onClose, 300);
+          }}
+          className="ml-auto -mx-1.5 -my-1.5 rounded-lg focus:ring-2 p-1.5 inline-flex items-center justify-center h-8 w-8 dark:bg-gray-800 dark:text-blue-400 dark:hover:bg-gray-700"
+          aria-label="Close"
+        >
+          <span className="sr-only">Close</span>
+          <X className="w-4 h-4" />
+        </button>
       </div>
     </div>
   );

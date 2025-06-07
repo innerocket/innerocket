@@ -12,7 +12,7 @@ import type {
   NotificationType,
 } from './components/Notification';
 import { v4 as uuidv4 } from 'uuid';
-import { Info } from 'lucide-react';
+import { Info, HelpCircle } from 'lucide-react';
 import { usePeer } from './contexts/PeerContext';
 
 export function App() {
@@ -36,6 +36,7 @@ export function App() {
   const prevFileTransfers = useRef(fileTransfers);
   const [previewFileId, setPreviewFileId] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [showHelp, setShowHelp] = useState<boolean>(false);
 
   // Monitor file transfers for status changes
   useEffect(() => {
@@ -198,63 +199,118 @@ export function App() {
     setPreviewFileId(null);
   };
 
+  const toggleHelp = () => {
+    setShowHelp(!showHelp);
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <main className="max-w-4xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-white dark:bg-gray-900">
+      <main className="max-w-6xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-4">
-            <PeerConnection onConnect={handleConnectToPeer} />
+          {/* Left Panel - Connection Info */}
+          <div className="w-full bg-white border border-gray-200 rounded-lg dark:bg-gray-800 dark:border-gray-700">
+            <div className="p-4 bg-white border-b border-gray-200 rounded-t-lg dark:bg-gray-800 dark:border-gray-700">
+              <h5 className="text-xl font-medium text-gray-900 dark:text-white">
+                Your Connection
+              </h5>
+            </div>
 
-            <ConnectedPeers
-              peers={connectedPeers}
-              onDisconnect={handleDisconnectFromPeer}
-              onSendFile={handleSelectPeerForSending}
-            />
-          </div>
-
-          <div>
-            <FileRequests
-              requests={incomingRequests}
-              onAccept={handleAcceptFileTransfer}
-              onReject={handleRejectFileTransfer}
-            />
-
-            <FileTransferList
-              transfers={fileTransfers}
-              onDownload={handleDownloadFile}
-              onPreview={handlePreviewFile}
-            />
-          </div>
-        </div>
-
-        <div className="mt-12 bg-white shadow-md rounded-lg p-6">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">About</h2>
-          <p className="mb-3 text-gray-600">
-            Innerocket is a secure peer-to-peer file sharing application that
-            uses WebRTC technology to transfer files directly between users
-            without sending any file data through servers.
-          </p>
-          <p className="mb-3 text-gray-600">
-            All file transfers are end-to-end encrypted and take place directly
-            between your browser and the recipient's browser. This means your
-            files never touch our servers, ensuring maximum privacy and
-            security.
-          </p>
-          <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mt-4">
-            <div className="flex">
-              <div className="flex-shrink-0">
-                <Info className="h-5 w-5 text-blue-400" />
+            <div className="p-4">
+              <div className="mb-6">
+                <PeerConnection onConnect={handleConnectToPeer} />
               </div>
-              <div className="ml-3">
-                <p className="text-sm text-blue-700">
-                  To share files, first connect with the recipient by exchanging
-                  peer IDs or scanning their QR code, then select the file and
-                  send it directly to them.
-                </p>
+
+              <div>
+                <h3 className="mb-2 text-lg font-medium text-gray-900 dark:text-white">
+                  Connected Peers
+                </h3>
+                <ConnectedPeers
+                  peers={connectedPeers}
+                  onDisconnect={handleDisconnectFromPeer}
+                  onSendFile={handleSelectPeerForSending}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Right Panel - File Transfers */}
+          <div className="w-full bg-white border border-gray-200 rounded-lg dark:bg-gray-800 dark:border-gray-700">
+            <div className="p-4 bg-white border-b border-gray-200 rounded-t-lg dark:bg-gray-800 dark:border-gray-700">
+              <h5 className="text-xl font-medium text-gray-900 dark:text-white">
+                File Transfer History
+              </h5>
+            </div>
+
+            <div className="p-4">
+              <FileRequests
+                requests={incomingRequests}
+                onAccept={handleAcceptFileTransfer}
+                onReject={handleRejectFileTransfer}
+              />
+
+              <div>
+                <FileTransferList
+                  transfers={fileTransfers}
+                  onDownload={handleDownloadFile}
+                  onPreview={handlePreviewFile}
+                />
               </div>
             </div>
           </div>
         </div>
+
+        {/* Help Toggle Button */}
+        <div className="mt-4 flex justify-center">
+          <button
+            onClick={toggleHelp}
+            type="button"
+            className="inline-flex items-center text-blue-700 hover:text-white border border-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:hover:bg-blue-600 dark:focus:ring-blue-800"
+          >
+            <HelpCircle className="h-5 w-5 mr-2" />
+            <span>
+              {showHelp ? 'Hide information' : 'Click for more information'}
+            </span>
+          </button>
+        </div>
+
+        {/* Help Section - Togglable */}
+        {showHelp && (
+          <div className="mt-4 w-full bg-white border border-gray-200 rounded-lg dark:bg-gray-800 dark:border-gray-700">
+            <div className="p-4 bg-white border-b border-gray-200 rounded-t-lg dark:bg-gray-800 dark:border-gray-700">
+              <h5 className="text-xl font-medium text-gray-900 dark:text-white">
+                About
+              </h5>
+            </div>
+
+            <div className="p-4">
+              <p className="mb-3 text-gray-500 dark:text-gray-400">
+                Innerocket is a secure peer-to-peer file sharing application
+                that uses WebRTC technology to transfer files directly between
+                users without sending any file data through servers.
+              </p>
+              <p className="mb-3 text-gray-500 dark:text-gray-400">
+                All file transfers are end-to-end encrypted and take place
+                directly between your browser and the recipient's browser. This
+                means your files never touch our servers, ensuring maximum
+                privacy and security.
+              </p>
+              <div className="p-4 mb-4 text-sm text-blue-800 border border-blue-300 rounded-lg bg-blue-50 dark:bg-gray-800 dark:text-blue-400 dark:border-blue-800">
+                <div className="flex">
+                  <div className="flex-shrink-0">
+                    <Info className="h-5 w-5 text-blue-600 dark:text-blue-500" />
+                  </div>
+                  <div className="ml-3">
+                    <p>
+                      To share files, first connect with the recipient by
+                      exchanging peer IDs or scanning their QR code, then select
+                      the file and send it directly to them.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
 
       <FileSender currentPeerId={selectedPeerId} onSendFile={handleSendFile} />

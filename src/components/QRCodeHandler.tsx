@@ -75,13 +75,13 @@ export function QRCodeHandler({
                 onChange={(e) =>
                   !readOnly && setQrValue((e.target as HTMLInputElement).value)
                 }
-                className="flex-1 min-w-0 block w-full px-3 py-2 rounded-md border border-gray-300 shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                className="flex-1 min-w-0 block w-full px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                 readOnly={readOnly}
               />
               {!readOnly && (
                 <button
                   onClick={generateNewUUID}
-                  className="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  className="ml-3 inline-flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                 >
                   Generate UUID
                 </button>
@@ -94,7 +94,7 @@ export function QRCodeHandler({
               <img
                 src={qrCodeDataURL}
                 alt="QR Code"
-                className="border border-gray-200 rounded-md shadow-sm select-none pointer-events-none"
+                className="border border-gray-200 rounded-md select-none pointer-events-none"
               />
               <p className="mt-2 text-sm text-gray-500 break-all max-w-full">
                 {qrValue}
@@ -112,7 +112,7 @@ export function QRCodeHandler({
 
           <button
             onClick={toggleScanner}
-            className="mb-4 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+            className="mb-4 inline-flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
           >
             {isScannerActive ? 'Stop Scanner' : 'Start Scanner'}
           </button>

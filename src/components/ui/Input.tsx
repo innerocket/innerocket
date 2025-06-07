@@ -12,11 +12,12 @@ const inputWrapper = tv({
 });
 
 const inputStyles = tv({
-  base: 'px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
+  base: 'block p-2.5 rounded-lg focus:outline-none focus:ring-4',
   variants: {
     error: {
-      true: 'border-red-300 text-red-900 placeholder-red-300 focus:ring-red-500 focus:border-red-500',
-      false: 'border-gray-300',
+      true: 'bg-red-50 border border-red-500 text-red-900 placeholder-red-700 focus:ring-red-500 focus:border-red-500 dark:bg-red-100 dark:border-red-400',
+      false:
+        'bg-gray-50 border border-gray-300 text-gray-900 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500',
     },
     icon: {
       true: 'pl-10',
@@ -35,11 +36,11 @@ const iconWrapper = tv({
 });
 
 const leftIconWrapper = tv({
-  base: 'absolute inset-y-0 left-0 flex items-center pointer-events-none',
+  base: 'absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none',
 });
 
 const rightIconWrapper = tv({
-  base: 'absolute inset-y-0 right-0 flex items-center',
+  base: 'absolute inset-y-0 right-0 flex items-center pr-3',
   variants: {
     clickable: {
       true: 'cursor-pointer',
@@ -85,7 +86,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     return (
       <div className={fullWidth ? 'w-full' : ''}>
         {label && (
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
             {label}
           </label>
         )}
@@ -93,7 +94,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           {icon && (
             <div className={leftIconWrapper()}>
               <div className={iconWrapper()}>
-                <span className="text-gray-500">{icon}</span>
+                <span className="text-gray-500 dark:text-gray-400">{icon}</span>
               </div>
             </div>
           )}
@@ -104,15 +105,19 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
               onClick={onRightIconClick}
             >
               <div className={iconWrapper()}>
-                <span className="text-gray-500">{rightIcon}</span>
+                <span className="text-gray-500 dark:text-gray-400">
+                  {rightIcon}
+                </span>
               </div>
             </div>
           )}
         </div>
         {(error || hint) && (
           <p
-            className={`mt-1 text-sm ${
-              error ? 'text-red-600' : 'text-gray-500'
+            className={`mt-2 text-sm ${
+              error
+                ? 'text-red-600 dark:text-red-500'
+                : 'text-gray-500 dark:text-gray-400'
             }`}
           >
             {error || hint}

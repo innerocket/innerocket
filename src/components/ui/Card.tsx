@@ -25,30 +25,38 @@ export function Card({
 
   return (
     <div
-      className={`bg-white shadow-md rounded-lg overflow-hidden ${className}`}
+      className={`w-full bg-white border border-gray-200 rounded-lg dark:bg-gray-800 dark:border-gray-700 ${className}`}
     >
       {hasHeader && (
-        <div className={`px-6 py-4 ${headerClassName}`}>
+        <div
+          className={`p-4 bg-white border-b border-gray-200 rounded-t-lg dark:bg-gray-800 dark:border-gray-700 ${headerClassName}`}
+        >
           {title &&
             (typeof title === 'string' ? (
-              <h2 className="text-xl font-bold text-gray-800 mb-1">{title}</h2>
+              <h5 className="text-xl font-medium text-gray-900 dark:text-white">
+                {title}
+              </h5>
             ) : (
               title
             ))}
           {subtitle &&
             (typeof subtitle === 'string' ? (
-              <p className="text-gray-500 text-sm">{subtitle}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                {subtitle}
+              </p>
             ) : (
               subtitle
             ))}
         </div>
       )}
-      <div className={`px-6 py-4 ${hasHeader ? '' : 'pt-6'} ${bodyClassName}`}>
+      <div
+        className={`p-4 ${hasHeader ? '' : 'rounded-t-lg'} ${bodyClassName}`}
+      >
         {children}
       </div>
       {footer && (
         <div
-          className={`px-6 py-4 bg-gray-50 border-t border-gray-100 ${footerClassName}`}
+          className={`p-4 bg-gray-50 border-t border-gray-200 rounded-b-lg dark:bg-gray-700 dark:border-gray-600 ${footerClassName}`}
         >
           {footer}
         </div>
@@ -72,7 +80,9 @@ export function CardSection({
     <div className={`mb-4 ${className}`}>
       {title &&
         (typeof title === 'string' ? (
-          <h3 className="text-lg font-medium text-gray-700 mb-2">{title}</h3>
+          <h3 className="mb-2 text-lg font-medium text-gray-900 dark:text-white">
+            {title}
+          </h3>
         ) : (
           <div className="mb-2">{title}</div>
         ))}
