@@ -52,9 +52,6 @@ export function FileTransferList({
               Progress
             </th>
             <th scope="col" className="px-6 py-3">
-              Speed
-            </th>
-            <th scope="col" className="px-6 py-3">
               Actions
             </th>
           </tr>
@@ -140,22 +137,6 @@ export function FileTransferList({
                   {transfer.progress}%
                 </div>
               </td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                {transfer.transferSpeed &&
-                transfer.status === 'transferring' ? (
-                  <div className="text-sm text-gray-900 dark:text-white">
-                    {formatTransferSpeed(transfer.transferSpeed)}
-                  </div>
-                ) : transfer.status === 'completed' ? (
-                  <div className="text-sm text-green-600 dark:text-green-400">
-                    Completed
-                  </div>
-                ) : (
-                  <div className="text-xs text-gray-500 dark:text-gray-400">
-                    -
-                  </div>
-                )}
-              </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                 {transfer.status === 'completed' && (
                   <div className="flex space-x-2">
@@ -189,10 +170,4 @@ function formatFileSize(bytes: number): string {
   const i = Math.floor(Math.log(bytes) / Math.log(k));
 
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-}
-
-function formatTransferSpeed(mbps: number): string {
-  if (mbps < 0.01) return '<0.01 MB/s';
-  if (mbps > 1000) return (mbps / 1000).toFixed(2) + ' GB/s';
-  return mbps.toFixed(2) + ' MB/s';
 }
