@@ -373,6 +373,8 @@ export function App() {
         )}
       </main>
 
+      {selectedPeerId && <div className="mt-40" />}
+
       <FileSender
         currentPeerId={selectedPeerId}
         onSendFile={handleSendFile}
