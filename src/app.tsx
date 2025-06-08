@@ -402,7 +402,7 @@ export function App() {
 
       {/* Confirmation Dialog */}
       {showClearConfirmation && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex justify-center items-center z-50">
+        <div className="fixed inset-0 bg-gray-900/75 backdrop-blur-sm flex justify-center items-center z-50 dark:bg-gray-900/80">
           <div className="relative p-4 w-full max-w-md max-h-full">
             <div className="relative bg-white rounded-lg shadow dark:bg-gray-700">
               <div className="p-4 md:p-5 text-center">
