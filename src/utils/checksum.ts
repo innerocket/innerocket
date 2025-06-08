@@ -5,62 +5,63 @@ import { createChecksumWorker } from './workerLoader';
 import { createSHA256 } from 'hash-wasm';
 
 /**
- * Calculates a SHA-256 checksum for a file or blob using a streaming approach
- * This handles large files much better by processing them in chunks
+ * Calculates a SHA-256 checksum for a file or blob.
+ * It uses a Web Worker for large files to avoid blocking the main thread.
  * @param file The file or blob to calculate checksum for
- * @param chunkSize Size of each chunk in bytes (default: 4MB)
  * @returns Promise resolving to the hex string representation of the checksum
  */
-export async function calculateChecksum(
-  file: File | Blob,
-  chunkSize = 4 * 1024 * 1024
-): Promise<string> {
-  // For small files (under 20MB), use the simpler approach
-  if (file.size < 20 * 1024 * 1024) {
-    return calculateChecksumSimple(file);
-  }
-
-  // For larger files, use the chunked approach with worker if available
-  if (typeof Worker !== 'undefined' && file.size > 100 * 1024 * 1024) {
+export async function calculateChecksum(file: File | Blob): Promise<string> {
+  // Use a Web Worker for large files to keep the UI responsive.
+  if (typeof Worker !== 'undefined' && file.size > 20 * 1024 * 1024) {
+    // 20MB threshold
     try {
       return await calculateChecksumWithWorker(file);
     } catch (error) {
       console.warn(
-        'Worker-based checksum failed, falling back to chunked:',
+        'Worker-based checksum failed, falling back to main thread:',
         error
       );
-      // Fall back to regular chunked approach
+      // Fallback to main thread if worker fails
+      return calculateChecksumStreaming(file);
     }
   }
 
-  return calculateChecksumChunked(file, chunkSize);
+  // For smaller files, calculate on the main thread.
+  return calculateChecksumStreaming(file);
 }
 
 /**
- * Simple checksum calculation for smaller files
+ * Calculates checksum on the main thread using a streaming approach.
  */
-async function calculateChecksumSimple(file: File | Blob): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
+async function calculateChecksumStreaming(
+  file: File | Blob,
+  chunkSize = 4 * 1024 * 1024 // 4MB
+): Promise<string> {
+  const hasher = await createSHA256();
+  hasher.init();
 
-    reader.onload = async (e) => {
-      if (!e.target?.result) {
-        reject(new Error('Failed to read file'));
+  const reader = new FileReader();
+  let offset = 0;
+
+  return new Promise((resolve, reject) => {
+    function readNextChunk() {
+      if (offset >= file.size) {
+        resolve(hasher.digest('hex'));
         return;
       }
 
-      try {
-        // Use hash-wasm to calculate SHA-256 hash
-        const arrayBuffer = e.target.result as ArrayBuffer;
-        const hasher = await createSHA256();
-        hasher.init();
-        hasher.update(new Uint8Array(arrayBuffer));
-        const hashHex = hasher.digest('hex');
+      const end = Math.min(offset + chunkSize, file.size);
+      const slice = file.slice(offset, end);
+      reader.readAsArrayBuffer(slice);
+    }
 
-        resolve(hashHex);
-      } catch (error) {
-        console.error('Error in simple checksum:', error);
-        reject(error);
+    reader.onload = (e) => {
+      if (e.target?.result) {
+        hasher.update(new Uint8Array(e.target.result as ArrayBuffer));
+        offset += (e.target.result as ArrayBuffer).byteLength;
+        readNextChunk();
+      } else {
+        reject(new Error('Failed to read file chunk'));
       }
     };
 
@@ -68,105 +69,45 @@ async function calculateChecksumSimple(file: File | Blob): Promise<string> {
       reject(error);
     };
 
-    reader.readAsArrayBuffer(file);
+    readNextChunk();
   });
 }
 
 /**
- * Chunked checksum calculation for larger files
- * Uses a more cross-platform compatible approach
- */
-async function calculateChecksumChunked(
-  file: File | Blob,
-  chunkSize: number
-): Promise<string> {
-  console.log(`Calculating chunked checksum for file size: ${file.size} bytes`);
-
-  // Use the fallback method for better cross-platform compatibility
-  // This method may be slower but is more reliable across different browsers/devices
-  return fallbackChunkedChecksum(file, chunkSize);
-}
-
-/**
- * Fall back to the original chunked checksum method if incremental hashing fails
- */
-async function fallbackChunkedChecksum(
-  file: File | Blob,
-  chunkSize: number
-): Promise<string> {
-  // We're going to concatenate all chunk hashes and then hash the result
-  // This is a simplified approach that works well for integrity checks
-  const chunkHashes: string[] = [];
-  const chunks = Math.ceil(file.size / chunkSize);
-
-  for (let i = 0; i < chunks; i++) {
-    const start = i * chunkSize;
-    const end = Math.min(start + chunkSize, file.size);
-    const chunk = file.slice(start, end);
-
-    // Get hash for this chunk
-    const chunkHash = await calculateChecksumSimple(chunk);
-    chunkHashes.push(chunkHash);
-  }
-
-  // Combine all chunk hashes and hash the result
-  const combinedHash = chunkHashes.join('');
-  const encoder = new TextEncoder();
-  const data = encoder.encode(combinedHash);
-
-  // Use hash-wasm to hash the combined data
-  const hasher = await createSHA256();
-  hasher.init();
-  hasher.update(data);
-  return hasher.digest('hex');
-}
-
-/**
- * Calculate checksum using a Web Worker for large files
- * This offloads the work to another thread to prevent UI blocking
+ * Calculate checksum using a Web Worker.
  */
 function calculateChecksumWithWorker(file: File | Blob): Promise<string> {
   return new Promise((resolve, reject) => {
+    let worker: Worker;
     try {
-      // Create worker with error handling
-      let worker: Worker;
-      try {
-        worker = createChecksumWorker();
-      } catch (workerError) {
-        console.error('Failed to create worker:', workerError);
-        // Fall back to non-worker method
-        reject(new Error('Worker creation failed'));
-        return;
-      }
-
-      // Set up message handlers
-      worker.onmessage = (e) => {
-        const data = e.data;
-        if (data.type === 'complete') {
-          worker.terminate();
-          resolve(data.hash);
-        } else if (data.type === 'error') {
-          worker.terminate();
-          reject(new Error(data.error));
-        }
-        // Progress updates can be handled here if needed
-      };
-
-      worker.onerror = (error) => {
-        worker.terminate();
-        reject(error);
-      };
-
-      // Start the worker
-      worker.postMessage(file);
-    } catch (error) {
-      reject(error);
+      worker = createChecksumWorker();
+    } catch (workerError) {
+      return reject(workerError);
     }
+
+    worker.onmessage = (e) => {
+      const { type, hash, error } = e.data;
+      if (type === 'complete') {
+        resolve(hash);
+      } else if (type === 'error') {
+        reject(new Error(error));
+      }
+      if (type === 'complete' || type === 'error') {
+        worker.terminate();
+      }
+    };
+
+    worker.onerror = (error) => {
+      reject(error);
+      worker.terminate();
+    };
+
+    worker.postMessage(file);
   });
 }
 
 /**
- * Verifies that a file matches the expected checksum
+ * Verifies that a file matches the expected checksum.
  * @param file The file to verify
  * @param expectedChecksum The expected checksum to compare against
  * @returns Promise resolving to boolean indicating if the checksum matches
@@ -175,130 +116,19 @@ export async function verifyChecksum(
   file: File | Blob,
   expectedChecksum: string
 ): Promise<boolean> {
-  try {
-    console.log(`Starting verification for file size: ${file.size} bytes`);
-
-    // For large files, use sampled verification
-    if (file.size > 100 * 1024 * 1024) {
-      // Files larger than 100MB
-      console.log('Using sampled verification for large file');
-      // Verify just a sample of the file (beginning, middle, end)
-      return await verifySampledChecksum(file, expectedChecksum);
-    }
-
-    // For smaller files, use full verification
-    console.log('Using full verification for smaller file');
-    const actualChecksum = await calculateChecksum(file);
-    console.log('Calculated checksum:', actualChecksum);
-    console.log('Expected checksum:', expectedChecksum);
-
-    if (actualChecksum === expectedChecksum) {
-      return true;
-    }
-
-    // If checksums don't match, try a different method as fallback
-    console.log('Checksum mismatch, trying alternative method');
-    try {
-      const alternativeChecksum = await calculateChecksumSimple(file);
-      console.log('Alternative checksum:', alternativeChecksum);
-      return alternativeChecksum === expectedChecksum;
-    } catch (innerError) {
-      console.error('Alternative checksum failed:', innerError);
-      // Accept the file anyway for better user experience
-      console.warn('Accepting file despite checksum verification failures');
-      return true;
-    }
-  } catch (error) {
-    console.error('Error verifying checksum:', error);
-    // Prioritize successful transfer over perfect integrity
-    console.warn('Accepting file despite verification error');
-    return true;
+  if (!expectedChecksum) {
+    console.warn('No expected checksum provided. Skipping verification.');
+    return true; // Or false, depending on your security policy
   }
-}
 
-/**
- * Performs a sampled verification of large files
- * Takes samples from the beginning, middle, and end of the file
- * Uses a cross-platform compatible approach to avoid endianness issues
- */
-async function verifySampledChecksum(
-  file: File | Blob,
-  expectedChecksum: string
-): Promise<boolean> {
   try {
-    // Take 1MB samples from the beginning, middle, and end
-    const sampleSize = 1024 * 1024;
-
-    // Ensure we don't go out of bounds for small files
-    const actualBeginSize = Math.min(sampleSize, file.size);
-    const beginSample = file.slice(0, actualBeginSize);
-
-    // Calculate middle sample position carefully
-    let middleSample: Blob;
-    if (file.size <= sampleSize * 2) {
-      // File is too small for a distinct middle section
-      middleSample = new Blob(); // Empty blob
-    } else {
-      const middleOffset = Math.max(
-        actualBeginSize,
-        Math.floor(file.size / 2) - Math.floor(sampleSize / 2)
-      );
-      const middleSize = Math.min(sampleSize, file.size - middleOffset);
-      middleSample = file.slice(middleOffset, middleOffset + middleSize);
-    }
-
-    // End sample
-    const endOffset = Math.max(0, file.size - sampleSize);
-    const endSample =
-      endOffset > actualBeginSize
-        ? file.slice(endOffset, file.size)
-        : new Blob(); // Empty if too close to beginning
-
-    // Combine the samples
-    const samples = new Blob([beginSample, middleSample, endSample]);
-
-    // Add file size as a string to avoid endianness issues with BigInt
-    // This is more reliable across platforms than using DataView
-    const fileSizeStr = file.size.toString(16).padStart(16, '0');
-    const encoder = new TextEncoder();
-    const sizeData = encoder.encode(fileSizeStr);
-
-    const combinedSamples = new Blob([samples, new Blob([sizeData])]);
-
-    // Calculate checksum of the samples
-    const sampledChecksum = await calculateChecksumSimple(combinedSamples);
-
-    // Log for debugging
-    console.log('Sampled checksum calculated:', sampledChecksum);
-    console.log('Expected checksum:', expectedChecksum);
-
-    // Check exact match first
-    if (sampledChecksum === expectedChecksum) {
-      return true;
-    }
-
-    // As a fallback, try a standard checksum for the entire file
-    // This is a last resort for cross-platform compatibility
-    console.log('Sampled checksum mismatch, trying full checksum...');
-    try {
-      const fullChecksum = await calculateChecksumChunked(
-        file,
-        4 * 1024 * 1024
-      );
-      console.log('Full checksum:', fullChecksum);
-      return fullChecksum === expectedChecksum;
-    } catch (err) {
-      console.error('Full checksum verification failed:', err);
-      // If full verification fails, accept the file anyway
-      // This is a trade-off between usability and security
-      console.warn('Accepting file despite checksum verification failure');
-      return true;
-    }
+    const actualChecksum = await calculateChecksum(file);
+    console.log(`Verification:
+      Actual:   ${actualChecksum}
+      Expected: ${expectedChecksum}`);
+    return actualChecksum === expectedChecksum;
   } catch (error) {
-    console.error('Error in sampled checksum verification:', error);
-    // If verification fails completely, accept the file anyway
-    // This prioritizes successful transfers over perfect integrity
-    console.warn('Accepting file despite verification error');
-    return true;
+    console.error('Error during checksum verification:', error);
+    return false; // Treat verification errors as failure
   }
 }

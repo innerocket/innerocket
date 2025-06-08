@@ -31,10 +31,7 @@ export function useFileTransfer() {
   }, [fileTransfers]);
 
   useEffect(() => {
-    const fileChunks = new Map<string, ArrayBuffer[]>();
-    // Track memory usage for adaptive chunk handling
-    const transferMemoryUsage = new Map<string, number>();
-    const MAX_MEMORY_PER_TRANSFER = 100 * 1024 * 1024; // 100MB max memory per transfer
+    const fileChunks = new Map<string, Map<number, ArrayBuffer>>();
 
     webRTCService.setOnPeerConnected((peer) => {
       setConnectedPeers((prev) => [...prev, peer.id]);
@@ -49,45 +46,31 @@ export function useFileTransfer() {
     });
 
     webRTCService.setOnFileChunk(
-      (peerId, chunk, metadata, progress, chunkSize, transferSpeed) => {
-        // Store chunks with memory management
+      (
+        peerId,
+        chunk,
+        metadata,
+        progress,
+        chunkSize,
+        transferSpeed,
+        chunkIndex
+      ) => {
+        if (chunkIndex === undefined) {
+          console.error('Received a chunk without an index. Ignoring.');
+          return;
+        }
+
         if (!fileChunks.has(metadata.id)) {
-          fileChunks.set(metadata.id, []);
-          transferMemoryUsage.set(metadata.id, 0);
+          fileChunks.set(metadata.id, new Map<number, ArrayBuffer>());
         }
 
-        const chunks = fileChunks.get(metadata.id);
-        const currentMemoryUsage = transferMemoryUsage.get(metadata.id) || 0;
-
-        if (chunks) {
-          // Add new chunk to memory
-          chunks.push(chunk);
-
-          // Update memory tracking
-          transferMemoryUsage.set(
-            metadata.id,
-            currentMemoryUsage + chunk.byteLength
-          );
-
-          // Check if we should save to temporary storage to free memory
-          if (
-            transferMemoryUsage.get(metadata.id)! > MAX_MEMORY_PER_TRANSFER &&
-            metadata.size > MAX_MEMORY_PER_TRANSFER
-          ) {
-            // For large files, periodically save chunks to IndexedDB and clear memory
-            if (chunks.length >= 20) {
-              // Save after accumulating 20 chunks
-              const tempBlob = new Blob(chunks, {
-                type: 'application/octet-stream',
-              });
-              saveTemporaryChunk(metadata.id, tempBlob, chunks.length);
-
-              // Clear in-memory chunks to free memory
-              chunks.length = 0;
-              transferMemoryUsage.set(metadata.id, 0);
-            }
-          }
+        const chunksMap = fileChunks.get(metadata.id);
+        // Ignore duplicate chunks
+        if (!chunksMap || chunksMap.has(chunkIndex)) {
+          return;
         }
+
+        chunksMap.set(chunkIndex, chunk);
 
         // Update transfer progress
         setFileTransfers((prev) => {
@@ -127,34 +110,37 @@ export function useFileTransfer() {
 
     webRTCService.setOnFileTransferComplete(async (_, metadata) => {
       try {
-        let blob: Blob;
+        const chunksMap = fileChunks.get(metadata.id);
+        if (!chunksMap) {
+          throw new Error(
+            `No chunks found for completed transfer ${metadata.id}`
+          );
+        }
 
-        // Check if we've been saving chunks to temporary storage
-        const tempChunks = await getTemporaryChunks(metadata.id);
+        // Sort chunks by index and create a blob
+        const sortedChunks = Array.from(chunksMap.entries())
+          .sort(([indexA], [indexB]) => indexA - indexB)
+          .map(([, chunkData]) => chunkData);
 
-        if (tempChunks.length > 0) {
-          // We have temporary chunks stored - combine with in-memory chunks
-          const inMemoryChunks = fileChunks.get(metadata.id) || [];
+        const blob = new Blob(sortedChunks, {
+          type: metadata.type || 'application/octet-stream',
+        });
 
-          // Create a combined blob from all chunks
-          const allChunks = [
-            ...tempChunks,
-            new Blob(inMemoryChunks, {
-              type: metadata.type || 'application/octet-stream',
-            }),
-          ];
-          blob = new Blob(allChunks, {
-            type: metadata.type || 'application/octet-stream',
-          });
+        // Clean up chunks from memory
+        fileChunks.delete(metadata.id);
 
-          // Clean up temporary storage
-          deleteTemporaryChunks(metadata.id);
-        } else {
-          // All chunks are in memory
-          const chunks = fileChunks.get(metadata.id) || [];
-          blob = new Blob(chunks, {
-            type: metadata.type || 'application/octet-stream',
-          });
+        // Verify that the reconstructed file size matches the expected size
+        if (blob.size !== metadata.size) {
+          console.error(
+            `File size mismatch for ${metadata.name}. Expected: ${metadata.size}, Got: ${blob.size}. This indicates lost chunks.`
+          );
+          // Mark the transfer as failed due to size mismatch
+          setFileTransfers((prev) =>
+            prev.map((t) =>
+              t.id === metadata.id ? { ...t, status: 'failed' } : t
+            )
+          );
+          return;
         }
 
         // Verify file integrity if checksum is available
@@ -280,19 +266,11 @@ export function useFileTransfer() {
         console.error('Error processing completed file transfer:', error);
 
         // Update transfer status to failed if there was an error
-        setFileTransfers((prev) => {
-          const index = prev.findIndex((t) => t.id === metadata.id);
-          if (index === -1) return prev;
-
-          const newTransfers = [...prev];
-          newTransfers[index] = {
-            ...newTransfers[index],
-            progress: 100,
-            status: 'failed',
-          };
-
-          return newTransfers;
-        });
+        setFileTransfers((prev) =>
+          prev.map((t) =>
+            t.id === metadata.id ? { ...t, status: 'failed' } : t
+          )
+        );
 
         // Clean up chunks
         fileChunks.delete(metadata.id);
@@ -712,152 +690,28 @@ export function useFileTransfer() {
   // New functions for temporary chunk storage
 
   /**
-   * Saves a temporary chunk to IndexedDB during file transfer
-   * This helps with memory management for large files
+   * Sends a file to all connected peers simultaneously
+   * @param file The file to send to all peers
+   * @returns An array of transfer IDs for each initiated transfer
    */
-  const saveTemporaryChunk = (
-    fileId: string,
-    chunkBlob: Blob,
-    chunkIndex: number
-  ) => {
-    const dbName = 'innerocket-temp-chunks';
-    const request = indexedDB.open(dbName, 1);
+  const sendFileToAllPeers = async (file: File): Promise<string[]> => {
+    const transferIds: string[] = [];
 
-    request.onupgradeneeded = (event) => {
-      const db = (event.target as IDBOpenDBRequest).result;
-      if (!db.objectStoreNames.contains('chunks')) {
-        const store = db.createObjectStore('chunks', {
-          keyPath: ['fileId', 'index'],
-        });
-        // Create an index for quick lookup by fileId
-        store.createIndex('fileId', 'fileId', { unique: false });
+    // Check if we have any connected peers
+    if (connectedPeers.length === 0) {
+      console.warn('No connected peers to send file to');
+      return transferIds;
+    }
+
+    // Send the file to each connected peer
+    for (const peerId of connectedPeers) {
+      const transferId = await sendFile(peerId, file);
+      if (transferId) {
+        transferIds.push(transferId);
       }
-    };
+    }
 
-    request.onsuccess = (event) => {
-      const db = (event.target as IDBOpenDBRequest).result;
-      const transaction = db.transaction(['chunks'], 'readwrite');
-      const store = transaction.objectStore('chunks');
-
-      store.put({
-        fileId,
-        index: chunkIndex,
-        blob: chunkBlob,
-        timestamp: Date.now(),
-      });
-
-      transaction.oncomplete = () => {
-        db.close();
-      };
-    };
-
-    request.onerror = (event) => {
-      console.error(
-        'Error opening temp chunks IndexedDB:',
-        (event.target as IDBOpenDBRequest).error
-      );
-    };
-  };
-
-  /**
-   * Retrieves all temporary chunks for a file from IndexedDB
-   */
-  const getTemporaryChunks = (fileId: string): Promise<Blob[]> => {
-    return new Promise((resolve) => {
-      const dbName = 'innerocket-temp-chunks';
-      const request = indexedDB.open(dbName, 1);
-      const chunks: Blob[] = [];
-
-      request.onupgradeneeded = (event) => {
-        const db = (event.target as IDBOpenDBRequest).result;
-        if (!db.objectStoreNames.contains('chunks')) {
-          const store = db.createObjectStore('chunks', {
-            keyPath: ['fileId', 'index'],
-          });
-          // Create an index for quick lookup by fileId
-          store.createIndex('fileId', 'fileId', { unique: false });
-        }
-      };
-
-      request.onsuccess = (event) => {
-        const db = (event.target as IDBOpenDBRequest).result;
-        const transaction = db.transaction(['chunks'], 'readonly');
-        const store = transaction.objectStore('chunks');
-
-        // Use a range to get all chunks for this file ID
-        const range = IDBKeyRange.bound(
-          [fileId, 0],
-          [fileId, Number.MAX_SAFE_INTEGER]
-        );
-        const getAllRequest = store.getAll(range);
-
-        getAllRequest.onsuccess = () => {
-          // Sort chunks by index to ensure correct order
-          const sortedChunks = getAllRequest.result.sort(
-            (a, b) => a.index - b.index
-          );
-          sortedChunks.forEach((chunk) => chunks.push(chunk.blob));
-          resolve(chunks);
-        };
-
-        getAllRequest.onerror = () => {
-          console.error('Error retrieving temporary chunks');
-          resolve([]);
-        };
-
-        transaction.oncomplete = () => {
-          db.close();
-        };
-      };
-
-      request.onerror = () => {
-        console.error('Error opening temp chunks database');
-        resolve([]);
-      };
-    });
-  };
-
-  /**
-   * Deletes all temporary chunks for a file from IndexedDB
-   */
-  const deleteTemporaryChunks = (fileId: string) => {
-    const dbName = 'innerocket-temp-chunks';
-    const request = indexedDB.open(dbName, 1);
-
-    request.onupgradeneeded = (event) => {
-      const db = (event.target as IDBOpenDBRequest).result;
-      if (!db.objectStoreNames.contains('chunks')) {
-        const store = db.createObjectStore('chunks', {
-          keyPath: ['fileId', 'index'],
-        });
-        store.createIndex('fileId', 'fileId', { unique: false });
-      }
-    };
-
-    request.onsuccess = (event) => {
-      const db = (event.target as IDBOpenDBRequest).result;
-      const transaction = db.transaction(['chunks'], 'readwrite');
-      const store = transaction.objectStore('chunks');
-
-      // Use a range to delete all chunks for this file ID
-      const range = IDBKeyRange.bound(
-        [fileId, 0],
-        [fileId, Number.MAX_SAFE_INTEGER]
-      );
-      const deleteRequest = store.delete(range);
-
-      deleteRequest.onerror = () => {
-        console.error('Error deleting temporary chunks');
-      };
-
-      transaction.oncomplete = () => {
-        db.close();
-      };
-    };
-
-    request.onerror = () => {
-      console.error('Error opening temp chunks database for deletion');
-    };
+    return transferIds;
   };
 
   /**
@@ -896,55 +750,29 @@ export function useFileTransfer() {
       console.error('Error opening files database for clearing');
     };
 
-    // Clear temporary chunks too
+    // Clear temporary chunks database as it's now obsolete
     const chunksDbName = 'innerocket-temp-chunks';
-    const chunksRequest = indexedDB.open(chunksDbName, 1);
+    const chunksRequest = indexedDB.open(chunksDbName);
 
     chunksRequest.onsuccess = (event) => {
       const db = (event.target as IDBOpenDBRequest).result;
-      const transaction = db.transaction(['chunks'], 'readwrite');
-      const store = transaction.objectStore('chunks');
+      if (db.objectStoreNames.contains('chunks')) {
+        const transaction = db.transaction(['chunks'], 'readwrite');
+        const store = transaction.objectStore('chunks');
 
-      // Clear all records
-      const clearRequest = store.clear();
+        const clearRequest = store.clear();
 
-      clearRequest.onerror = () => {
-        console.error('Error clearing chunks from IndexedDB');
-      };
+        clearRequest.onerror = () => {
+          console.error('Error clearing chunks from IndexedDB');
+        };
 
-      transaction.oncomplete = () => {
+        transaction.oncomplete = () => {
+          db.close();
+        };
+      } else {
         db.close();
-      };
-    };
-
-    chunksRequest.onerror = () => {
-      console.error('Error opening chunks database for clearing');
-    };
-  };
-
-  /**
-   * Sends a file to all connected peers simultaneously
-   * @param file The file to send to all peers
-   * @returns An array of transfer IDs for each initiated transfer
-   */
-  const sendFileToAllPeers = async (file: File): Promise<string[]> => {
-    const transferIds: string[] = [];
-
-    // Check if we have any connected peers
-    if (connectedPeers.length === 0) {
-      console.warn('No connected peers to send file to');
-      return transferIds;
-    }
-
-    // Send the file to each connected peer
-    for (const peerId of connectedPeers) {
-      const transferId = await sendFile(peerId, file);
-      if (transferId) {
-        transferIds.push(transferId);
       }
-    }
-
-    return transferIds;
+    };
   };
 
   return {
