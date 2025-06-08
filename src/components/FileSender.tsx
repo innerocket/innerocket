@@ -74,7 +74,7 @@ export function FileSender({
     }
   };
 
-  if (!currentPeerId && connectedPeersCount === 0) {
+  if (!currentPeerId) {
     return null;
   }
 
