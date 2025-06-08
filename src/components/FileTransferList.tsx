@@ -1,5 +1,5 @@
 import type { FileTransfer } from '../types';
-import { ChevronRight, ChevronLeft, Eye } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Eye, Download } from 'lucide-react';
 import { Badge, Button, getStatusBadgeVariant } from './ui';
 import { usePeer } from '../contexts/PeerContext';
 
@@ -144,13 +144,16 @@ export function FileTransferList({
                   <div className="flex space-x-2">
                     <Button
                       onClick={() => onPreview(transfer.id)}
-                      variant="info"
                       size="sm"
                       icon={<Eye size={16} />}
                     >
                       Preview
                     </Button>
-                    <Button onClick={() => onDownload(transfer.id)} size="sm">
+                    <Button
+                      onClick={() => onDownload(transfer.id)}
+                      size="sm"
+                      icon={<Download size={16} />}
+                    >
                       Download
                     </Button>
                   </div>
