@@ -62,7 +62,7 @@ export function FileSender({
           <button
             onClick={onClose}
             type="button"
-            className="absolute top-2 right-2 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 inline-flex items-center dark:hover:bg-gray-600 dark:hover:text-white"
+            className="absolute top-4 right-4 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 inline-flex items-center dark:hover:bg-gray-600 dark:hover:text-white"
             aria-label="Close"
           >
             <X size={20} />
@@ -105,7 +105,7 @@ export function FileSender({
               )}
             </div>
           </label>
-          <div className="flex flex-col gap-2">
+          <div className="flex mt-auto flex-col gap-2">
             <Button
               onClick={handleSendFile}
               disabled={!selectedFile || (!currentPeerId && !onSendFileToAll)}
