@@ -15,14 +15,76 @@ export function FilePreview({
   onClose,
 }: FilePreviewProps) {
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [actualFileType, setActualFileType] = useState<string>(fileType);
+  const [videoPlaybackAttempted, setVideoPlaybackAttempted] = useState(false);
 
   useEffect(() => {
     setIsLoading(true);
+    setError(null);
+    setVideoPlaybackAttempted(false);
+
     // When previewUrl changes, reset loading state
     if (previewUrl) {
-      setIsLoading(false);
+      console.log(`FilePreview: Loading preview for ${fileName} (${fileType})`);
+
+      // Detect the actual file type from the blob if possible
+      fetch(previewUrl)
+        .then((response) => response.blob())
+        .then((blob) => {
+          console.log(
+            `Preview blob type: ${blob.type}, size: ${blob.size} bytes`
+          );
+
+          // For video files, we may need to detect type from filename if MIME type is generic
+          let detectedType = blob.type;
+
+          // If the type is generic or empty but filename suggests it's a video
+          if (
+            (detectedType === 'application/octet-stream' || !detectedType) &&
+            fileName.toLowerCase().match(/\.(mp4|webm|ogg|mov|avi)$/)
+          ) {
+            const ext = fileName.split('.').pop()?.toLowerCase();
+            if (ext === 'mp4') detectedType = 'video/mp4';
+            else if (ext === 'webm') detectedType = 'video/webm';
+            else if (ext === 'ogg') detectedType = 'video/ogg';
+            else if (ext === 'mov') detectedType = 'video/quicktime';
+            else if (ext === 'avi') detectedType = 'video/x-msvideo';
+
+            console.log(`Detected video type from filename: ${detectedType}`);
+          }
+
+          if (detectedType && detectedType !== 'application/octet-stream') {
+            setActualFileType(detectedType);
+          }
+          setIsLoading(false);
+        })
+        .catch((err) => {
+          console.error('Error fetching preview blob:', err);
+          setError('Failed to load preview data');
+          setIsLoading(false);
+        });
     }
-  }, [previewUrl]);
+  }, [previewUrl, fileName]);
+
+  // Function to handle video loading errors
+  const handleVideoError = (e: any) => {
+    console.error('Video error:', e);
+    if (!videoPlaybackAttempted) {
+      // Try with a different MIME type on first error
+      setVideoPlaybackAttempted(true);
+
+      // If we initially tried with detected type, try with a generic video type
+      if (actualFileType !== 'video/mp4') {
+        console.log('Retrying video with video/mp4 type');
+        setActualFileType('video/mp4');
+      } else {
+        setError('Unable to play this video. Try downloading it instead.');
+      }
+    } else {
+      setError('Unable to play this video. Try downloading it instead.');
+    }
+  };
 
   if (!previewUrl) {
     return (
@@ -75,41 +137,50 @@ export function FilePreview({
             </div>
           )}
 
-          {fileType.startsWith('image/') && (
+          {error && !isLoading && (
+            <div className="text-center p-8">
+              <p className="text-red-500 mb-2">{error}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Try downloading the file instead.
+              </p>
+            </div>
+          )}
+
+          {!isLoading && !error && actualFileType.startsWith('image/') && (
             <img
               src={previewUrl}
               alt={fileName}
               className="max-w-full max-h-full object-contain"
-              onLoad={() => setIsLoading(false)}
+              onError={() => setError('Failed to load image')}
               style={{ display: isLoading ? 'none' : 'block' }}
             />
           )}
 
-          {fileType.startsWith('video/') && (
+          {!isLoading && !error && actualFileType.startsWith('video/') && (
             <video
               src={previewUrl}
               controls
               className="max-w-full max-h-full"
-              onLoadedData={() => setIsLoading(false)}
+              onError={handleVideoError}
               style={{ display: isLoading ? 'none' : 'block' }}
             />
           )}
 
-          {fileType.startsWith('audio/') && (
+          {!isLoading && !error && actualFileType.startsWith('audio/') && (
             <audio
               src={previewUrl}
               controls
               className="w-full"
-              onLoadedData={() => setIsLoading(false)}
+              onError={() => setError('Failed to load audio')}
               style={{ display: isLoading ? 'none' : 'block' }}
             />
           )}
 
-          {fileType === 'application/pdf' && (
+          {!isLoading && !error && actualFileType === 'application/pdf' && (
             <iframe
               src={previewUrl}
               className="w-full h-full"
-              onLoad={() => setIsLoading(false)}
+              onError={() => setError('Failed to load PDF')}
               style={{
                 display: isLoading ? 'none' : 'block',
                 minHeight: '70vh',
@@ -117,10 +188,12 @@ export function FilePreview({
             />
           )}
 
-          {!fileType.startsWith('image/') &&
-            !fileType.startsWith('video/') &&
-            !fileType.startsWith('audio/') &&
-            fileType !== 'application/pdf' && (
+          {!isLoading &&
+            !error &&
+            !actualFileType.startsWith('image/') &&
+            !actualFileType.startsWith('video/') &&
+            !actualFileType.startsWith('audio/') &&
+            actualFileType !== 'application/pdf' && (
               <div className="text-center p-8">
                 <div className="bg-gray-100 rounded-lg p-6 inline-block mb-4 dark:bg-gray-700">
                   <svg
@@ -142,7 +215,7 @@ export function FilePreview({
                   Preview not available for this file type.
                 </p>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {fileType || 'Unknown type'}
+                  {actualFileType || 'Unknown type'}
                 </p>
               </div>
             )}

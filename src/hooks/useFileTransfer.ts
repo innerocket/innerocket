@@ -7,6 +7,11 @@ import { verifyChecksum } from '../utils/checksum';
 // LocalStorage keys
 const TRANSFERS_STORAGE_KEY = 'innerocket_transfers';
 
+// IndexedDB configuration
+const DB_NAME = 'innerocket-files';
+const DB_VERSION = 2; // Database schema version
+const TEMP_CHUNKS_DB_NAME = 'innerocket-temp-chunks';
+
 export function useFileTransfer() {
   const { peerId } = usePeer();
   const [fileTransfers, setFileTransfers] = useState<FileTransfer[]>(() => {
@@ -292,32 +297,154 @@ export function useFileTransfer() {
     fileName: string,
     checksum?: string
   ) => {
-    const dbName = 'innerocket-files';
-    const request = indexedDB.open(dbName, 1);
+    console.log(
+      `Attempting to save file to IndexedDB: ${fileName}, type: ${blob.type}, size: ${blob.size} bytes`
+    );
+
+    // For large files (especially videos), we need to be more careful
+    const isLargeFile = blob.size > 50 * 1024 * 1024; // 50MB threshold
+    const isVideoFile =
+      blob.type.startsWith('video/') ||
+      fileName.toLowerCase().match(/\.(mp4|webm|ogg|mov|avi)$/);
+
+    if (isLargeFile || isVideoFile) {
+      console.log(
+        `Handling large or video file (${isLargeFile ? 'large' : 'normal'}, ${
+          isVideoFile ? 'video' : 'non-video'
+        })`
+      );
+    }
+
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
 
     request.onupgradeneeded = (event) => {
+      console.log(`Upgrading database to version ${DB_VERSION}`);
       const db = (event.target as IDBOpenDBRequest).result;
       if (!db.objectStoreNames.contains('files')) {
         db.createObjectStore('files', { keyPath: 'id' });
+        console.log('Created files object store');
+      }
+
+      if (!db.objectStoreNames.contains('file_chunks')) {
+        // Create a store for large file chunks
+        const chunkStore = db.createObjectStore('file_chunks', {
+          keyPath: ['fileId', 'index'],
+        });
+        chunkStore.createIndex('fileId', 'fileId', { unique: false });
+        console.log('Created file_chunks object store for large files');
       }
     };
 
     request.onsuccess = (event) => {
       const db = (event.target as IDBOpenDBRequest).result;
-      const transaction = db.transaction(['files'], 'readwrite');
-      const store = transaction.objectStore('files');
 
-      store.put({
-        id: fileId,
-        blob: blob,
-        fileName: fileName,
-        timestamp: Date.now(),
-        checksum: checksum,
-      });
+      try {
+        // For regular files, store as before
+        if (!isLargeFile && !isVideoFile) {
+          const transaction = db.transaction(['files'], 'readwrite');
+          const store = transaction.objectStore('files');
 
-      transaction.oncomplete = () => {
+          store.put({
+            id: fileId,
+            blob: blob,
+            fileName: fileName,
+            timestamp: Date.now(),
+            checksum: checksum,
+            fileType: blob.type,
+          });
+
+          transaction.oncomplete = () => {
+            console.log(`File saved successfully: ${fileName}`);
+            db.close();
+          };
+
+          transaction.onerror = (event) => {
+            console.error(
+              'Error in transaction:',
+              (event.target as IDBTransaction).error
+            );
+            db.close();
+          };
+        } else {
+          // For large files or videos, split into smaller chunks for reliability
+          console.log(`Splitting ${fileName} into chunks for reliable storage`);
+
+          // Store file metadata
+          const metaTransaction = db.transaction(['files'], 'readwrite');
+          const fileStore = metaTransaction.objectStore('files');
+
+          fileStore.put({
+            id: fileId,
+            fileName: fileName,
+            timestamp: Date.now(),
+            checksum: checksum,
+            isChunked: true,
+            totalSize: blob.size,
+            fileType: blob.type,
+          });
+
+          metaTransaction.oncomplete = () => {
+            console.log(
+              `File metadata saved, now storing chunks for: ${fileName}`
+            );
+
+            // Store the actual blob data in chunks
+            const CHUNK_SIZE = 10 * 1024 * 1024; // 10MB chunks
+            const chunks = Math.ceil(blob.size / CHUNK_SIZE);
+            let processedChunks = 0;
+
+            // Process each chunk
+            for (let i = 0; i < chunks; i++) {
+              const start = i * CHUNK_SIZE;
+              const end = Math.min(start + CHUNK_SIZE, blob.size);
+              const chunkBlob = blob.slice(start, end);
+
+              const chunkTransaction = db.transaction(
+                ['file_chunks'],
+                'readwrite'
+              );
+              const chunkStore = chunkTransaction.objectStore('file_chunks');
+
+              chunkStore.put({
+                fileId: fileId,
+                index: i,
+                data: chunkBlob,
+                size: chunkBlob.size,
+              });
+
+              chunkTransaction.oncomplete = () => {
+                processedChunks++;
+                console.log(`Saved chunk ${i + 1}/${chunks} for ${fileName}`);
+
+                if (processedChunks === chunks) {
+                  console.log(
+                    `All ${chunks} chunks saved successfully for ${fileName}`
+                  );
+                  db.close();
+                }
+              };
+
+              chunkTransaction.onerror = (event) => {
+                console.error(
+                  `Error saving chunk ${i + 1}/${chunks}:`,
+                  (event.target as IDBTransaction).error
+                );
+              };
+            }
+          };
+
+          metaTransaction.onerror = (event) => {
+            console.error(
+              'Error saving file metadata:',
+              (event.target as IDBTransaction).error
+            );
+            db.close();
+          };
+        }
+      } catch (error) {
+        console.error('Error in IndexedDB operations:', error);
         db.close();
-      };
+      }
     };
 
     request.onerror = (event) => {
@@ -330,13 +457,25 @@ export function useFileTransfer() {
 
   // Function to load completed files from IndexedDB
   const loadCompletedFiles = () => {
-    const dbName = 'innerocket-files';
-    const request = indexedDB.open(dbName, 1);
+    console.log('Loading completed files from IndexedDB...');
+
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
 
     request.onupgradeneeded = (event) => {
+      console.log(
+        `Upgrading database in loadCompletedFiles to version ${DB_VERSION}`
+      );
       const db = (event.target as IDBOpenDBRequest).result;
       if (!db.objectStoreNames.contains('files')) {
         db.createObjectStore('files', { keyPath: 'id' });
+        console.log('Created files object store in loadCompletedFiles');
+      }
+      if (!db.objectStoreNames.contains('file_chunks')) {
+        const chunkStore = db.createObjectStore('file_chunks', {
+          keyPath: ['fileId', 'index'],
+        });
+        chunkStore.createIndex('fileId', 'fileId', { unique: false });
+        console.log('Created file_chunks object store in loadCompletedFiles');
       }
     };
 
@@ -348,14 +487,26 @@ export function useFileTransfer() {
 
       getAllRequest.onsuccess = () => {
         const files = getAllRequest.result;
+        console.log(`Found ${files.length} files in IndexedDB`);
 
-        // Update receivedFiles with stored files
-        setReceivedFiles((prev) => {
-          const newFiles = new Map(prev);
-          files.forEach((file) => {
-            newFiles.set(file.id, file.blob);
-          });
-          return newFiles;
+        // Process each file entry
+        files.forEach((file) => {
+          console.log(
+            `Processing file: ${file.fileName}, isChunked: ${
+              file.isChunked ? 'yes' : 'no'
+            }`
+          );
+
+          // For regular files, update receivedFiles right away
+          if (!file.isChunked && file.blob) {
+            setReceivedFiles((prev) => {
+              const newFiles = new Map(prev);
+              newFiles.set(file.id, file.blob);
+              return newFiles;
+            });
+          }
+
+          // For chunked files, we'll need to reassemble them when accessed later
         });
 
         // Make sure completed transfers are marked as such
@@ -373,14 +524,44 @@ export function useFileTransfer() {
               const fileTransfer: FileTransfer = {
                 id: file.id,
                 fileName: file.fileName,
-                fileSize: file.blob.size,
-                fileType: file.blob.type,
+                fileSize: file.isChunked
+                  ? file.totalSize
+                  : file.blob?.size || 0,
+                fileType:
+                  file.fileType ||
+                  file.blob?.type ||
+                  'application/octet-stream',
                 sender: 'unknown', // We don't know the sender anymore
                 receiver: webRTCService.getMyPeerId(),
                 progress: 100,
                 status: 'completed',
                 createdAt: file.timestamp || Date.now(),
               };
+
+              // Check for video files by filename if type is generic
+              if (
+                (fileTransfer.fileType === 'application/octet-stream' ||
+                  !fileTransfer.fileType) &&
+                fileTransfer.fileName
+                  .toLowerCase()
+                  .match(/\.(mp4|webm|ogg|mov|avi)$/)
+              ) {
+                const ext = fileTransfer.fileName
+                  .split('.')
+                  .pop()
+                  ?.toLowerCase();
+                if (ext === 'mp4') fileTransfer.fileType = 'video/mp4';
+                else if (ext === 'webm') fileTransfer.fileType = 'video/webm';
+                else if (ext === 'ogg') fileTransfer.fileType = 'video/ogg';
+                else if (ext === 'mov')
+                  fileTransfer.fileType = 'video/quicktime';
+                else if (ext === 'avi')
+                  fileTransfer.fileType = 'video/x-msvideo';
+
+                console.log(
+                  `Updated file type based on extension: ${fileTransfer.fileType}`
+                );
+              }
 
               updatedTransfers.push(fileTransfer);
             } else if (
@@ -391,6 +572,9 @@ export function useFileTransfer() {
                 ...updatedTransfers[existingTransferIndex],
                 progress: 100,
                 status: 'completed',
+                fileType:
+                  file.fileType ||
+                  updatedTransfers[existingTransferIndex].fileType,
               };
             }
           });
@@ -479,21 +663,43 @@ export function useFileTransfer() {
   const getFile = async (
     fileId: string
   ): Promise<{ blob: Blob; fileName: string } | null> => {
+    console.log(`getFile: Trying to get file with ID ${fileId}`);
+
     // First try to get from memory
     let file = receivedFiles.get(fileId);
 
     if (file) {
+      console.log(`getFile: Found file in memory cache`);
       // Get file name from transfers
       const transfer = fileTransfers.find((t) => t.id === fileId);
-      if (!transfer) return null;
+      if (!transfer) {
+        console.log(`getFile: File found in memory but no transfer metadata`);
+        return { blob: file, fileName: 'unknown-file' };
+      }
 
       return { blob: file, fileName: transfer.fileName };
     }
 
+    console.log(`getFile: File not found in memory, trying IndexedDB`);
     // If not in memory, try to get from IndexedDB
     return new Promise((resolve) => {
-      const dbName = 'innerocket-files';
-      const request = indexedDB.open(dbName, 1);
+      const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+      request.onupgradeneeded = (event) => {
+        console.log(`Upgrading database in getFile to version ${DB_VERSION}`);
+        const db = (event.target as IDBOpenDBRequest).result;
+        if (!db.objectStoreNames.contains('files')) {
+          db.createObjectStore('files', { keyPath: 'id' });
+          console.log('Created files object store in getFile');
+        }
+        if (!db.objectStoreNames.contains('file_chunks')) {
+          const chunkStore = db.createObjectStore('file_chunks', {
+            keyPath: ['fileId', 'index'],
+          });
+          chunkStore.createIndex('fileId', 'fileId', { unique: false });
+          console.log('Created file_chunks object store in getFile');
+        }
+      };
 
       request.onsuccess = (event) => {
         const db = (event.target as IDBOpenDBRequest).result;
@@ -504,43 +710,201 @@ export function useFileTransfer() {
         getRequest.onsuccess = () => {
           if (getRequest.result) {
             const fileData = getRequest.result;
-            resolve({ blob: fileData.blob, fileName: fileData.fileName });
+            console.log(
+              `getFile: Found file metadata in IndexedDB: ${fileData.fileName}`
+            );
+
+            // Check if this is a regular file or a chunked file
+            if (!fileData.isChunked) {
+              console.log(`getFile: Regular file, retrieving blob directly`);
+
+              // Add to memory cache for future use
+              setReceivedFiles((prev) => {
+                const newFiles = new Map(prev);
+                newFiles.set(fileId, fileData.blob);
+                return newFiles;
+              });
+
+              resolve({ blob: fileData.blob, fileName: fileData.fileName });
+              db.close();
+            } else {
+              // This is a chunked file (likely a large video)
+              console.log(
+                `getFile: Chunked file detected, size: ${fileData.totalSize}, retrieving chunks...`
+              );
+
+              // Check if file_chunks store exists
+              if (!db.objectStoreNames.contains('file_chunks')) {
+                console.error(
+                  'file_chunks store does not exist yet. Creating it and retrying later.'
+                );
+                // The store doesn't exist yet, we need to close this connection and create it
+                db.close();
+
+                // Upgrade the database to add the chunks store
+                const upgradeRequest = indexedDB.open(DB_NAME, DB_VERSION);
+
+                upgradeRequest.onupgradeneeded = (upgradeEvent) => {
+                  const upgradeDb = (upgradeEvent.target as IDBOpenDBRequest)
+                    .result;
+                  if (!upgradeDb.objectStoreNames.contains('file_chunks')) {
+                    const chunkStore = upgradeDb.createObjectStore(
+                      'file_chunks',
+                      {
+                        keyPath: ['fileId', 'index'],
+                      }
+                    );
+                    chunkStore.createIndex('fileId', 'fileId', {
+                      unique: false,
+                    });
+                    console.log('Created file_chunks store during recovery');
+                  }
+                };
+
+                upgradeRequest.onsuccess = () => {
+                  console.log(
+                    'Database upgrade successful, store should now exist'
+                  );
+                  upgradeRequest.result.close();
+
+                  // Return as if no chunks found - user will need to retry
+                  resolve(null);
+                };
+
+                upgradeRequest.onerror = (e) => {
+                  console.error('Error upgrading database:', e);
+                  resolve(null);
+                };
+
+                return;
+              }
+
+              // Get all chunks for this file
+              try {
+                const chunkTransaction = db.transaction(
+                  ['file_chunks'],
+                  'readonly'
+                );
+                const chunkStore = chunkTransaction.objectStore('file_chunks');
+                const chunkIndex = chunkStore.index('fileId');
+                const chunksRequest = chunkIndex.getAll(fileId);
+
+                chunksRequest.onsuccess = () => {
+                  const chunks = chunksRequest.result;
+
+                  if (!chunks || chunks.length === 0) {
+                    console.error(
+                      `getFile: No chunks found for file ${fileId}`
+                    );
+                    resolve(null);
+                    db.close();
+                    return;
+                  }
+
+                  console.log(
+                    `getFile: Retrieved ${chunks.length} chunks for file ${fileId}`
+                  );
+
+                  // Sort chunks by index
+                  chunks.sort((a, b) => a.index - b.index);
+
+                  // Combine chunks into a single blob
+                  const chunkBlobs = chunks.map((chunk) => chunk.data);
+                  const combinedBlob = new Blob(chunkBlobs, {
+                    type: fileData.fileType || 'application/octet-stream',
+                  });
+
+                  console.log(
+                    `getFile: Reconstructed file from chunks, size: ${combinedBlob.size}`
+                  );
+
+                  // Verify size
+                  if (combinedBlob.size !== fileData.totalSize) {
+                    console.warn(
+                      `getFile: Size mismatch! Expected: ${fileData.totalSize}, Got: ${combinedBlob.size}`
+                    );
+                  }
+
+                  // Add to memory cache for future use
+                  setReceivedFiles((prev) => {
+                    const newFiles = new Map(prev);
+                    newFiles.set(fileId, combinedBlob);
+                    return newFiles;
+                  });
+
+                  resolve({ blob: combinedBlob, fileName: fileData.fileName });
+                  db.close();
+                };
+
+                chunksRequest.onerror = (e) => {
+                  console.error(
+                    `getFile: Error retrieving chunks for file ${fileId}:`,
+                    e
+                  );
+                  resolve(null);
+                  db.close();
+                };
+              } catch (txError) {
+                console.error('Transaction error:', txError);
+                resolve(null);
+                db.close();
+              }
+            }
           } else {
+            console.error(`getFile: File not found in IndexedDB`);
             resolve(null);
+            db.close();
           }
         };
 
-        getRequest.onerror = () => {
-          console.error('Error getting file from IndexedDB');
+        getRequest.onerror = (e) => {
+          console.error('Error getting file from IndexedDB:', e);
           resolve(null);
-        };
-
-        transaction.oncomplete = () => {
           db.close();
         };
       };
 
-      request.onerror = () => {
-        console.error('Error opening IndexedDB');
+      request.onerror = (e) => {
+        console.error('Error opening IndexedDB:', e);
         resolve(null);
       };
     });
   };
 
   const previewFile = async (fileId: string): Promise<string | null> => {
-    const fileData = await getFile(fileId);
-    if (!fileData) return null;
+    try {
+      console.log(`Attempting to preview file with ID: ${fileId}`);
 
-    const { blob } = fileData;
+      const fileData = await getFile(fileId);
+      if (!fileData) {
+        console.error(`Could not retrieve file data for ID: ${fileId}`);
+        return null;
+      }
 
-    // Create a preview URL for the file
-    return URL.createObjectURL(blob);
+      const { blob } = fileData;
+      console.log(
+        `File retrieved, type: ${blob.type}, size: ${blob.size} bytes`
+      );
+
+      // Create a preview URL for the file
+      return URL.createObjectURL(blob);
+    } catch (error) {
+      console.error(`Error previewing file ${fileId}:`, error);
+      return null;
+    }
   };
 
   const getFileType = (fileId: string): string | null => {
+    // First try to get from fileTransfers
     const transfer = fileTransfers.find((t) => t.id === fileId);
-    if (!transfer) return null;
-    return transfer.fileType;
+    if (transfer && transfer.fileType) return transfer.fileType;
+
+    // If not found or fileType is empty, try to get from receivedFiles in memory
+    const file = receivedFiles.get(fileId);
+    if (file) return file.type;
+
+    // If still not found, return a default type that will allow preview attempt
+    return 'application/octet-stream';
   };
 
   const downloadFile = (fileId: string) => {
@@ -712,24 +1076,63 @@ export function useFileTransfer() {
     setReceivedFiles(new Map());
 
     // Clear IndexedDB files
-    const filesDbName = 'innerocket-files';
-    const filesRequest = indexedDB.open(filesDbName, 1);
+    const filesRequest = indexedDB.open(DB_NAME, DB_VERSION);
+
+    filesRequest.onupgradeneeded = (event) => {
+      console.log(
+        `Upgrading database in clearFileHistory to version ${DB_VERSION}`
+      );
+      const db = (event.target as IDBOpenDBRequest).result;
+      if (!db.objectStoreNames.contains('files')) {
+        db.createObjectStore('files', { keyPath: 'id' });
+        console.log('Created files object store in clearFileHistory');
+      }
+      if (!db.objectStoreNames.contains('file_chunks')) {
+        const chunkStore = db.createObjectStore('file_chunks', {
+          keyPath: ['fileId', 'index'],
+        });
+        chunkStore.createIndex('fileId', 'fileId', { unique: false });
+        console.log('Created file_chunks object store in clearFileHistory');
+      }
+    };
 
     filesRequest.onsuccess = (event) => {
       const db = (event.target as IDBOpenDBRequest).result;
-      const transaction = db.transaction(['files'], 'readwrite');
-      const store = transaction.objectStore('files');
 
-      // Clear all records
-      const clearRequest = store.clear();
+      // Clear main files store
+      if (db.objectStoreNames.contains('files')) {
+        const transaction = db.transaction(['files'], 'readwrite');
+        const store = transaction.objectStore('files');
 
-      clearRequest.onerror = () => {
-        console.error('Error clearing files from IndexedDB');
-      };
+        // Clear all records
+        const clearRequest = store.clear();
 
-      transaction.oncomplete = () => {
+        clearRequest.onerror = () => {
+          console.error('Error clearing files from IndexedDB');
+        };
+      }
+
+      // Clear file chunks store
+      if (db.objectStoreNames.contains('file_chunks')) {
+        const chunkTransaction = db.transaction(['file_chunks'], 'readwrite');
+        const chunkStore = chunkTransaction.objectStore('file_chunks');
+
+        const clearChunksRequest = chunkStore.clear();
+
+        clearChunksRequest.onsuccess = () => {
+          console.log('Successfully cleared file chunks from IndexedDB');
+        };
+
+        clearChunksRequest.onerror = () => {
+          console.error('Error clearing file chunks from IndexedDB');
+        };
+      }
+
+      // Close the database when all transactions complete
+      setTimeout(() => {
         db.close();
-      };
+        console.log('IndexedDB cleared and closed');
+      }, 100);
     };
 
     filesRequest.onerror = () => {
@@ -737,8 +1140,7 @@ export function useFileTransfer() {
     };
 
     // Clear temporary chunks database as it's now obsolete
-    const chunksDbName = 'innerocket-temp-chunks';
-    const chunksRequest = indexedDB.open(chunksDbName);
+    const chunksRequest = indexedDB.open(TEMP_CHUNKS_DB_NAME);
 
     chunksRequest.onsuccess = (event) => {
       const db = (event.target as IDBOpenDBRequest).result;

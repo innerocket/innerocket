@@ -191,13 +191,19 @@ export function App() {
     // Set the file ID first to show the loading state
     setPreviewFileId(fileId);
 
-    // Fetch the preview URL
-    const url = await previewFile(fileId);
+    try {
+      // Fetch the preview URL
+      const url = await previewFile(fileId);
 
-    if (url) {
-      setPreviewUrl(url);
-    } else {
-      showNotification(`Unable to preview "${transfer.fileName}"`, 'error');
+      if (url) {
+        setPreviewUrl(url);
+      } else {
+        showNotification(`Unable to preview "${transfer.fileName}"`, 'error');
+        setPreviewFileId(null);
+      }
+    } catch (error) {
+      console.error('Error previewing file:', error);
+      showNotification(`Error previewing "${transfer.fileName}"`, 'error');
       setPreviewFileId(null);
     }
   };
