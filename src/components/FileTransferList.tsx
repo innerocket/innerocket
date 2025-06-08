@@ -1,6 +1,7 @@
 import type { FileTransfer } from '../types';
 import { ChevronRight, ChevronLeft, Eye } from 'lucide-react';
 import { Badge, Button, getStatusBadgeVariant } from './ui';
+import { usePeer } from '../contexts/PeerContext';
 
 interface FileTransferListProps {
   transfers: FileTransfer[];
@@ -13,6 +14,7 @@ export function FileTransferList({
   onDownload,
   onPreview,
 }: FileTransferListProps) {
+  const { peerId } = usePeer();
   if (transfers.length === 0) {
     return (
       <div className="p-4 mb-4 text-sm text-gray-500 rounded-lg border border-gray-200 bg-gray-50 dark:bg-gray-700 dark:border-gray-700 dark:text-gray-300">
@@ -93,7 +95,7 @@ export function FileTransferList({
                     Received
                   </span>
                 ) : transfer.sender !== transfer.receiver ? (
-                  transfer.sender === window.location.hostname ? (
+                  transfer.sender === peerId ? (
                     <span className="flex items-center text-blue-600 dark:text-blue-500">
                       <ChevronRight className="w-4 h-4 mr-1" />
                       Sent

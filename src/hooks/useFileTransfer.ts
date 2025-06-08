@@ -91,6 +91,10 @@ export function useFileTransfer() {
           newTransfers[index] = {
             ...newTransfers[index],
             progress,
+            status:
+              newTransfers[index].status === 'pending'
+                ? 'transferring'
+                : newTransfers[index].status,
             transferSpeed:
               transferSpeed || newTransfers[index].transferSpeed || 0,
             chunkSize: chunkSize || newTransfers[index].chunkSize || 0,
@@ -453,6 +457,13 @@ export function useFileTransfer() {
 
         // Start sending the file
         webRTCService.sendFile(peerId, file, metadata);
+
+        // Update the status to 'transferring' once we start sending
+        setFileTransfers((prev) =>
+          prev.map((t) =>
+            t.id === transferId ? { ...t, status: 'transferring' } : t
+          )
+        );
 
         return transferId;
       });

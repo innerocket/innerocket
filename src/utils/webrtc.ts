@@ -280,6 +280,19 @@ export class WebRTCService {
         chunkIndex,
       });
 
+      // Update sender's progress too via event
+      if (this.onFileChunk) {
+        this.onFileChunk(
+          conn.peer,
+          chunk,
+          metadata,
+          progress,
+          chunkSize,
+          currentTransferSpeed,
+          chunkIndex
+        );
+      }
+
       // Measure transfer rate if not the first chunk
       if (lastSendTime > 0 && chunk) {
         const timeTaken = now - lastSendTime; // ms
@@ -413,6 +426,19 @@ export class WebRTCService {
               chunkSize: chunk.byteLength,
               chunkIndex: chunkMeta.index,
             });
+
+            // Update sender's progress too via event
+            if (this.onFileChunk) {
+              this.onFileChunk(
+                conn.peer,
+                chunk,
+                metadata,
+                progress,
+                chunk.byteLength,
+                0, // Transfer speed not available in worker mode
+                chunkMeta.index
+              );
+            }
 
             offset = nextOffset;
           } catch (error) {
