@@ -24,6 +24,7 @@ export function App() {
     connectToPeer,
     disconnectFromPeer,
     sendFile,
+    sendFileToAllPeers,
     acceptFileTransfer,
     rejectFileTransfer,
     downloadFile,
@@ -145,6 +146,21 @@ export function App() {
           'error'
         );
       }
+    }
+  };
+
+  const handleSendFileToAll = async (file: File) => {
+    const transferIds = await sendFileToAllPeers(file);
+    if (transferIds.length > 0) {
+      showNotification(
+        `Sending file "${file.name}" to ${transferIds.length} peers...`,
+        'info'
+      );
+    } else {
+      showNotification(
+        `Failed to initiate file transfer for "${file.name}"`,
+        'error'
+      );
     }
   };
 
@@ -360,6 +376,8 @@ export function App() {
       <FileSender
         currentPeerId={selectedPeerId}
         onSendFile={handleSendFile}
+        onSendFileToAll={handleSendFileToAll}
+        connectedPeersCount={connectedPeers.length}
         onClose={handleCloseFileSender}
       />
 

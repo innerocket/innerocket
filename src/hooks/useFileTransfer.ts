@@ -922,6 +922,31 @@ export function useFileTransfer() {
     };
   };
 
+  /**
+   * Sends a file to all connected peers simultaneously
+   * @param file The file to send to all peers
+   * @returns An array of transfer IDs for each initiated transfer
+   */
+  const sendFileToAllPeers = async (file: File): Promise<string[]> => {
+    const transferIds: string[] = [];
+
+    // Check if we have any connected peers
+    if (connectedPeers.length === 0) {
+      console.warn('No connected peers to send file to');
+      return transferIds;
+    }
+
+    // Send the file to each connected peer
+    for (const peerId of connectedPeers) {
+      const transferId = await sendFile(peerId, file);
+      if (transferId) {
+        transferIds.push(transferId);
+      }
+    }
+
+    return transferIds;
+  };
+
   return {
     myPeerId: peerId,
     connectedPeers,
@@ -931,6 +956,7 @@ export function useFileTransfer() {
     connectToPeer,
     disconnectFromPeer,
     sendFile,
+    sendFileToAllPeers,
     acceptFileTransfer,
     rejectFileTransfer,
     downloadFile,
