@@ -128,8 +128,16 @@ async function fallbackChunkedChecksum(
 function calculateChecksumWithWorker(file: File | Blob): Promise<string> {
   return new Promise((resolve, reject) => {
     try {
-      // Create worker from the external file
-      const worker = createChecksumWorker();
+      // Create worker with error handling
+      let worker: Worker;
+      try {
+        worker = createChecksumWorker();
+      } catch (workerError) {
+        console.error('Failed to create worker:', workerError);
+        // Fall back to non-worker method
+        reject(new Error('Worker creation failed'));
+        return;
+      }
 
       // Set up message handlers
       worker.onmessage = (e) => {

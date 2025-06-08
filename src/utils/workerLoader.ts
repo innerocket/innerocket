@@ -15,7 +15,7 @@ export function createWorker(workerPath: string): Worker {
   }
 
   // Create worker
-  return new Worker(workerPath);
+  return new Worker(workerPath, { type: 'module' });
 }
 
 /**
@@ -23,8 +23,10 @@ export function createWorker(workerPath: string): Worker {
  * @returns Worker instance for checksum calculations
  */
 export function createChecksumWorker(): Worker {
-  return createWorker(
-    new URL('../workers/checksumWorker.ts', import.meta.url).href
+  // Use Vite's ?worker suffix to ensure proper bundling
+  return new Worker(
+    new URL('../workers/checksumWorker.ts?worker', import.meta.url),
+    { type: 'module' }
   );
 }
 
@@ -33,7 +35,9 @@ export function createChecksumWorker(): Worker {
  * @returns Worker instance for file chunk processing
  */
 export function createFileChunkWorker(): Worker {
-  return createWorker(
-    new URL('../workers/fileChunkWorker.ts', import.meta.url).href
+  // Use Vite's ?worker suffix to ensure proper bundling
+  return new Worker(
+    new URL('../workers/fileChunkWorker.ts?worker', import.meta.url),
+    { type: 'module' }
   );
 }
