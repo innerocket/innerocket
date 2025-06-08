@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'preact/hooks';
-import type { FileTransfer, FileTransferRequest } from '../types';
+import type { FileTransfer } from '../types';
 import { WebRTCService } from '../utils/webrtc';
 import { usePeer } from '../contexts/PeerContext';
 import { verifyChecksum } from '../utils/checksum';
@@ -18,9 +18,6 @@ export function useFileTransfer() {
   const [receivedFiles, setReceivedFiles] = useState<Map<string, Blob>>(
     new Map()
   );
-  const [incomingRequests, setIncomingRequests] = useState<
-    FileTransferRequest[]
-  >([]);
   const [connectedPeers, setConnectedPeers] = useState<string[]>([]);
 
   const webRTCService = useMemo(() => new WebRTCService(peerId), [peerId]);
@@ -39,10 +36,6 @@ export function useFileTransfer() {
 
     webRTCService.setOnPeerDisconnected((peerId) => {
       setConnectedPeers((prev) => prev.filter((id) => id !== peerId));
-    });
-
-    webRTCService.setOnFileTransferRequest((request) => {
-      setIncomingRequests((prev) => [...prev, request]);
     });
 
     webRTCService.setOnFileChunk(
@@ -472,24 +465,6 @@ export function useFileTransfer() {
     }
   };
 
-  const acceptFileTransfer = (request: FileTransferRequest) => {
-    webRTCService.acceptFileTransfer(request.from.id, request.metadata);
-
-    // Remove from incoming requests
-    setIncomingRequests((prev) =>
-      prev.filter((r) => r.metadata.id !== request.metadata.id)
-    );
-  };
-
-  const rejectFileTransfer = (request: FileTransferRequest) => {
-    webRTCService.rejectFileTransfer(request.from.id, request.metadata);
-
-    // Remove from incoming requests
-    setIncomingRequests((prev) =>
-      prev.filter((r) => r.metadata.id !== request.metadata.id)
-    );
-  };
-
   const getFile = async (
     fileId: string
   ): Promise<{ blob: Blob; fileName: string } | null> => {
@@ -779,14 +754,11 @@ export function useFileTransfer() {
     myPeerId: peerId,
     connectedPeers,
     fileTransfers,
-    incomingRequests,
     receivedFiles,
     connectToPeer,
     disconnectFromPeer,
     sendFile,
     sendFileToAllPeers,
-    acceptFileTransfer,
-    rejectFileTransfer,
     downloadFile,
     previewFile,
     getFileType,

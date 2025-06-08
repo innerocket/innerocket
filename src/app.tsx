@@ -3,7 +3,6 @@ import { useFileTransfer } from './hooks/useFileTransfer';
 import { PeerConnection } from './components/PeerConnection';
 import { ConnectedPeers } from './components/ConnectedPeers';
 import { FileTransferList } from './components/FileTransferList';
-import { FileRequests } from './components/FileRequests';
 import { FileSender } from './components/FileSender';
 import { FilePreview } from './components/FilePreview';
 import { NotificationContainer } from './components/Notification';
@@ -20,13 +19,10 @@ export function App() {
   const {
     connectedPeers,
     fileTransfers,
-    incomingRequests,
     connectToPeer,
     disconnectFromPeer,
     sendFile,
     sendFileToAllPeers,
-    acceptFileTransfer,
-    rejectFileTransfer,
     downloadFile,
     previewFile,
     getFileType,
@@ -180,22 +176,6 @@ export function App() {
     showNotification(`Selected peer ${peerId} for file transfer`, 'info');
   };
 
-  const handleAcceptFileTransfer = (request: any) => {
-    acceptFileTransfer(request);
-    showNotification(
-      `Accepted file transfer for "${request.metadata.name}"`,
-      'info'
-    );
-  };
-
-  const handleRejectFileTransfer = (request: any) => {
-    rejectFileTransfer(request);
-    showNotification(
-      `Rejected file transfer for "${request.metadata.name}"`,
-      'info'
-    );
-  };
-
   const handleDownloadFile = (fileId: string) => {
     downloadFile(fileId);
     const transfer = fileTransfers.find((t) => t.id === fileId);
@@ -302,12 +282,6 @@ export function App() {
             </div>
 
             <div className="p-4">
-              <FileRequests
-                requests={incomingRequests}
-                onAccept={handleAcceptFileTransfer}
-                onReject={handleRejectFileTransfer}
-              />
-
               <div>
                 <FileTransferList
                   transfers={fileTransfers}
