@@ -61,6 +61,8 @@ export function getStatusBadgeVariant(
   switch (status) {
     case 'pending':
       return 'warning';
+    case 'preparing':
+      return 'secondary';
     case 'transferring':
       return 'primary';
     case 'completed':

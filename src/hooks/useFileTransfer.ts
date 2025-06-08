@@ -43,6 +43,76 @@ export function useFileTransfer() {
       setConnectedPeers((prev) => prev.filter((id) => id !== peerId));
     });
 
+    webRTCService.setOnFileTransferRequest((request) => {
+      // Automatically add a new transfer entry with 'preparing' status
+      const { metadata, from } = request;
+
+      // First, create an entry with 'preparing' status
+      setFileTransfers((prev) => [
+        ...prev,
+        {
+          id: metadata.id,
+          fileName: metadata.name,
+          fileSize: metadata.size,
+          fileType: metadata.type,
+          sender: from.id,
+          receiver: webRTCService.getMyPeerId(),
+          progress: 0,
+          status: 'preparing',
+          createdAt: Date.now(),
+          checksum: metadata.checksum,
+        },
+      ]);
+
+      // Start preparing animation
+      let prepProgress = 0;
+      const prepInterval = setInterval(() => {
+        prepProgress += 5; // Increment by 5% each time
+        if (prepProgress >= 95) {
+          prepProgress = 95; // Cap at 95%
+        }
+
+        // Update preparing progress
+        setFileTransfers((prev) => {
+          const index = prev.findIndex((t) => t.id === metadata.id);
+          if (index === -1 || prev[index].status !== 'preparing') {
+            clearInterval(prepInterval);
+            return prev;
+          }
+
+          const newTransfers = [...prev];
+          newTransfers[index] = {
+            ...newTransfers[index],
+            progress: prepProgress,
+          };
+
+          return newTransfers;
+        });
+      }, 100); // Update every 100ms
+
+      // Automatically accept the transfer after a short delay
+      setTimeout(() => {
+        clearInterval(prepInterval);
+
+        // Update to pending status when accepting
+        setFileTransfers((prev) => {
+          const index = prev.findIndex((t) => t.id === metadata.id);
+          if (index === -1) return prev;
+
+          const newTransfers = [...prev];
+          newTransfers[index] = {
+            ...newTransfers[index],
+            status: 'pending',
+            progress: 0,
+          };
+
+          return newTransfers;
+        });
+
+        webRTCService.acceptFileTransfer(from.id, metadata);
+      }, 1000);
+    });
+
     webRTCService.setOnFileChunk(
       (
         peerId,
@@ -613,31 +683,100 @@ export function useFileTransfer() {
 
   const sendFile = (peerId: string, file: File) => {
     try {
+      // First, add a placeholder entry with 'preparing' status
+      const tempId = crypto.randomUUID();
+      setFileTransfers((prev) => [
+        ...prev,
+        {
+          id: tempId,
+          fileName: file.name,
+          fileSize: file.size,
+          fileType: file.type,
+          sender: webRTCService.getMyPeerId(),
+          receiver: peerId,
+          progress: 0,
+          status: 'preparing',
+          createdAt: Date.now(),
+        },
+      ]);
+
+      // Start preparing animation
+      let prepProgress = 0;
+      const prepInterval = setInterval(() => {
+        prepProgress += 5; // Increment by 5% each time
+        if (prepProgress >= 95) {
+          prepProgress = 95; // Cap at 95%
+        }
+
+        // Update preparing progress
+        setFileTransfers((prev) => {
+          const index = prev.findIndex((t) => t.id === tempId);
+          if (index === -1 || prev[index].status !== 'preparing') {
+            clearInterval(prepInterval);
+            return prev;
+          }
+
+          const newTransfers = [...prev];
+          newTransfers[index] = {
+            ...newTransfers[index],
+            progress: prepProgress,
+          };
+
+          return newTransfers;
+        });
+      }, 100); // Update every 100ms
+
       const metadataPromise = webRTCService.sendFileRequest(peerId, file);
 
       metadataPromise.then((metadata) => {
         if (!metadata) {
           console.error('Failed to initiate file transfer');
+          // Clear the preparing interval
+          clearInterval(prepInterval);
+          // Update status to failed
+          setFileTransfers((prev) =>
+            prev.map((t) => (t.id === tempId ? { ...t, status: 'failed' } : t))
+          );
           return null;
         }
 
-        // Create a new transfer entry
+        // Clear the preparing interval
+        clearInterval(prepInterval);
+
+        // Update the temporary entry with the real ID and metadata
         const transferId = metadata.id;
-        setFileTransfers((prev) => [
-          ...prev,
-          {
+        setFileTransfers((prev) => {
+          // Find the temp entry
+          const tempIndex = prev.findIndex((t) => t.id === tempId);
+          if (tempIndex === -1) {
+            // If temp entry doesn't exist, create a new one
+            return [
+              ...prev,
+              {
+                id: transferId,
+                fileName: file.name,
+                fileSize: file.size,
+                fileType: file.type,
+                sender: webRTCService.getMyPeerId(),
+                receiver: peerId,
+                progress: 0,
+                status: 'pending',
+                createdAt: Date.now(),
+                checksum: metadata.checksum,
+              },
+            ];
+          }
+
+          // Replace the temp entry with the real one
+          const newTransfers = [...prev];
+          newTransfers[tempIndex] = {
+            ...newTransfers[tempIndex],
             id: transferId,
-            fileName: file.name,
-            fileSize: file.size,
-            fileType: file.type,
-            sender: webRTCService.getMyPeerId(),
-            receiver: peerId,
-            progress: 0,
             status: 'pending',
-            createdAt: Date.now(),
             checksum: metadata.checksum,
-          },
-        ]);
+          };
+          return newTransfers;
+        });
 
         // Start sending the file
         webRTCService.sendFile(peerId, file, metadata);
@@ -645,7 +784,9 @@ export function useFileTransfer() {
         // Update the status to 'transferring' once we start sending
         setFileTransfers((prev) =>
           prev.map((t) =>
-            t.id === transferId ? { ...t, status: 'transferring' } : t
+            t.id === transferId
+              ? { ...t, status: 'transferring', progress: 0 }
+              : t
           )
         );
 
@@ -1053,6 +1194,49 @@ export function useFileTransfer() {
       return transferIds;
     }
 
+    // Add a global preparing entry to show the user something is happening
+    const globalPrepId = crypto.randomUUID();
+    setFileTransfers((prev) => [
+      ...prev,
+      {
+        id: globalPrepId,
+        fileName: `${file.name} (to all peers)`,
+        fileSize: file.size,
+        fileType: file.type,
+        sender: webRTCService.getMyPeerId(),
+        receiver: 'multiple',
+        progress: 0,
+        status: 'preparing',
+        createdAt: Date.now(),
+      },
+    ]);
+
+    // Start preparing animation
+    let prepProgress = 0;
+    const prepInterval = setInterval(() => {
+      prepProgress += 5;
+      if (prepProgress >= 95) {
+        prepProgress = 95;
+      }
+
+      // Update preparing progress
+      setFileTransfers((prev) => {
+        const index = prev.findIndex((t) => t.id === globalPrepId);
+        if (index === -1 || prev[index].status !== 'preparing') {
+          clearInterval(prepInterval);
+          return prev;
+        }
+
+        const newTransfers = [...prev];
+        newTransfers[index] = {
+          ...newTransfers[index],
+          progress: prepProgress,
+        };
+
+        return newTransfers;
+      });
+    }, 100);
+
     // Send the file to each connected peer
     for (const peerId of connectedPeers) {
       const transferId = await sendFile(peerId, file);
@@ -1060,6 +1244,10 @@ export function useFileTransfer() {
         transferIds.push(transferId);
       }
     }
+
+    // Remove the global preparing entry when done
+    clearInterval(prepInterval);
+    setFileTransfers((prev) => prev.filter((t) => t.id !== globalPrepId));
 
     return transferIds;
   };
