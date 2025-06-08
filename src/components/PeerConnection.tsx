@@ -57,7 +57,7 @@ export function PeerConnection({ onConnect }: PeerConnectionProps) {
             <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
               Your ID:
             </span>
-            <code className="flex-1 px-3 py-1 text-sm text-gray-800 bg-gray-100 rounded dark:bg-gray-700 dark:text-gray-300 truncate">
+            <code className="flex-1 px-3 py-1 text-sm text-gray-800 bg-gray-100 rounded dark:bg-gray-700 dark:text-gray-300 truncate mr-2">
               {peerId}
             </code>
             <IconButton

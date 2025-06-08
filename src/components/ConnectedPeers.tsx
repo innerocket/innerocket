@@ -1,6 +1,18 @@
 import { useState } from 'preact/hooks';
 import { FilePlus, X, QrCode } from 'lucide-react';
 import { QRCodeHandler } from './QRCodeHandler';
+import { tv } from 'tailwind-variants';
+
+const buttonStyles = tv({
+  base: 'p-2 rounded-lg',
+  variants: {
+    active: {
+      true: 'text-green-500 dark:text-green-400',
+      false:
+        'text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-500',
+    },
+  },
+});
 
 interface ConnectedPeersProps {
   peers: string[];
@@ -33,8 +45,8 @@ export function ConnectedPeers({
         {peers.map((peerId) => (
           <li key={peerId}>
             <div className="py-3 px-4 flex justify-between items-center">
-              <div className="flex-1 flex items-center truncate">
-                <code className="text-sm bg-gray-100 px-2 py-1 rounded dark:bg-gray-700 dark:text-gray-300">
+              <div className="flex-1 flex items-center truncate mr-2">
+                <code className="text-sm w-full max-w-full truncate bg-gray-100 px-2 py-1 rounded dark:bg-gray-700 dark:text-gray-300">
                   {peerId}
                 </code>
               </div>
@@ -42,11 +54,7 @@ export function ConnectedPeers({
                 <button
                   onClick={() => toggleQRCode(peerId)}
                   type="button"
-                  className={`${
-                    showQRCode === peerId
-                      ? 'text-green-500 dark:text-green-400'
-                      : 'text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-500'
-                  } p-2 rounded-lg`}
+                  className={buttonStyles({ active: showQRCode === peerId })}
                   aria-label="Show QR Code"
                 >
                   <QrCode className="h-5 w-5" stroke="currentColor" />
