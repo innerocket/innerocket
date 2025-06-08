@@ -19,6 +19,7 @@ export function FileSender({
 }: FileSenderProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   const handleFileChange = (e: Event) => {
     const input = e.target as HTMLInputElement;
@@ -51,6 +52,28 @@ export function FileSender({
     }
   };
 
+  const handleDragOver = (e: DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    if (e.dataTransfer?.files && e.dataTransfer.files.length > 0) {
+      setSelectedFile(e.dataTransfer.files[0]);
+    }
+  };
+
   if (!currentPeerId && connectedPeersCount === 0) {
     return null;
   }
@@ -79,10 +102,23 @@ export function FileSender({
           />
           <label
             htmlFor="file-input"
-            className="flex-1 flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer border-gray-200 bg-gray-50 dark:hover:bg-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:hover:border-gray-500 dark:bg-gray-700"
+            className={`flex-1 flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer ${
+              isDragging
+                ? 'border-blue-500 bg-blue-50 dark:border-blue-400 dark:bg-blue-900/20'
+                : 'border-gray-200 bg-gray-50 dark:hover:bg-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:hover:border-gray-500 dark:bg-gray-700'
+            }`}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
           >
             <div className="flex flex-col items-center justify-center pt-5 pb-6">
-              <CloudUpload className="w-10 h-10 mb-3 text-gray-400 dark:text-gray-400" />
+              <CloudUpload
+                className={`w-10 h-10 mb-3 ${
+                  isDragging
+                    ? 'text-blue-500 dark:text-blue-400'
+                    : 'text-gray-400 dark:text-gray-400'
+                }`}
+              />
               {selectedFile ? (
                 <div className="text-center">
                   <p className="mb-1 text-sm font-semibold text-gray-900 dark:text-white">
@@ -96,7 +132,7 @@ export function FileSender({
               ) : (
                 <div className="text-center">
                   <p className="mb-1 text-sm font-semibold text-gray-900 dark:text-white">
-                    Select a file to send
+                    {isDragging ? 'Drop file here' : 'Select a file to send'}
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
                     Click or drag and drop
