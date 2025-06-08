@@ -33,7 +33,7 @@ export function ConnectedPeers({
         {peers.map((peerId) => (
           <li key={peerId}>
             <div className="py-3 px-4 flex justify-between items-center">
-              <div className="flex-1 truncate">
+              <div className="flex-1 flex items-center truncate">
                 <code className="text-sm bg-gray-100 px-2 py-1 rounded dark:bg-gray-700 dark:text-gray-300">
                   {peerId}
                 </code>
