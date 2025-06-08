@@ -61,7 +61,7 @@ export function Notification({
 
   return (
     <div
-      className={`fixed top-4 right-4 z-50 transition-opacity duration-300 ${
+      className={`fixed top-4 right-4 z-50 transition-opacity duration-300 max-w-[calc(100dvw-2rem)] ${
         isVisible ? 'opacity-100' : 'opacity-0'
       }`}
     >
