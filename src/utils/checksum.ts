@@ -2,6 +2,7 @@
  * Utility functions for file integrity checking
  */
 import { createChecksumWorker } from './workerLoader';
+import { createSHA256 } from 'hash-wasm';
 
 /**
  * Calculates a SHA-256 checksum for a file or blob using a streaming approach
@@ -49,15 +50,12 @@ async function calculateChecksumSimple(file: File | Blob): Promise<string> {
       }
 
       try {
-        // Use the Web Crypto API to calculate SHA-256 hash in one go
+        // Use hash-wasm to calculate SHA-256 hash
         const arrayBuffer = e.target.result as ArrayBuffer;
-        const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer);
-
-        // Convert hash to hex string
-        const hashArray = Array.from(new Uint8Array(hashBuffer));
-        const hashHex = hashArray
-          .map((b) => b.toString(16).padStart(2, '0'))
-          .join('');
+        const hasher = await createSHA256();
+        hasher.init();
+        hasher.update(new Uint8Array(arrayBuffer));
+        const hashHex = hasher.digest('hex');
 
         resolve(hashHex);
       } catch (error) {
@@ -116,9 +114,11 @@ async function fallbackChunkedChecksum(
   const encoder = new TextEncoder();
   const data = encoder.encode(combinedHash);
 
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+  // Use hash-wasm to hash the combined data
+  const hasher = await createSHA256();
+  hasher.init();
+  hasher.update(data);
+  return hasher.digest('hex');
 }
 
 /**

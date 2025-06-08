@@ -2,6 +2,7 @@
  * Web Worker for checksum calculation
  * This offloads the work to another thread to prevent UI blocking
  */
+import { createSHA256 } from 'hash-wasm';
 
 self.onmessage = async function (e) {
   try {
@@ -15,13 +16,12 @@ self.onmessage = async function (e) {
       const end = Math.min(start + chunkSize, file.size);
       const chunk = file.slice(start, end);
 
-      // Calculate hash for this chunk
+      // Calculate hash for this chunk using hash-wasm
       const buffer = await chunk.arrayBuffer();
-      const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      const hashHex = hashArray
-        .map((b) => b.toString(16).padStart(2, '0'))
-        .join('');
+      const hasher = await createSHA256();
+      hasher.init();
+      hasher.update(new Uint8Array(buffer));
+      const hashHex = hasher.digest('hex');
 
       chunkHashes.push(hashHex);
 
@@ -37,11 +37,11 @@ self.onmessage = async function (e) {
     const encoder = new TextEncoder();
     const data = encoder.encode(combinedHash);
 
-    const finalHashBuffer = await crypto.subtle.digest('SHA-256', data);
-    const finalHashArray = Array.from(new Uint8Array(finalHashBuffer));
-    const finalHashHex = finalHashArray
-      .map((b) => b.toString(16).padStart(2, '0'))
-      .join('');
+    // Use hash-wasm for the final hash
+    const finalHasher = await createSHA256();
+    finalHasher.init();
+    finalHasher.update(data);
+    const finalHashHex = finalHasher.digest('hex');
 
     self.postMessage({ type: 'complete', hash: finalHashHex });
   } catch (error: unknown) {
