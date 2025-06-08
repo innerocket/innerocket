@@ -63,7 +63,7 @@ export function QRCodeHandler({
     <div className="qr-code-handler space-y-6">
       {(mode === 'generate' || mode === 'both') && (
         <div className="qr-generator">
-          <div className="w-full p-4 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+          <div className="w-full p-4 bg-white border border-gray-200 rounded-lg dark:bg-gray-800 dark:border-gray-700">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-xl font-bold text-gray-900 dark:text-white">
                 QR Code
@@ -113,7 +113,7 @@ export function QRCodeHandler({
 
       {(mode === 'scan' || mode === 'both') && (
         <div className="qr-scanner">
-          <div className="w-full p-4 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+          <div className="w-full p-4 bg-white border border-gray-200 rounded-lg dark:bg-gray-800 dark:border-gray-700">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-xl font-bold text-gray-900 dark:text-white">
                 QR Code Scanner
