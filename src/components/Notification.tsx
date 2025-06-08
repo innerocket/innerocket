@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'preact/hooks';
 import { CheckCircle, XCircle, AlertTriangle, Info, X } from 'lucide-react';
+import { tv } from 'tailwind-variants';
 
 export type NotificationType = 'success' | 'error' | 'info' | 'warning';
 
@@ -9,6 +10,21 @@ interface NotificationProps {
   duration?: number;
   onClose: () => void;
 }
+
+const notificationStyles = tv({
+  base: 'flex items-center p-4 mb-4 border rounded-lg',
+  variants: {
+    type: {
+      success:
+        'text-green-800 bg-green-50 border-green-300 dark:border-green-800 dark:bg-gray-800 dark:text-green-400',
+      error:
+        'text-red-800 bg-red-50 border-red-300 dark:border-red-800 dark:bg-gray-800 dark:text-red-400',
+      warning:
+        'text-yellow-800 bg-yellow-50 border-yellow-300 dark:border-yellow-800 dark:bg-gray-800 dark:text-yellow-300',
+      info: 'text-blue-800 bg-blue-50 border-blue-300 dark:border-blue-800 dark:bg-gray-800 dark:text-blue-400',
+    },
+  },
+});
 
 export function Notification({
   message,
@@ -28,20 +44,6 @@ export function Notification({
       clearTimeout(timer);
     };
   }, [duration, onClose]);
-
-  const getStyles = () => {
-    switch (type) {
-      case 'success':
-        return 'text-green-800 bg-green-50 border-green-300 dark:border-green-800 dark:bg-gray-800 dark:text-green-400';
-      case 'error':
-        return 'text-red-800 bg-red-50 border-red-300 dark:border-red-800 dark:bg-gray-800 dark:text-red-400';
-      case 'warning':
-        return 'text-yellow-800 bg-yellow-50 border-yellow-300 dark:border-yellow-800 dark:bg-gray-800 dark:text-yellow-300';
-      case 'info':
-      default:
-        return 'text-blue-800 bg-blue-50 border-blue-300 dark:border-blue-800 dark:bg-gray-800 dark:text-blue-400';
-    }
-  };
 
   const getIcon = () => {
     switch (type) {
@@ -63,10 +65,7 @@ export function Notification({
         isVisible ? 'opacity-100' : 'opacity-0'
       }`}
     >
-      <div
-        className={`flex items-center p-4 mb-4 border rounded-lg ${getStyles()}`}
-        role="alert"
-      >
+      <div className={notificationStyles({ type })} role="alert">
         <div className="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 mr-3">
           {getIcon()}
         </div>
