@@ -40,11 +40,11 @@ export function ConnectedPeers({
   }
 
   return (
-    <div className="border border-gray-200 rounded-lg dark:border-gray-700">
+    <div className="border border-gray-200 rounded-lg dark:border-gray-700 mb-4">
       <ul className="divide-y divide-gray-200 dark:divide-gray-700">
         {peers.map((peerId) => (
           <li key={peerId}>
-            <div className="py-3 px-4 flex justify-between items-center">
+            <div className="py-2 px-4 flex justify-between items-center">
               <div className="flex-1 flex items-center truncate mr-2">
                 <code className="text-sm w-full max-w-full truncate bg-gray-100 px-2 py-1 rounded dark:bg-gray-700 dark:text-gray-300">
                   {peerId}
