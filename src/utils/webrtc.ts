@@ -1,8 +1,14 @@
 import { Peer as PeerJS } from 'peerjs';
 import { v4 as uuidv4 } from 'uuid';
-import type { FileMetadata, FileTransferRequest, Peer } from '../types';
+import type {
+  FECChunkMetadata,
+  FileMetadata,
+  FileTransferRequest,
+  Peer,
+} from '../types';
 import { calculateChecksum } from './checksum';
 import { createFileChunkWorker } from './workerLoader';
+import { FECEncoder } from './fec';
 
 // Configuration constants
 const DEFAULT_CHUNK_SIZE = 1024 * 1024; // 1MB
@@ -43,7 +49,8 @@ export class WebRTCService {
     metadata: FileMetadata,
     progress: number,
     chunkSize?: number,
-    transferSpeed?: number
+    transferSpeed?: number,
+    fecMetadata?: FECChunkMetadata
   ) => void = () => {};
   private onFileTransferComplete: (
     peerId: string,
@@ -129,7 +136,26 @@ export class WebRTCService {
         data.metadata,
         data.progress,
         data.chunkSize,
-        data.transferSpeed
+        data.transferSpeed,
+        data.fecMetadata
+      );
+    } else if (data.type === 'file-parity-chunk') {
+      // Handle parity chunks separately, with special FEC metadata
+      this.onFileChunk(
+        peerId,
+        data.chunk,
+        data.metadata,
+        data.progress,
+        data.chunkSize,
+        data.transferSpeed,
+        {
+          index: data.parityIndex,
+          totalChunks: data.totalParityChunks,
+          isParityChunk: true,
+          chunkMap: data.chunkMap,
+          blockOffset: data.blockOffset,
+          blockSize: data.blockSize,
+        }
       );
     } else if (data.type === 'file-complete') {
       this.onFileTransferComplete(peerId, data.metadata);
@@ -180,7 +206,11 @@ export class WebRTCService {
     }
   }
 
-  public async sendFileRequest(peerId: string, file: File) {
+  public async sendFileRequest(
+    peerId: string,
+    file: File,
+    useFEC: boolean = true
+  ) {
     const conn = this.connections.get(peerId);
     if (!conn) {
       console.error('No connection to peer:', peerId);
@@ -197,6 +227,9 @@ export class WebRTCService {
         size: file.size,
         type: file.type,
         checksum: checksum,
+        useFEC: useFEC,
+        // Use an appropriate parity ratio based on file size
+        fecParityRatio: file.size > 100 * 1024 * 1024 ? 0.1 : 0.2, // 10% for large files, 20% for smaller ones
       };
 
       conn.send({
@@ -219,15 +252,23 @@ export class WebRTCService {
       return;
     }
 
+    // Determine whether to use FEC
+    const useFEC = metadata.useFEC !== undefined ? metadata.useFEC : true;
+
     // Use web worker for large files
     if (file.size > LARGE_FILE_THRESHOLD && typeof Worker !== 'undefined') {
-      this.sendFileWithWorker(conn, file, metadata);
+      this.sendFileWithWorker(conn, file, metadata, useFEC);
     } else {
-      this.sendFileStandard(conn, file, metadata);
+      this.sendFileStandard(conn, file, metadata, useFEC);
     }
   }
 
-  private sendFileStandard(conn: any, file: File, metadata: FileMetadata) {
+  private sendFileStandard(
+    conn: any,
+    file: File,
+    metadata: FileMetadata,
+    useFEC: boolean = false
+  ) {
     // Start with default chunk size
     let chunkSize = getOptimalChunkSize(file.size, 'medium');
     let connectionQuality: 'slow' | 'medium' | 'fast' = 'medium';
@@ -239,18 +280,67 @@ export class WebRTCService {
     let consecutiveFastChunks = 0;
     let currentTransferSpeed = 0;
 
+    // FEC setup
+    const fecEnabled = useFEC && file.size > 512 * 1024; // Only use FEC for files > 512KB
+    const fecEncoder = fecEnabled ? new FECEncoder(chunkSize) : null;
+    const fecBlockSize = fecEnabled
+      ? Math.min(10 * chunkSize, 5 * 1024 * 1024)
+      : 0; // Process 10 chunks per FEC block, max 5MB
+
+    // Buffers for FEC block processing
+    const fecBuffer: ArrayBuffer[] = [];
+    let fecBlockStartOffset = 0;
+
     const sendChunk = () => {
       if (offset >= file.size) {
-        // File transfer complete
+        // Send any remaining FEC parity chunks before completing
+        if (fecEnabled && fecBuffer.length > 0 && fecEncoder) {
+          sendFECParityChunks();
+        }
+
+        // File transfer complete - always send 100% progress
         conn.send({
           type: 'file-complete',
           metadata,
+          progress: 100,
         });
         return;
       }
 
       const slice = file.slice(offset, offset + chunkSize);
       reader.readAsArrayBuffer(slice);
+    };
+
+    // Process and send FEC parity chunks for the current buffer
+    const sendFECParityChunks = () => {
+      if (!fecEnabled || !fecEncoder || fecBuffer.length === 0) return;
+
+      // Generate parity chunks
+      const { parityChunks, chunkMap } = fecEncoder.encodeChunks(fecBuffer);
+
+      // Send each parity chunk
+      for (let i = 0; i < parityChunks.length; i++) {
+        conn.send({
+          type: 'file-parity-chunk',
+          chunk: parityChunks[i],
+          metadata,
+          progress: Math.min(
+            100,
+            Math.floor(((fecBlockStartOffset + fecBlockSize) / file.size) * 100)
+          ),
+          chunkSize,
+          transferSpeed: currentTransferSpeed,
+          parityIndex: i,
+          totalParityChunks: parityChunks.length,
+          chunkMap: chunkMap,
+          blockOffset: fecBlockStartOffset,
+          blockSize: fecBlockSize,
+        });
+      }
+
+      // Reset FEC buffer and update block start offset for next block
+      fecBuffer.length = 0;
+      fecBlockStartOffset = offset;
     };
 
     reader.onload = (e) => {
@@ -262,6 +352,29 @@ export class WebRTCService {
 
       const progress = Math.min(100, Math.floor((offset / file.size) * 100));
 
+      // If FEC is enabled, add to buffer for batch processing
+      if (fecEnabled && fecEncoder) {
+        fecBuffer.push(chunk);
+
+        // Process FEC block when we've collected enough chunks or reached the end
+        const isLastChunk = offset + chunkSize >= file.size;
+        const isBlockFull =
+          fecBuffer.length >= Math.floor(fecBlockSize / chunkSize);
+
+        if (isBlockFull || isLastChunk) {
+          sendFECParityChunks();
+        }
+      }
+
+      // Create FEC chunk metadata if enabled
+      const fecMetadata = fecEnabled
+        ? {
+            index: Math.floor(offset / chunkSize),
+            totalChunks: Math.ceil(file.size / chunkSize),
+            isParityChunk: false,
+          }
+        : undefined;
+
       // Send the chunk
       conn.send({
         type: 'file-chunk',
@@ -270,6 +383,7 @@ export class WebRTCService {
         progress,
         chunkSize,
         transferSpeed: currentTransferSpeed,
+        fecMetadata,
       });
 
       // Measure transfer rate if not the first chunk
@@ -340,7 +454,12 @@ export class WebRTCService {
     sendChunk();
   }
 
-  private sendFileWithWorker(conn: any, file: File, metadata: FileMetadata) {
+  private sendFileWithWorker(
+    conn: any,
+    file: File,
+    metadata: FileMetadata,
+    useFEC: boolean = false
+  ) {
     try {
       // Create web worker from external file
       const worker = createFileChunkWorker();
@@ -353,6 +472,16 @@ export class WebRTCService {
       let connectionQuality: 'slow' | 'medium' | 'fast' = 'medium';
       let currentTransferSpeed = 0;
 
+      // FEC setup
+      const fecEnabled = useFEC && file.size > 512 * 1024;
+      const fecBlockSize = fecEnabled
+        ? Math.min(10 * chunkSize, 5 * 1024 * 1024)
+        : 0;
+      const parityRatio = metadata.fecParityRatio || 0.2;
+      const parityChunksPerBlock = fecEnabled
+        ? Math.max(1, Math.ceil((fecBlockSize / chunkSize) * parityRatio))
+        : 0;
+
       // Set up worker message handler
       worker.onmessage = (e) => {
         const data = e.data;
@@ -362,6 +491,19 @@ export class WebRTCService {
           const chunk = data.chunk;
           const progress = data.progress;
 
+          // Create FEC metadata if enabled
+          const fecMetadata = fecEnabled
+            ? {
+                index: data.metadata
+                  ? data.metadata.index
+                  : Math.floor(offset / chunkSize),
+                totalChunks: data.metadata
+                  ? data.metadata.totalChunks
+                  : Math.ceil(file.size / chunkSize),
+                isParityChunk: false,
+              }
+            : undefined;
+
           // Send the chunk
           conn.send({
             type: 'file-chunk',
@@ -370,6 +512,7 @@ export class WebRTCService {
             progress,
             chunkSize,
             transferSpeed: currentTransferSpeed,
+            fecMetadata,
           });
 
           // Process transfer rate
@@ -399,6 +542,7 @@ export class WebRTCService {
             conn.send({
               type: 'file-complete',
               metadata,
+              progress: 100,
             });
 
             // Clean up worker
@@ -417,12 +561,32 @@ export class WebRTCService {
               : 0; // For smaller files, use minimal or no delay
 
           setTimeout(() => {
+            // Process FEC block if needed
+            if (
+              fecEnabled &&
+              Math.floor(offset / fecBlockSize) >
+                Math.floor((offset - chunkSize) / fecBlockSize)
+            ) {
+              // We've crossed a block boundary, process the previous block
+              const blockStartOffset =
+                Math.floor((offset - chunkSize) / fecBlockSize) * fecBlockSize;
+              worker.postMessage({
+                action: 'processFEC',
+                fileBlob: file,
+                startOffset: blockStartOffset,
+                blockSize: Math.min(fecBlockSize, file.size - blockStartOffset),
+                parityCount: parityChunksPerBlock,
+              });
+            }
+
+            // Continue with normal chunk processing
             worker.postMessage({
               action: 'process',
               file,
               chunkSize,
               offset,
               maxChunkSize: MAX_CHUNK_SIZE,
+              useFEC: fecEnabled,
             });
           }, nextChunkDelay);
         } else if (data.type === 'sizeAdjusted') {
@@ -430,10 +594,29 @@ export class WebRTCService {
           chunkSize = data.newChunkSize;
           connectionQuality = data.connectionQuality;
           transferRates = data.transferRates;
+        } else if (data.type === 'parityChunk') {
+          // Handle parity chunk from worker
+          conn.send({
+            type: 'file-parity-chunk',
+            chunk: data.chunk,
+            metadata,
+            progress: data.progress,
+            chunkSize,
+            transferSpeed: currentTransferSpeed,
+            parityIndex: data.parityIndex,
+            totalParityChunks: data.totalParityChunks,
+            chunkMap: data.chunkMap,
+            blockOffset: data.startOffset,
+            blockSize: data.blockSize,
+          });
+        } else if (data.type === 'fecBlockComplete') {
+          // FEC block processing is now separate from file completion
+          // We no longer wait for FEC to complete before ending the transfer
+          console.log('FEC block processing complete');
         } else if (data.type === 'error') {
           console.error('Worker error:', data.error);
           // Fallback to standard method if worker fails
-          this.sendFileStandard(conn, file, metadata);
+          this.sendFileStandard(conn, file, metadata, useFEC);
           worker.terminate();
         }
       };
@@ -442,7 +625,7 @@ export class WebRTCService {
       worker.onerror = (error) => {
         console.error('Worker error:', error);
         // Fallback to standard method if worker fails
-        this.sendFileStandard(conn, file, metadata);
+        this.sendFileStandard(conn, file, metadata, useFEC);
         worker.terminate();
       };
 
@@ -459,7 +642,7 @@ export class WebRTCService {
         'Failed to create worker, falling back to standard method:',
         error
       );
-      this.sendFileStandard(conn, file, metadata);
+      this.sendFileStandard(conn, file, metadata, useFEC);
     }
   }
 
@@ -518,7 +701,8 @@ export class WebRTCService {
       metadata: FileMetadata,
       progress: number,
       chunkSize?: number,
-      transferSpeed?: number
+      transferSpeed?: number,
+      fecMetadata?: FECChunkMetadata
     ) => void
   ) {
     this.onFileChunk = callback;

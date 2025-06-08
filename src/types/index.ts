@@ -22,6 +22,7 @@ export interface FileTransfer {
   checksum?: string;
   transferSpeed?: number; // Transfer speed in MB/s
   chunkSize?: number; // Current chunk size in bytes
+  useFEC?: boolean; // Whether FEC is enabled for this transfer
 }
 
 export interface FileMetadata {
@@ -30,9 +31,23 @@ export interface FileMetadata {
   size: number;
   type: string;
   checksum?: string;
+  useFEC?: boolean; // Whether FEC is enabled for this file
+  fecParityRatio?: number; // Ratio of parity chunks to data chunks (e.g., 0.2 = 20% extra parity data)
 }
 
 export interface FileTransferRequest {
   metadata: FileMetadata;
   from: Peer;
+}
+
+// New interface for FEC chunk metadata
+export interface FECChunkMetadata {
+  index: number;
+  totalChunks: number;
+  isParityChunk?: boolean;
+  parityIndex?: number;
+  totalParityChunks?: number;
+  chunkMap?: Uint32Array;
+  blockOffset?: number;
+  blockSize?: number;
 }
