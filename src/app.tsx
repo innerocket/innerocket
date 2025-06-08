@@ -282,7 +282,7 @@ export function App() {
                 aria-label="Clear file history"
                 title="Clear file history"
               >
-                <Trash2 className="h-4 w-4 mr-1" />
+                <Trash2 className="h-4 w-4 mr-2 hidden md:block" />
                 <span>Clear History</span>
               </button>
             </div>
