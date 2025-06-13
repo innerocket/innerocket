@@ -4,8 +4,8 @@ import { Button } from './ui';
 
 interface FileSenderProps {
   currentPeerId: string | null;
-  onSendFile: (file: File) => void;
-  onSendFileToAll?: (file: File) => void;
+  onSendFile: (file: File) => void | Promise<void>;
+  onSendFileToAll?: (file: File) => void | Promise<void>;
   connectedPeersCount?: number;
   onClose?: () => void;
 }
@@ -18,20 +18,22 @@ export function FileSender({
   onClose,
 }: FileSenderProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isDragging, setIsDragging] = useState(false);
 
   const handleFileChange = (e: Event) => {
     const input = e.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
-      setSelectedFile(input.files[0]);
+      setSelectedFiles(Array.from(input.files));
     }
   };
 
-  const handleSendFile = () => {
-    if (selectedFile) {
-      onSendFile(selectedFile);
-      setSelectedFile(null);
+  const handleSendFile = async () => {
+    if (selectedFiles.length > 0) {
+      for (const file of selectedFiles) {
+        await onSendFile(file);
+      }
+      setSelectedFiles([]);
 
       // Reset file input
       if (fileInputRef.current) {
@@ -40,10 +42,12 @@ export function FileSender({
     }
   };
 
-  const handleSendFileToAll = () => {
-    if (selectedFile && onSendFileToAll) {
-      onSendFileToAll(selectedFile);
-      setSelectedFile(null);
+  const handleSendFileToAll = async () => {
+    if (selectedFiles.length > 0 && onSendFileToAll) {
+      for (const file of selectedFiles) {
+        await onSendFileToAll(file);
+      }
+      setSelectedFiles([]);
 
       // Reset file input
       if (fileInputRef.current) {
@@ -70,7 +74,7 @@ export function FileSender({
     setIsDragging(false);
 
     if (e.dataTransfer?.files && e.dataTransfer.files.length > 0) {
-      setSelectedFile(e.dataTransfer.files[0]);
+      setSelectedFiles(Array.from(e.dataTransfer.files));
     }
   };
 
@@ -96,6 +100,7 @@ export function FileSender({
           <input
             ref={fileInputRef}
             type="file"
+            multiple
             onChange={handleFileChange}
             className="hidden"
             id="file-input"
@@ -119,15 +124,30 @@ export function FileSender({
                     : 'text-gray-400 dark:text-gray-400'
                 }`}
               />
-              {selectedFile ? (
+              {selectedFiles.length > 0 ? (
                 <div className="text-center">
-                  <p className="mb-1 text-sm font-semibold text-gray-900 dark:text-white">
-                    {selectedFile.name}
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    {formatFileSize(selectedFile.size)} •{' '}
-                    {selectedFile.type || 'Unknown type'}
-                  </p>
+                  {selectedFiles.length === 1 ? (
+                    <>
+                      <p className="mb-1 text-sm font-semibold text-gray-900 dark:text-white">
+                        {selectedFiles[0].name}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {formatFileSize(selectedFiles[0].size)} •{' '}
+                        {selectedFiles[0].type || 'Unknown type'}
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="mb-1 text-sm font-semibold text-gray-900 dark:text-white">
+                        {selectedFiles.length} files selected
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {formatFileSize(
+                          selectedFiles.reduce((t, f) => t + f.size, 0)
+                        )}
+                      </p>
+                    </>
+                  )}
                 </div>
               ) : (
                 <div className="text-center">
@@ -144,7 +164,9 @@ export function FileSender({
           <div className="flex mt-auto flex-col gap-2">
             <Button
               onClick={handleSendFile}
-              disabled={!selectedFile || (!currentPeerId && !onSendFileToAll)}
+              disabled={
+                selectedFiles.length === 0 || (!currentPeerId && !onSendFileToAll)
+              }
               className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800"
             >
               Send File
@@ -153,7 +175,7 @@ export function FileSender({
             {onSendFileToAll && connectedPeersCount > 0 && (
               <Button
                 onClick={handleSendFileToAll}
-                disabled={!selectedFile}
+                disabled={selectedFiles.length === 0}
                 className="flex items-center gap-2 text-white bg-green-600 hover:bg-green-700 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-green-600 dark:hover:bg-green-700 focus:outline-none dark:focus:ring-green-800"
               >
                 <Users size={16} />

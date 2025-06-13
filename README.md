@@ -9,6 +9,7 @@ Innerocket is a secure peer-to-peer file sharing application that uses WebRTC te
 - **No File Size Limits**: Share files of any size (limited only by browser memory)
 - **Simple User Interface**: Easy to use interface built with Tailwind CSS
 - **No Account Required**: Just open the app and start sharing
+- **Send Multiple Files**: Select and send several files in one go
 
 ## How It Works
 
