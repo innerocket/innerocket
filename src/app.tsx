@@ -131,10 +131,10 @@ export function App() {
     );
   };
 
-  const handleSendFile = (file: File) => {
+  const handleSendFile = async (file: File) => {
     if (selectedPeerId) {
-      const transferId = sendFile(selectedPeerId, file);
-      if (transferId) {
+      const transferId = await sendFile(selectedPeerId, file);
+      if (transferId !== null) {
         showNotification(`Sending file "${file.name}"...`, 'info');
       } else {
         showNotification(
