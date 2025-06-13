@@ -50,6 +50,14 @@ export class WebRTCService {
     peerId: string,
     metadata: FileMetadata
   ) => void = () => {};
+  private onFileTransferAccepted: (
+    peerId: string,
+    metadata: FileMetadata
+  ) => void = () => {};
+  private onFileTransferRejected: (
+    peerId: string,
+    metadata: FileMetadata
+  ) => void = () => {};
   private discoveredPeers: Map<string, Peer> = new Map();
   private myPeerId: string;
 
@@ -135,6 +143,10 @@ export class WebRTCService {
       );
     } else if (data.type === 'file-complete') {
       this.onFileTransferComplete(peerId, data.metadata);
+    } else if (data.type === 'file-accept') {
+      this.onFileTransferAccepted(peerId, data.metadata);
+    } else if (data.type === 'file-reject') {
+      this.onFileTransferRejected(peerId, data.metadata);
     }
   }
 
@@ -534,5 +546,17 @@ export class WebRTCService {
     callback: (peerId: string, metadata: FileMetadata) => void
   ) {
     this.onFileTransferComplete = callback;
+  }
+
+  public setOnFileTransferAccepted(
+    callback: (peerId: string, metadata: FileMetadata) => void
+  ) {
+    this.onFileTransferAccepted = callback;
+  }
+
+  public setOnFileTransferRejected(
+    callback: (peerId: string, metadata: FileMetadata) => void
+  ) {
+    this.onFileTransferRejected = callback;
   }
 }

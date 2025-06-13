@@ -6,6 +6,7 @@ import { FileTransferList } from './components/FileTransferList';
 import { FileSender } from './components/FileSender';
 import { FilePreview } from './components/FilePreview';
 import { NotificationContainer } from './components/Notification';
+import { IncomingRequests } from './components/IncomingRequests';
 import type {
   NotificationItem,
   NotificationType,
@@ -23,6 +24,9 @@ export function App() {
     disconnectFromPeer,
     sendFile,
     sendFileToAllPeers,
+    incomingRequests,
+    acceptRequest,
+    rejectRequest,
     downloadFile,
     previewFile,
     getFileType,
@@ -208,6 +212,22 @@ export function App() {
     }
   };
 
+  const handleAcceptRequest = (id: string) => {
+    const req = incomingRequests.find((r) => r.metadata.id === id);
+    if (req) {
+      acceptRequest(id);
+      showNotification(`Accepted file "${req.metadata.name}"`, 'info');
+    }
+  };
+
+  const handleRejectRequest = (id: string) => {
+    const req = incomingRequests.find((r) => r.metadata.id === id);
+    if (req) {
+      rejectRequest(id);
+      showNotification(`Rejected file "${req.metadata.name}"`, 'warning');
+    }
+  };
+
   const handleClosePreview = () => {
     if (previewUrl) {
       URL.revokeObjectURL(previewUrl);
@@ -361,6 +381,12 @@ export function App() {
         onSendFileToAll={handleSendFileToAll}
         connectedPeersCount={connectedPeers.length}
         onClose={handleCloseFileSender}
+      />
+
+      <IncomingRequests
+        requests={incomingRequests}
+        onAccept={handleAcceptRequest}
+        onReject={handleRejectRequest}
       />
 
       <NotificationContainer

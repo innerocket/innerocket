@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'preact/hooks';
+import { useEffect, useMemo, useState, useRef } from 'preact/hooks';
 import { WebRTCService } from '../utils/webrtc';
 import { usePeer } from '../contexts/PeerContext';
 import { verifyChecksum } from '../utils/checksum';
@@ -7,7 +7,7 @@ import {
   createProgressAnimation,
   getFileTypeFromName,
 } from '../utils/fileTransferUtils';
-import type { FileTransfer } from '../types';
+import type { FileTransfer, FileTransferRequest, FileMetadata } from '../types';
 
 interface UseWebRTCFileTransferProps {
   addTransfer: (transfer: FileTransfer) => void;
@@ -34,6 +34,12 @@ export function useWebRTCFileTransfer({
 }: UseWebRTCFileTransferProps) {
   const { peerId } = usePeer();
   const [connectedPeers, setConnectedPeersLocal] = useState<string[]>([]);
+  const [incomingRequests, setIncomingRequests] = useState<
+    FileTransferRequest[]
+  >([]);
+  const pendingOutgoing = useRef(
+    new Map<string, { peerId: string; file: File; metadata: FileMetadata }>()
+  );
 
   const webRTCService = useMemo(() => new WebRTCService(peerId), [peerId]);
   const fileStorageService = useMemo(() => new FileStorageService(), []);
@@ -61,7 +67,6 @@ export function useWebRTCFileTransfer({
     webRTCService.setOnFileTransferRequest((request) => {
       const { metadata, from } = request;
 
-      // Create transfer with preparing status
       addTransfer({
         id: metadata.id,
         fileName: metadata.name,
@@ -70,22 +75,12 @@ export function useWebRTCFileTransfer({
         sender: from.id,
         receiver: webRTCService.getMyPeerId(),
         progress: 0,
-        status: 'preparing',
+        status: 'pending',
         createdAt: Date.now(),
         checksum: metadata.checksum,
       });
 
-      // Start preparing animation
-      const stopAnimation = createProgressAnimation((progress) => {
-        updateTransferProgress(metadata.id, progress);
-      });
-
-      // Auto-accept after delay
-      setTimeout(() => {
-        stopAnimation();
-        updateTransfer(metadata.id, { status: 'pending', progress: 0 });
-        webRTCService.acceptFileTransfer(from.id, metadata);
-      }, 1000);
+      setIncomingRequests((prev) => [...prev, request]);
     });
 
     webRTCService.setOnFileChunk(
@@ -194,6 +189,20 @@ export function useWebRTCFileTransfer({
       }
     });
 
+    webRTCService.setOnFileTransferAccepted((peerId, metadata) => {
+      const pending = pendingOutgoing.current.get(metadata.id);
+      if (pending) {
+        webRTCService.sendFile(peerId, pending.file, metadata);
+        updateTransfer(metadata.id, { status: 'transferring', progress: 0 });
+        pendingOutgoing.current.delete(metadata.id);
+      }
+    });
+
+    webRTCService.setOnFileTransferRejected((_, metadata) => {
+      updateTransfer(metadata.id, { status: 'rejected' });
+      pendingOutgoing.current.delete(metadata.id);
+    });
+
     // Load previously completed files
     loadCompletedFiles();
 
@@ -239,6 +248,26 @@ export function useWebRTCFileTransfer({
 
   const disconnectFromPeer = (peerId: string) => {
     webRTCService.disconnectFromPeer(peerId);
+  };
+
+  const acceptRequest = (requestId: string) => {
+    const req = incomingRequests.find((r) => r.metadata.id === requestId);
+    if (!req) return;
+    updateTransfer(requestId, { status: 'transferring', progress: 0 });
+    webRTCService.acceptFileTransfer(req.from.id, req.metadata);
+    setIncomingRequests((prev) =>
+      prev.filter((r) => r.metadata.id !== requestId)
+    );
+  };
+
+  const rejectRequest = (requestId: string) => {
+    const req = incomingRequests.find((r) => r.metadata.id === requestId);
+    if (!req) return;
+    updateTransfer(requestId, { status: 'rejected' });
+    webRTCService.rejectFileTransfer(req.from.id, req.metadata);
+    setIncomingRequests((prev) =>
+      prev.filter((r) => r.metadata.id !== requestId)
+    );
   };
 
   const sendFile = async (
@@ -291,12 +320,7 @@ export function useWebRTCFileTransfer({
         checksum: metadata.checksum,
       });
 
-      webRTCService.sendFile(peerId, file, metadata);
-
-      updateTransfer(metadata.id, {
-        status: 'transferring',
-        progress: 0,
-      });
+      pendingOutgoing.current.set(metadata.id, { peerId, file, metadata });
 
       return metadata.id;
     } catch (error) {
@@ -329,6 +353,9 @@ export function useWebRTCFileTransfer({
     disconnectFromPeer,
     sendFile,
     sendFileToAllPeers,
+    incomingRequests,
+    acceptRequest,
+    rejectRequest,
     myPeerId: peerId,
   };
 }

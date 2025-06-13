@@ -67,6 +67,8 @@ export function getStatusBadgeVariant(
       return 'primary';
     case 'completed':
       return 'success';
+    case 'rejected':
+      return 'danger';
     case 'failed':
       return 'danger';
     case 'integrity_error':

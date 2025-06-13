@@ -16,6 +16,7 @@ export interface FileTransfer {
     | 'preparing'
     | 'transferring'
     | 'completed'
+    | 'rejected'
     | 'failed'
     | 'integrity_error'
     | 'verifying';
