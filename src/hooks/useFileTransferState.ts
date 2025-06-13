@@ -19,7 +19,12 @@ export function useFileTransferState() {
   }, [fileTransfers]);
 
   const addTransfer = (transfer: FileTransfer) => {
-    setFileTransfers((prev) => [...prev, transfer]);
+    setFileTransfers((prev) => {
+      if (prev.some((t) => t.id === transfer.id)) {
+        return prev;
+      }
+      return [...prev, transfer];
+    });
   };
 
   const updateTransfer = (
