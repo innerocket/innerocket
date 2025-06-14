@@ -49,7 +49,7 @@ const rightIconWrapper = tv({
   },
 });
 
-export interface InputProps extends JSX.HTMLAttributes<HTMLInputElement> {
+export interface InputProps extends JSX.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string;
   hint?: string;
