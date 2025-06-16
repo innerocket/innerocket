@@ -7,19 +7,19 @@ const button = tv({
   variants: {
     variant: {
       primary:
-        'text-white bg-blue-600 hover:bg-blue-700 focus:ring-blue-500 border border-blue-600 hover:border-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-500 dark:border-blue-600',
+        'text-white bg-blue-600 hover:bg-blue-700 focus:ring-blue-500 border-2 border-blue-600 hover:border-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-500 dark:border-blue-600',
       secondary:
-        'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 hover:border-gray-400 focus:ring-gray-500 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-500 dark:focus:ring-gray-400',
+        'text-gray-700 bg-white border-2 border-gray-300 hover:bg-gray-50 hover:border-gray-400 focus:ring-gray-500 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-500 dark:focus:ring-gray-400',
       success:
-        'text-white bg-green-600 hover:bg-green-700 focus:ring-green-500 border border-green-600 hover:border-green-700 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-500',
+        'text-white bg-green-600 hover:bg-green-700 focus:ring-green-500 border-2 border-green-600 hover:border-green-700 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-500',
       danger:
-        'text-white bg-red-600 hover:bg-red-700 focus:ring-red-500 border border-red-600 hover:border-red-700 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-500',
+        'text-white bg-red-600 hover:bg-red-700 focus:ring-red-500 border-2 border-red-600 hover:border-red-700 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-500',
       warning:
-        'text-white bg-amber-500 hover:bg-amber-600 focus:ring-amber-500 border border-amber-500 hover:border-amber-600 dark:bg-amber-600 dark:hover:bg-amber-700 dark:focus:ring-amber-500',
-      info: 'text-white bg-cyan-600 hover:bg-cyan-700 focus:ring-cyan-500 border border-cyan-600 hover:border-cyan-700 dark:bg-cyan-600 dark:hover:bg-cyan-700 dark:focus:ring-cyan-500',
+        'text-white bg-amber-500 hover:bg-amber-600 focus:ring-amber-500 border-2 border-amber-500 hover:border-amber-600 dark:bg-amber-600 dark:hover:bg-amber-700 dark:focus:ring-amber-500',
+      info: 'text-white bg-cyan-600 hover:bg-cyan-700 focus:ring-cyan-500 border-2 border-cyan-600 hover:border-cyan-700 dark:bg-cyan-600 dark:hover:bg-cyan-700 dark:focus:ring-cyan-500',
       light:
-        'text-gray-600 bg-gray-100 border border-gray-200 hover:bg-gray-200 hover:border-gray-300 focus:ring-gray-500 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600 dark:hover:border-gray-500',
-      dark: 'text-white bg-gray-800 hover:bg-gray-900 focus:ring-gray-600 border border-gray-800 hover:border-gray-900 dark:bg-gray-700 dark:hover:bg-gray-600 dark:focus:ring-gray-500',
+        'text-gray-600 bg-gray-100 border-2 border-gray-200 hover:bg-gray-200 hover:border-gray-300 focus:ring-gray-500 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600 dark:hover:border-gray-500',
+      dark: 'text-white bg-gray-800 hover:bg-gray-900 focus:ring-gray-600 border-2 border-gray-800 hover:border-gray-900 dark:bg-gray-700 dark:hover:bg-gray-600 dark:focus:ring-gray-500',
       ghost: 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 focus:ring-gray-500 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200',
     },
     size: {
