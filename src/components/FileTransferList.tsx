@@ -173,13 +173,13 @@ export function FileTransferList({
                     <div
                       className={`h-3 rounded-lg transition-all duration-300 ${
                         transfer.status === 'completed'
-                          ? 'bg-gradient-to-r from-green-500 to-green-600'
+                          ? 'bg-green-500'
                           : transfer.status === 'failed' ||
                             transfer.status === 'integrity_error'
-                          ? 'bg-gradient-to-r from-red-500 to-red-600'
+                          ? 'bg-red-500'
                           : transfer.status === 'verifying'
-                          ? 'bg-gradient-to-r from-amber-500 to-yellow-500'
-                          : 'bg-gradient-to-r from-blue-500 to-blue-600'
+                          ? 'bg-amber-500'
+                          : 'bg-blue-500'
                       }`}
                       style={{ width: `${transfer.progress}%` }}
                     ></div>
