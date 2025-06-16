@@ -92,7 +92,7 @@ export function FileTransferList({
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100 dark:divide-gray-600">
+          <tbody className="divide-y-2 divide-gray-100 dark:divide-gray-600">
             {filteredTransfers.map((transfer) => (
               <tr
                 key={transfer.id}
