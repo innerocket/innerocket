@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, useRef } from 'preact/hooks';
+import Sqlds from 'sqids';
 import { WebRTCService } from '../utils/webrtc';
 import { usePeer } from '../contexts/PeerContext';
 import { verifyChecksum } from '../utils/checksum';
@@ -8,6 +9,8 @@ import {
   getFileTypeFromName,
 } from '../utils/fileTransferUtils';
 import type { FileTransfer, FileTransferRequest, FileMetadata } from '../types';
+
+const sqlds = new Sqlds();
 
 interface UseWebRTCFileTransferProps {
   addTransfer: (transfer: FileTransfer) => void;
@@ -275,7 +278,10 @@ export function useWebRTCFileTransfer({
     file: File
   ): Promise<string | null> => {
     try {
-      const tempId = crypto.randomUUID();
+      const tempId = sqlds.encode([
+        Date.now(),
+        Math.floor(Math.random() * 10000),
+      ]);
 
       // Add preparing transfer
       addTransfer({

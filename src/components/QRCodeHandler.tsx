@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'preact/hooks';
 import QRCode from 'qrcode';
 import { QrReader } from 'react-qr-reader';
-import { v4 as uuidv4 } from 'uuid';
+import Sqlds from 'sqids';
 import { Button } from './ui';
+
+const sqlds = new Sqlds();
 
 type QRCodeHandlerProps = {
   initialValue?: string;
@@ -17,7 +19,10 @@ export function QRCodeHandler({
   mode = 'both',
   readOnly = false,
 }: QRCodeHandlerProps) {
-  const [qrValue, setQrValue] = useState<string>(initialValue || uuidv4());
+  const [qrValue, setQrValue] = useState<string>(
+    initialValue ||
+      sqlds.encode([Date.now(), Math.floor(Math.random() * 10000)])
+  );
   const [qrCodeDataURL, setQrCodeDataURL] = useState<string>('');
   const [isScannerActive, setIsScannerActive] = useState<boolean>(false);
   const [scanResult, setScanResult] = useState<string>('');
@@ -38,11 +43,11 @@ export function QRCodeHandler({
     }
   }, [qrValue]);
 
-  // Generate new UUID
+  // Generate new ID
   const generateNewUUID = () => {
-    const newUUID = uuidv4();
-    setQrValue(newUUID);
-    return newUUID;
+    const newID = sqlds.encode([Date.now(), Math.floor(Math.random() * 10000)]);
+    setQrValue(newID);
+    return newID;
   };
 
   // Handle scan result
@@ -82,7 +87,7 @@ export function QRCodeHandler({
                   className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-md focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                 />
                 <Button onClick={generateNewUUID} variant="primary">
-                  Generate UUID
+                  Generate ID
                 </Button>
               </div>
             </div>

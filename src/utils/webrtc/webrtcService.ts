@@ -1,7 +1,9 @@
-import { v4 as uuidv4 } from 'uuid';
+import Sqlds from 'sqids';
 import type { FileMetadata, FileTransferRequest, Peer } from '../../types';
 import { ConnectionManager } from './connectionManager';
 import { FileTransferService } from './fileTransferService';
+
+const sqlds = new Sqlds();
 
 export class WebRTCService {
   private connectionManager: ConnectionManager;
@@ -10,7 +12,8 @@ export class WebRTCService {
 
   constructor(peerId?: string) {
     // Use provided peerId or generate a new one if not provided
-    this.myPeerId = peerId || uuidv4();
+    this.myPeerId =
+      peerId || sqlds.encode([Date.now(), Math.floor(Math.random() * 10000)]);
 
     // Initialize services
     this.connectionManager = new ConnectionManager(this.myPeerId);

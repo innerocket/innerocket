@@ -25,9 +25,9 @@
     "qrcode": "^1.5.4",
     "react-qr-reader": "3.0.0-beta-1",
     "simple-peer": "^9.11.1",
+    "sqids": "^0.3.0",
     "tailwind-variants": "^1.0.0",
-    "tailwindcss": "^4.1.8",
-    "uuid": "^9.0.1"
+    "tailwindcss": "^4.1.8"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.8.1",
@@ -35,7 +35,6 @@
     "@preact/preset-vite": "^2.10.1",
     "@types/qrcode": "^1.5.5",
     "@types/simple-peer": "^9.11.8",
-    "@types/uuid": "^9.0.8",
     "husky": "^9.1.7",
     "typescript": "~5.8.3",
     "vite": "^6.3.5",

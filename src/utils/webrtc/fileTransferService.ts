@@ -1,4 +1,4 @@
-import { v4 as uuidv4 } from 'uuid';
+import Sqlds from 'sqids';
 import type { FileMetadata } from '../../types';
 import { calculateChecksum } from '../checksum';
 import { createFileChunkWorker } from '../workerLoader';
@@ -9,6 +9,7 @@ import type {
   WebRTCCallbacks,
 } from './types';
 
+const sqlds = new Sqlds();
 const LARGE_FILE_THRESHOLD = 100 * 1024 * 1024; // 100MB
 
 export class FileTransferService {
@@ -29,7 +30,7 @@ export class FileTransferService {
       const checksum = await calculateChecksum(file);
 
       const metadata: FileMetadata = {
-        id: uuidv4(),
+        id: sqlds.encode([Date.now(), Math.floor(Math.random() * 10000)]),
         name: file.name,
         size: file.size,
         type: file.type,

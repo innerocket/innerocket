@@ -11,9 +11,11 @@ import type {
   NotificationItem,
   NotificationType,
 } from './components/Notification';
-import { v4 as uuidv4 } from 'uuid';
+import Sqlds from 'sqids';
 import { Info, HelpCircle, Trash2 } from 'lucide-react';
 import { usePeer } from './contexts/PeerContext';
+
+const sqlds = new Sqlds();
 
 export function App() {
   const { peerId } = usePeer();
@@ -123,7 +125,7 @@ export function App() {
   }, [previewUrl]);
 
   const showNotification = (message: string, type: NotificationType) => {
-    const id = uuidv4();
+    const id = sqlds.encode([Date.now(), Math.floor(Math.random() * 10000)]);
     setNotifications((prev) => [...prev, { id, message, type }]);
   };
 

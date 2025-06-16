@@ -1,6 +1,8 @@
 import { createContext } from 'preact';
 import { useContext, useState, useEffect } from 'preact/hooks';
-import { v4 as uuidv4 } from 'uuid';
+import Sqlds from 'sqids';
+
+const sqlds = new Sqlds();
 
 // Define the type for our context
 type PeerContextType = {
@@ -21,10 +23,13 @@ export function PeerProvider({
 }: {
   children: preact.ComponentChildren;
 }) {
-  // Initialize state from localStorage or generate a new UUID
+  // Initialize state from localStorage or generate a new sqlds ID
   const [peerId, setPeerId] = useState<string>(() => {
     const savedPeerId = localStorage.getItem(PEER_ID_STORAGE_KEY);
-    return savedPeerId || uuidv4();
+    return (
+      savedPeerId ||
+      sqlds.encode([Date.now(), Math.floor(Math.random() * 10000)])
+    );
   });
 
   // Save to localStorage whenever peerId changes
@@ -34,7 +39,7 @@ export function PeerProvider({
 
   // Function to reset the peer ID
   const resetPeerId = () => {
-    setPeerId(uuidv4());
+    setPeerId(sqlds.encode([Date.now(), Math.floor(Math.random() * 10000)]));
   };
 
   // Create the context value object
