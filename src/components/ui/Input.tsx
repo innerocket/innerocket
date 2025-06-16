@@ -12,7 +12,7 @@ const inputWrapper = tv({
 });
 
 const inputStyles = tv({
-  base: 'block p-3 rounded-lg focus:outline-none transition-all duration-200',
+  base: 'block p-2 px-3 rounded-lg focus:outline-none transition-all duration-200',
   variants: {
     error: {
       true: 'bg-red-50 border-2 border-red-400 text-red-900 placeholder-red-600 focus:border-red-500 dark:bg-red-900/20 dark:border-red-500 dark:text-red-200 dark:placeholder-red-400',

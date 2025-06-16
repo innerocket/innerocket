@@ -2,7 +2,7 @@ import { useState } from 'preact/hooks';
 import { Copy, Check, QrCode, ScanLine } from 'lucide-react';
 import { usePeer } from '../contexts/PeerContext';
 import { QRCodeModal } from './QRCodeModal';
-import { Button, IconButton } from './ui';
+import { Button, IconButton, Input } from './ui';
 
 interface PeerConnectionProps {
   onConnect: (peerId: string) => void;
@@ -100,14 +100,15 @@ export function PeerConnection({ onConnect }: PeerConnectionProps) {
 
           <div className="flex items-center">
             <div className="flex-1">
-              <input
+              <Input
                 type="text"
                 value={peerIdInput}
                 onChange={(e) =>
                   setPeerIdInput((e.target as HTMLInputElement).value)
                 }
                 placeholder="Enter peer ID to connect"
-                className="bg-gray-50 outline-gray-200 text-gray-900 outline-2 -outline-offset-2 text-sm rounded-l-md focus:outline-blue-400 block w-full p-3 transition-all duration-200 dark:bg-gray-700 dark:outline-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:outline-blue-500"
+                fullWidth
+                className="rounded-r-none"
               />
             </div>
             <Button
