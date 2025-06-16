@@ -303,12 +303,12 @@ export function App() {
                 <button
                   onClick={handleClearFileHistory}
                   type="button"
-                  className="inline-flex items-center text-red-600 hover:text-white border-2 border-red-500 hover:bg-red-600 focus:ring-2 focus:outline-none focus:ring-red-500 focus:ring-offset-2 font-medium rounded-md text-sm px-3 py-2 transition-all duration-200 dark:border-red-500 dark:text-red-400 dark:hover:text-white dark:hover:bg-red-600 dark:focus:ring-red-500"
+                  className="inline-flex items-center text-red-600 hover:text-white border-2 border-red-500 hover:bg-red-600 focus:ring-2 focus:outline-none focus:ring-red-500 focus:ring-offset-2 font-medium rounded-md text-sm px-3 py-2 sm:px-3 sm:py-2 transition-all duration-200 dark:border-red-500 dark:text-red-400 dark:hover:text-white dark:hover:bg-red-600 dark:focus:ring-red-500"
                   aria-label="Clear file history"
                   title="Clear file history"
                 >
-                  <Trash2 className="h-4 w-4 mr-2 hidden md:block" />
-                  <span>Clear History</span>
+                  <Trash2 className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Clear History</span>
                 </button>
               </div>
 
