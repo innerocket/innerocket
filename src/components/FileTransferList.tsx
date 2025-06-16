@@ -70,7 +70,7 @@ export function FileTransferList({
       />
       <div className="relative overflow-x-auto rounded-lg border-2 border-gray-200 dark:border-gray-700">
         <table className="w-full text-sm text-left text-gray-600 dark:text-gray-300">
-          <thead className="text-xs text-gray-700 uppercase bg-gray-100 dark:text-gray-300 border-b-2 border-gray-200 dark:border-gray-600 dark:bg-gray-700">
+          <thead className="text-xs text-gray-700 uppercase bg-gray-100 dark:text-gray-300 border-b-2 border-gray-200 dark:border-gray-700 dark:bg-gray-600">
             <tr>
               <th scope="col" className="px-6 py-4 font-semibold">
                 File
