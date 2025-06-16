@@ -11,6 +11,7 @@ type QRCodeHandlerProps = {
   onScan?: (data: string) => void;
   mode?: 'generate' | 'scan' | 'both';
   readOnly?: boolean;
+  onValidScan?: () => void; // Callback to close modal when valid scan is detected
 };
 
 export function QRCodeHandler({
@@ -18,14 +19,18 @@ export function QRCodeHandler({
   onScan,
   mode = 'both',
   readOnly = false,
+  onValidScan,
 }: QRCodeHandlerProps) {
   const [qrValue, setQrValue] = useState<string>(
     initialValue ||
       sqlds.encode([Date.now(), Math.floor(Math.random() * 10000)])
   );
   const [qrCodeDataURL, setQrCodeDataURL] = useState<string>('');
-  const [isScannerActive, setIsScannerActive] = useState<boolean>(false);
+  const [isScannerActive, setIsScannerActive] = useState<boolean>(
+    mode === 'scan'
+  );
   const [scanResult, setScanResult] = useState<string>('');
+  const [isScanning, setIsScanning] = useState<boolean>(false);
 
   // Generate QR code when value changes
   useEffect(() => {
@@ -50,12 +55,29 @@ export function QRCodeHandler({
     return newID;
   };
 
+  // Validate QR code format (basic peer ID validation)
+  const isValidPeerIdFormat = (text: string): boolean => {
+    // Basic validation - should be a non-empty string with reasonable length
+    return !!(text && text.trim().length > 0 && text.trim().length < 100);
+  };
+
   // Handle scan result
   const handleScan = (result: any) => {
     if (result?.text) {
-      setScanResult(result.text);
+      const scannedText = result.text.trim();
+      setScanResult(scannedText);
+      setIsScanning(false);
+
       if (onScan) {
-        onScan(result.text);
+        onScan(scannedText);
+      }
+
+      // If it's a valid format and we're in scan mode, auto-close
+      if (mode === 'scan' && isValidPeerIdFormat(scannedText) && onValidScan) {
+        // Small delay to show the result briefly before closing
+        setTimeout(() => {
+          onValidScan();
+        }, 500);
       }
     }
   };
@@ -107,22 +129,25 @@ export function QRCodeHandler({
 
       {(mode === 'scan' || mode === 'both') && (
         <div className="qr-scanner">
-          <div className="w-full p-4 bg-white border border-gray-200 rounded-md dark:bg-gray-800 dark:border-gray-700">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white">
-                QR Code Scanner
-              </h3>
-              <Button
-                onClick={isScannerActive ? toggleScanner : startScanner}
-                variant={isScannerActive ? 'danger' : 'success'}
-                size="sm"
-              >
-                {isScannerActive ? 'Stop Scanner' : 'Start Scanner'}
-              </Button>
-            </div>
+          <div className="w-full bg-white dark:bg-gray-800">
+            {mode !== 'scan' && (
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                  QR Code Scanner
+                </h3>
+                <Button
+                  onClick={isScannerActive ? toggleScanner : startScanner}
+                  variant={isScannerActive ? 'danger' : 'success'}
+                  size="sm"
+                  disabled={isScanning}
+                >
+                  {isScannerActive ? 'Stop Scanner' : 'Start Scanner'}
+                </Button>
+              </div>
+            )}
 
             {isScannerActive && (
-              <div className="scanner-container mb-4 border border-gray-300 rounded-md overflow-hidden dark:border-gray-600">
+              <div className="scanner-container mb-4 overflow-hidden">
                 <QrReader
                   constraints={{ facingMode: 'environment' }}
                   onResult={handleScan}
@@ -133,13 +158,18 @@ export function QRCodeHandler({
             )}
 
             {scanResult && (
-              <div className="p-4 bg-gray-50 border border-gray-200 rounded-md dark:bg-gray-700 dark:border-gray-600">
+              <div className="p-4 bg-gray-50 dark:bg-gray-700">
                 <h4 className="mb-2 text-sm font-medium text-gray-900 dark:text-white">
                   Scan Result:
                 </h4>
                 <p className="text-sm break-all text-gray-700 dark:text-gray-300">
                   {scanResult}
                 </p>
+                {mode === 'scan' && isValidPeerIdFormat(scanResult) && (
+                  <p className="text-sm text-green-600 dark:text-green-400 mt-2">
+                    ✓ Valid format detected - closing scanner...
+                  </p>
+                )}
               </div>
             )}
           </div>

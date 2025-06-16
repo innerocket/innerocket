@@ -109,11 +109,12 @@ export function PeerConnection({ onConnect }: PeerConnectionProps) {
                 placeholder="Enter peer ID to connect"
                 fullWidth
                 className="rounded-r-none"
+                disabled={showQRScanner}
               />
             </div>
             <Button
               onClick={handleConnect}
-              disabled={!peerIdInput.trim() || peerIdInput === peerId}
+              disabled={!peerIdInput.trim() || peerIdInput === peerId || showQRScanner}
               className="rounded-r-md rounded-l-none border-l-0 mr-2"
               size="md"
             >
@@ -125,6 +126,7 @@ export function PeerConnection({ onConnect }: PeerConnectionProps) {
               size="md"
               icon={<ScanLine size={20} />}
               ariaLabel="Scan QR Code"
+              disabled={showQRScanner}
             />
           </div>
         </div>

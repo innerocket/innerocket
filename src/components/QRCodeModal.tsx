@@ -46,6 +46,7 @@ export function QRCodeModal({
             initialValue={value}
             readOnly={mode === 'generate'}
             onScan={onScan}
+            onValidScan={mode === 'scan' ? onClose : undefined}
           />
         </div>
       </div>
