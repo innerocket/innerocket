@@ -92,11 +92,11 @@ export function FileTransferList({
               </th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="divide-y divide-gray-100 dark:divide-gray-600">
             {filteredTransfers.map((transfer) => (
               <tr
                 key={transfer.id}
-                className="border-b-2 border-gray-100 transition-all duration-200 dark:border-gray-600 bg-white dark:bg-gray-800"
+                className="transition-all duration-200 bg-white dark:bg-gray-800"
               >
                 <td className="px-6 py-4">
                   <div className="flex items-center space-x-3">
