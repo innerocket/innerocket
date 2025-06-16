@@ -236,12 +236,12 @@ export function App() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <main className="max-w-7xl mx-auto py-4 px-3 sm:py-8 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-8">
           {/* Left Panel - Connection Info */}
-          <div className="space-y-8">
+          <div className="space-y-4 sm:space-y-8">
             <div className="w-full bg-white border-2 border-gray-200 rounded-xl transition-all duration-200 dark:bg-gray-800 dark:border-gray-700">
-              <div className="p-6 border-b-2 border-gray-200 rounded-t-xl dark:border-gray-700">
+              <div className="p-4 sm:p-6 border-b-2 border-gray-200 rounded-t-xl dark:border-gray-700">
                 <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                   Connection
                 </h2>
@@ -250,7 +250,7 @@ export function App() {
                 </p>
               </div>
 
-              <div className="p-6">
+              <div className="p-4 sm:p-6">
                 <div className="mb-8">
                   <PeerConnection onConnect={handleConnectToPeer} />
                 </div>
@@ -269,10 +269,10 @@ export function App() {
           </div>
 
           {/* Right Panel - File Transfers */}
-          <div className="space-y-8 lg:flex lg:flex-col lg:space-y-0 lg:gap-8">
+          <div className="space-y-4 sm:space-y-8 lg:flex lg:flex-col lg:space-y-0 lg:gap-8">
             {/* File Transfer Component */}
             <div className="w-full bg-white border-2 border-gray-200 rounded-xl transition-all duration-200 dark:bg-gray-800 dark:border-gray-700 lg:flex-1 lg:flex lg:flex-col">
-              <div className="p-6 border-b-2 border-gray-200 rounded-t-xl dark:border-gray-700 lg:flex-none">
+              <div className="p-4 sm:p-6 border-b-2 border-gray-200 rounded-t-xl dark:border-gray-700 lg:flex-none">
                 <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                   Send Files
                 </h2>
@@ -281,7 +281,7 @@ export function App() {
                 </p>
               </div>
 
-              <div className="p-6 lg:flex-1 lg:flex lg:flex-col">
+              <div className="p-4 sm:p-6 lg:flex-1 lg:flex lg:flex-col">
                 <FileSender
                   onSendFileToAll={handleSendFileToAll}
                   connectedPeersCount={connectedPeers.length}
@@ -291,7 +291,7 @@ export function App() {
 
             {/* File Transfer History */}
             <div className="w-full bg-white border-2 border-gray-200 rounded-xl transition-all duration-200 dark:bg-gray-800 dark:border-gray-700 h-fit lg:flex-none">
-              <div className="p-6 border-b-2 border-gray-200 rounded-t-xl dark:border-gray-700 flex justify-between items-center">
+              <div className="p-4 sm:p-6 border-b-2 border-gray-200 rounded-t-xl dark:border-gray-700 flex justify-between items-center">
                 <div>
                   <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                     File Transfer History
@@ -312,7 +312,7 @@ export function App() {
                 </button>
               </div>
 
-              <div className="p-6">
+              <div className="p-4 sm:p-6">
                 <FileTransferList
                   transfers={fileTransfers}
                   onDownload={handleDownloadFile}
@@ -340,7 +340,7 @@ export function App() {
         {/* Help Section - Togglable */}
         {showHelp && (
           <div className="mt-6 w-full bg-white border-2 border-gray-200 rounded-xl transition-all duration-200 dark:bg-gray-800 dark:border-gray-700">
-            <div className="p-6 border-b-2 border-gray-200 rounded-t-xl dark:border-gray-700">
+            <div className="p-4 sm:p-6 border-b-2 border-gray-200 rounded-t-xl dark:border-gray-700">
               <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                 About
               </h2>
@@ -349,7 +349,7 @@ export function App() {
               </p>
             </div>
 
-            <div className="p-6">
+            <div className="p-4 sm:p-6">
               <div className="space-y-4">
                 <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
                   Innerocket is a secure peer-to-peer file sharing application
