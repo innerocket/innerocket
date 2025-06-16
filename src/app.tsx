@@ -236,7 +236,7 @@ export function App() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <main className="max-w-7xl mx-auto py-4 px-3 sm:py-8 sm:px-6 lg:px-8">
+      <main className="max-w-7xl mx-auto py-4 px-2 sm:py-8 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-8">
           {/* Left Panel - Connection Info */}
           <div className="space-y-4 sm:space-y-8">
@@ -324,7 +324,7 @@ export function App() {
         </div>
 
         {/* Help Toggle Button */}
-        <div className="mt-8 flex justify-center">
+        <div className="mt-8 mb-4 flex justify-center">
           <button
             onClick={toggleHelp}
             type="button"
@@ -339,7 +339,7 @@ export function App() {
 
         {/* Help Section - Togglable */}
         {showHelp && (
-          <div className="mt-6 w-full bg-white border-2 border-gray-200 rounded-xl transition-all duration-200 dark:bg-gray-800 dark:border-gray-700">
+          <div className="mt-8 mb-4 w-full bg-white border-2 border-gray-200 rounded-xl transition-all duration-200 dark:bg-gray-800 dark:border-gray-700">
             <div className="p-4 sm:p-6 border-b-2 border-gray-200 rounded-t-xl dark:border-gray-700">
               <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                 About
