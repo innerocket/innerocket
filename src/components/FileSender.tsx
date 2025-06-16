@@ -83,10 +83,10 @@ export function FileSender({
           >
             <div className="flex flex-col items-center justify-center flex-1 w-full">
               {selectedFiles.length > 0 ? (
-                <div className="text-center">
+                <div className="text-center w-full">
                   {selectedFiles.length === 1 ? (
                     <>
-                      <p className="font-medium text-gray-600 dark:text-gray-400">
+                      <p className="font-medium text-gray-600 dark:text-gray-400 truncate max-w-full">
                         {selectedFiles[0].name}
                       </p>
                       <p className="text-sm text-gray-500 mt-1">
