@@ -22,7 +22,6 @@ export function App() {
     fileTransfers,
     connectToPeer,
     disconnectFromPeer,
-    sendFile,
     sendFileToAllPeers,
     incomingRequests,
     acceptRequest,
@@ -33,7 +32,6 @@ export function App() {
     clearFileHistory,
   } = useFileTransfer();
 
-  const [selectedPeerId, setSelectedPeerId] = useState<string | null>(null);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const prevFileTransfers = useRef(fileTransfers);
   const [previewFileId, setPreviewFileId] = useState<string | null>(null);
@@ -135,20 +133,6 @@ export function App() {
     );
   };
 
-  const handleSendFile = async (file: File) => {
-    if (selectedPeerId) {
-      const transferId = await sendFile(selectedPeerId, file);
-      if (transferId !== null) {
-        showNotification(`Sending file "${file.name}"...`, 'info');
-      } else {
-        showNotification(
-          `Failed to initiate file transfer for "${file.name}"`,
-          'error'
-        );
-      }
-    }
-  };
-
   const handleSendFileToAll = async (file: File) => {
     const transferIds = await sendFileToAllPeers(file);
     if (transferIds.length > 0) {
@@ -171,13 +155,7 @@ export function App() {
 
   const handleDisconnectFromPeer = (peerId: string) => {
     disconnectFromPeer(peerId);
-    setSelectedPeerId((prev) => (prev === peerId ? null : prev));
     showNotification(`Disconnected from peer ${peerId}`, 'info');
-  };
-
-  const handleSelectPeerForSending = (peerId: string) => {
-    setSelectedPeerId(peerId);
-    showNotification(`Selected peer ${peerId} for file transfer`, 'info');
   };
 
   const handleDownloadFile = (fileId: string) => {
@@ -240,11 +218,6 @@ export function App() {
     setShowHelp(!showHelp);
   };
 
-  const handleCloseFileSender = () => {
-    setSelectedPeerId(null);
-    showNotification('File sender closed', 'info');
-  };
-
   const handleClearFileHistory = () => {
     setShowClearConfirmation(true);
   };
@@ -260,55 +233,84 @@ export function App() {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900">
-      <main className="max-w-6xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Left Panel - Connection Info */}
-          <div className="w-full bg-white border border-gray-200 rounded-lg dark:bg-gray-800 dark:border-gray-700">
-            <div className="p-4 bg-white border-b border-gray-200 rounded-t-lg dark:bg-gray-800 dark:border-gray-700">
-              <h5 className="text-xl font-medium text-gray-900 dark:text-white">
-                Your Connection
-              </h5>
-            </div>
-
-            <div className="p-4">
-              <div className="mb-6">
-                <PeerConnection onConnect={handleConnectToPeer} />
+          <div className="space-y-8">
+            <div className="w-full bg-white border-2 border-gray-200 rounded-xl transition-all duration-200 dark:bg-gray-800 dark:border-gray-700">
+              <div className="p-6 border-b-2 border-gray-200 rounded-t-xl dark:border-gray-700">
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                  Connection
+                </h2>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                  Connect with peers to start sharing files
+                </p>
               </div>
 
-              <div>
-                <h3 className="mb-2 text-lg font-medium text-gray-900 dark:text-white">
-                  Connected Peers
-                </h3>
-                <ConnectedPeers
-                  peers={connectedPeers}
-                  onDisconnect={handleDisconnectFromPeer}
-                  onSendFile={handleSelectPeerForSending}
-                />
+              <div className="p-6">
+                <div className="mb-8">
+                  <PeerConnection onConnect={handleConnectToPeer} />
+                </div>
+
+                <div>
+                  <h3 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
+                    Connected Peers
+                  </h3>
+                  <ConnectedPeers
+                    peers={connectedPeers}
+                    onDisconnect={handleDisconnectFromPeer}
+                  />
+                </div>
               </div>
             </div>
           </div>
 
           {/* Right Panel - File Transfers */}
-          <div className="w-full bg-white border border-gray-200 rounded-lg dark:bg-gray-800 dark:border-gray-700">
-            <div className="p-4 bg-white border-b border-gray-200 rounded-t-lg dark:bg-gray-800 dark:border-gray-700 flex justify-between items-center">
-              <h5 className="text-xl font-medium text-gray-900 dark:text-white">
-                File Transfer History
-              </h5>
-              <button
-                onClick={handleClearFileHistory}
-                type="button"
-                className="inline-flex items-center text-red-700 hover:text-white border border-red-700 hover:bg-red-800 focus:ring-2 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm px-3 py-1.5 text-center dark:border-red-500 dark:text-red-500 dark:hover:text-white dark:hover:bg-red-600 dark:focus:ring-red-800"
-                aria-label="Clear file history"
-                title="Clear file history"
-              >
-                <Trash2 className="h-4 w-4 mr-2 hidden md:block" />
-                <span>Clear History</span>
-              </button>
+          <div className="space-y-8 lg:flex lg:flex-col lg:space-y-0 lg:gap-8">
+            {/* File Transfer Component */}
+            <div className="w-full bg-white border-2 border-gray-200 rounded-xl transition-all duration-200 dark:bg-gray-800 dark:border-gray-700 lg:flex-1 lg:flex lg:flex-col">
+              <div className="p-6 border-b-2 border-gray-200 rounded-t-xl dark:border-gray-700 lg:flex-none">
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                  Send Files
+                </h2>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                  Upload and share files with connected peers
+                </p>
+              </div>
+
+              <div className="p-6 lg:flex-1 lg:flex lg:flex-col">
+                <FileSender
+                  onSendFileToAll={handleSendFileToAll}
+                  connectedPeersCount={connectedPeers.length}
+                />
+              </div>
             </div>
 
-            <div className="p-4">
-              <div>
+            {/* File Transfer History */}
+            <div className="w-full bg-white border-2 border-gray-200 rounded-xl transition-all duration-200 dark:bg-gray-800 dark:border-gray-700 h-fit lg:flex-none">
+              <div className="p-6 border-b-2 border-gray-200 rounded-t-xl dark:border-gray-700 flex justify-between items-center">
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                    File Transfer History
+                  </h2>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                    Track your file transfers and downloads
+                  </p>
+                </div>
+                <button
+                  onClick={handleClearFileHistory}
+                  type="button"
+                  className="inline-flex items-center text-red-600 hover:text-white border-2 border-red-500 hover:bg-red-600 focus:ring-2 focus:outline-none focus:ring-red-500 focus:ring-offset-2 font-medium rounded-md text-sm px-3 py-2 transition-all duration-200 dark:border-red-500 dark:text-red-400 dark:hover:text-white dark:hover:bg-red-600 dark:focus:ring-red-500"
+                  aria-label="Clear file history"
+                  title="Clear file history"
+                >
+                  <Trash2 className="h-4 w-4 mr-2 hidden md:block" />
+                  <span>Clear History</span>
+                </button>
+              </div>
+
+              <div className="p-6">
                 <FileTransferList
                   transfers={fileTransfers}
                   onDownload={handleDownloadFile}
@@ -320,11 +322,11 @@ export function App() {
         </div>
 
         {/* Help Toggle Button */}
-        <div className="mt-4 flex justify-center">
+        <div className="mt-8 flex justify-center">
           <button
             onClick={toggleHelp}
             type="button"
-            className="inline-flex items-center text-blue-700 hover:text-white border border-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:hover:bg-blue-600 dark:focus:ring-blue-800"
+            className="inline-flex items-center text-blue-600 hover:text-white border-2 border-blue-500 hover:bg-blue-600 focus:ring-2 focus:outline-none focus:ring-blue-500 focus:ring-offset-2 font-medium rounded-lg text-sm px-6 py-3 transition-all duration-200 dark:border-blue-500 dark:text-blue-400 dark:hover:text-white dark:hover:bg-blue-600 dark:focus:ring-blue-500"
           >
             <HelpCircle className="h-5 w-5 mr-2" />
             <span>
@@ -335,36 +337,41 @@ export function App() {
 
         {/* Help Section - Togglable */}
         {showHelp && (
-          <div className="mt-4 w-full bg-white border border-gray-200 rounded-lg dark:bg-gray-800 dark:border-gray-700">
-            <div className="p-4 bg-white border-b border-gray-200 rounded-t-lg dark:bg-gray-800 dark:border-gray-700">
-              <h5 className="text-xl font-medium text-gray-900 dark:text-white">
+          <div className="mt-6 w-full bg-white border-2 border-gray-200 rounded-xl transition-all duration-200 dark:bg-gray-800 dark:border-gray-700">
+            <div className="p-6 border-b-2 border-gray-200 rounded-t-xl dark:border-gray-700">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                 About
-              </h5>
+              </h2>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                Learn how our secure file sharing works
+              </p>
             </div>
 
-            <div className="p-4">
-              <p className="mb-3 text-gray-500 dark:text-gray-400">
-                Innerocket is a secure peer-to-peer file sharing application
-                that uses WebRTC technology to transfer files directly between
-                users without sending any file data through servers.
-              </p>
-              <p className="mb-3 text-gray-500 dark:text-gray-400">
-                All file transfers are end-to-end encrypted and take place
-                directly between your browser and the recipient's browser. This
-                means your files never touch our servers, ensuring maximum
-                privacy and security.
-              </p>
-              <div className="p-4 mb-4 text-sm text-blue-800 border border-blue-300 rounded-lg bg-blue-50 dark:bg-gray-800 dark:text-blue-400 dark:border-blue-800">
-                <div className="flex">
-                  <div className="flex-shrink-0">
-                    <Info className="h-5 w-5 text-blue-600 dark:text-blue-500" />
-                  </div>
-                  <div className="ml-3">
-                    <p>
-                      To share files, first connect with the recipient by
-                      exchanging peer IDs or scanning their QR code, then select
-                      the file and send it directly to them.
-                    </p>
+            <div className="p-6">
+              <div className="space-y-4">
+                <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+                  Innerocket is a secure peer-to-peer file sharing application
+                  that uses WebRTC technology to transfer files directly between
+                  users without sending any file data through servers.
+                </p>
+                <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+                  All file transfers are end-to-end encrypted and take place
+                  directly between your browser and the recipient's browser.
+                  This means your files never touch our servers, ensuring
+                  maximum privacy and security.
+                </p>
+                <div className="p-4 text-sm text-blue-800 border-2 border-blue-200 rounded-lg bg-blue-50 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-700">
+                  <div className="flex">
+                    <div className="flex-shrink-0">
+                      <Info className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <div className="ml-3">
+                      <p className="leading-relaxed">
+                        To share files, first connect with the recipient by
+                        exchanging peer IDs or scanning their QR code, then
+                        select the file and send it directly to them.
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -372,16 +379,6 @@ export function App() {
           </div>
         )}
       </main>
-
-      {selectedPeerId && <div className="mt-40" />}
-
-      <FileSender
-        currentPeerId={selectedPeerId}
-        onSendFile={handleSendFile}
-        onSendFileToAll={handleSendFileToAll}
-        connectedPeersCount={connectedPeers.length}
-        onClose={handleCloseFileSender}
-      />
 
       <IncomingRequests
         requests={incomingRequests}
@@ -410,30 +407,37 @@ export function App() {
       {showClearConfirmation && (
         <div className="fixed inset-0 bg-gray-900/75 backdrop-blur-sm flex justify-center items-center z-50 dark:bg-gray-900/80">
           <div className="relative p-4 w-full max-w-md max-h-full">
-            <div className="relative bg-white rounded-lg shadow dark:bg-gray-700">
-              <div className="p-4 md:p-5 text-center">
-                <Trash2 className="mx-auto mb-4 text-gray-400 w-12 h-12 dark:text-gray-200" />
-                <h3 className="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
+            <div className="relative bg-white rounded-xl border border-gray-200 dark:bg-gray-800 dark:border-gray-700">
+              <div className="p-6 md:p-8 text-center">
+                <div className="w-16 h-16 mx-auto mb-6 bg-red-100 rounded-lg flex items-center justify-center dark:bg-red-900/20">
+                  <Trash2 className="text-red-600 w-8 h-8 dark:text-red-400" />
+                </div>
+                <h3 className="mb-6 text-lg font-semibold text-gray-900 dark:text-white">
+                  Clear File Transfer History?
+                </h3>
+                <p className="mb-6 text-gray-600 dark:text-gray-300">
                   Are you sure you want to clear all file transfer history?
                   <br />
-                  <span className="text-red-500 font-medium">
+                  <span className="text-red-600 font-medium dark:text-red-400">
                     This action cannot be undone.
                   </span>
-                </h3>
-                <button
-                  onClick={confirmClearFileHistory}
-                  type="button"
-                  className="text-white bg-red-600 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 dark:focus:ring-red-800 font-medium rounded-lg text-sm inline-flex items-center px-5 py-2.5 text-center mr-2"
-                >
-                  Yes, clear history
-                </button>
-                <button
-                  onClick={cancelClearFileHistory}
-                  type="button"
-                  className="text-gray-500 bg-white hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-gray-200 rounded-lg border border-gray-200 text-sm font-medium px-5 py-2.5 hover:text-gray-900 focus:z-10 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-500 dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-gray-600"
-                >
-                  Cancel
-                </button>
+                </p>
+                <div className="flex space-x-3 justify-center">
+                  <button
+                    onClick={confirmClearFileHistory}
+                    type="button"
+                    className="text-white bg-red-600 hover:bg-red-700 focus:ring-2 focus:outline-none focus:ring-red-500 focus:ring-offset-2 font-medium rounded-md text-sm inline-flex items-center px-5 py-2.5 transition-all duration-200 dark:focus:ring-red-500"
+                  >
+                    Yes, clear history
+                  </button>
+                  <button
+                    onClick={cancelClearFileHistory}
+                    type="button"
+                    className="text-gray-700 bg-white hover:bg-gray-50 focus:ring-2 focus:outline-none focus:ring-gray-500 focus:ring-offset-2 rounded-md border-2 border-gray-300 text-sm font-medium px-5 py-2.5 hover:border-gray-400 transition-all duration-200 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-gray-500"
+                  >
+                    Cancel
+                  </button>
+                </div>
               </div>
             </div>
           </div>

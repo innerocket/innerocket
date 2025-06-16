@@ -25,15 +25,15 @@ export function Card({
 
   return (
     <div
-      className={`w-full bg-white border border-gray-200 rounded-lg dark:bg-gray-800 dark:border-gray-700 ${className}`}
+      className={`w-full bg-white border border-gray-200 rounded-lg transition-all duration-200 dark:bg-gray-800 dark:border-gray-700 ${className}`}
     >
       {hasHeader && (
         <div
-          className={`p-4 bg-white border-b border-gray-200 rounded-t-lg dark:bg-gray-800 dark:border-gray-700 ${headerClassName}`}
+          className={`p-6 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200 rounded-t-lg dark:from-gray-800 dark:to-gray-700 dark:border-gray-700 ${headerClassName}`}
         >
           {title &&
             (typeof title === 'string' ? (
-              <h5 className="text-xl font-medium text-gray-900 dark:text-white">
+              <h5 className="text-xl font-semibold text-gray-900 dark:text-white">
                 {title}
               </h5>
             ) : (
@@ -41,7 +41,7 @@ export function Card({
             ))}
           {subtitle &&
             (typeof subtitle === 'string' ? (
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
                 {subtitle}
               </p>
             ) : (
@@ -50,13 +50,13 @@ export function Card({
         </div>
       )}
       <div
-        className={`p-4 ${hasHeader ? '' : 'rounded-t-lg'} ${bodyClassName}`}
+        className={`p-6 ${hasHeader ? '' : 'rounded-t-lg'} ${bodyClassName}`}
       >
         {children}
       </div>
       {footer && (
         <div
-          className={`p-4 bg-gray-50 border-t border-gray-200 rounded-b-lg dark:bg-gray-700 dark:border-gray-600 ${footerClassName}`}
+          className={`p-6 bg-gray-50 border-t border-gray-200 rounded-b-lg dark:bg-gray-700 dark:border-gray-600 ${footerClassName}`}
         >
           {footer}
         </div>

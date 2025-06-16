@@ -12,16 +12,16 @@ interface NotificationProps {
 }
 
 const notificationStyles = tv({
-  base: 'flex items-center p-4 mb-4 border rounded-lg',
+  base: 'flex items-center p-4 mb-4 border-2 rounded-lg backdrop-blur-sm',
   variants: {
     type: {
       success:
-        'text-green-800 bg-green-50 border-green-300 dark:border-green-800 dark:bg-gray-800 dark:text-green-400',
+        'text-green-800 bg-green-50/90 border-green-300 dark:border-green-600 dark:bg-green-900/30 dark:text-green-300',
       error:
-        'text-red-800 bg-red-50 border-red-300 dark:border-red-800 dark:bg-gray-800 dark:text-red-400',
+        'text-red-800 bg-red-50/90 border-red-300 dark:border-red-600 dark:bg-red-900/30 dark:text-red-300',
       warning:
-        'text-yellow-800 bg-yellow-50 border-yellow-300 dark:border-yellow-800 dark:bg-gray-800 dark:text-yellow-300',
-      info: 'text-blue-800 bg-blue-50 border-blue-300 dark:border-blue-800 dark:bg-gray-800 dark:text-blue-400',
+        'text-amber-800 bg-amber-50/90 border-amber-300 dark:border-amber-600 dark:bg-amber-900/30 dark:text-amber-300',
+      info: 'text-blue-800 bg-blue-50/90 border-blue-300 dark:border-blue-600 dark:bg-blue-900/30 dark:text-blue-300',
     },
   },
 });
@@ -66,17 +66,17 @@ export function Notification({
       }`}
     >
       <div className={notificationStyles({ type })} role="alert">
-        <div className="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 mr-3">
+        <div className="inline-flex items-center justify-center flex-shrink-0 w-10 h-10 mr-4 rounded-lg bg-white/50 dark:bg-gray-800/50">
           {getIcon()}
         </div>
-        <div className="text-sm font-normal">{message}</div>
+        <div className="text-sm font-medium flex-1">{message}</div>
         <button
           type="button"
           onClick={() => {
             setIsVisible(false);
             setTimeout(onClose, 300);
           }}
-          className="ml-auto -mx-1.5 -my-1.5 rounded-lg focus:ring-2 p-1.5 inline-flex items-center justify-center h-8 w-8 dark:bg-gray-800 dark:text-blue-400 dark:hover:bg-gray-700"
+          className="ml-4 -mx-1.5 -my-1.5 rounded-md focus:ring-2 p-2 inline-flex items-center justify-center h-8 w-8 hover:bg-white/50 dark:hover:bg-gray-800/50 transition-colors duration-200"
           aria-label="Close"
         >
           <span className="sr-only">Close</span>

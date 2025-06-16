@@ -1,7 +1,7 @@
 import { useState } from 'preact/hooks';
 import { Copy, Check, QrCode, ScanLine } from 'lucide-react';
 import { usePeer } from '../contexts/PeerContext';
-import { QRCodeHandler } from './QRCodeHandler';
+import { QRCodeModal } from './QRCodeModal';
 import { Button, IconButton } from './ui';
 
 interface PeerConnectionProps {
@@ -41,62 +41,59 @@ export function PeerConnection({ onConnect }: PeerConnectionProps) {
   const handleScan = (data: string) => {
     if (data && data !== peerId) {
       setPeerIdInput(data);
+      setShowQRScanner(false);
     }
   };
 
   return (
-    <div className="w-full bg-white border border-gray-200 rounded-lg dark:bg-gray-800 dark:border-gray-700">
-      <div className="p-4 bg-white border-b rounded-t-lg border-gray-200 dark:bg-gray-800 dark:border-gray-700">
-        <h5 className="text-xl font-medium text-gray-900 dark:text-white">
-          Connect with Peers
-        </h5>
-      </div>
-      <div className="p-4">
-        <div className="mb-4">
-          <div className="flex items-center mb-2 space-x-2">
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Your ID:
-            </span>
-            <code className="flex-1 px-3 py-1 text-sm text-gray-800 bg-gray-100 rounded dark:bg-gray-700 dark:text-gray-300 truncate mr-2">
-              {peerId}
-            </code>
-            <IconButton
-              onClick={copyMyPeerId}
-              variant={copySuccess ? 'success' : 'ghost'}
-              size="sm"
-              icon={copySuccess ? <Check /> : <Copy />}
-              ariaLabel="Copy to clipboard"
-            />
-            <IconButton
-              onClick={toggleQRCode}
-              variant={showQRCode ? 'info' : 'ghost'}
-              size="sm"
-              icon={<QrCode />}
-              ariaLabel="Show QR Code"
-            />
+    <>
+      <div className="space-y-6">
+        {/* Your Peer ID Section */}
+        <div className="bg-white border-2 border-gray-200 rounded-lg p-6 transition-all duration-200 dark:bg-gray-800 dark:border-gray-700">
+          <div className="flex items-center justify-between mb-4">
+            <h4 className="text-lg font-semibold text-gray-900 dark:text-white">
+              Your Peer ID
+            </h4>
+            <div className="flex space-x-2">
+              <IconButton
+                onClick={copyMyPeerId}
+                variant={copySuccess ? 'success' : 'ghost'}
+                size="sm"
+                icon={copySuccess ? <Check /> : <Copy />}
+                ariaLabel="Copy to clipboard"
+              />
+              <IconButton
+                onClick={toggleQRCode}
+                variant="ghost"
+                size="sm"
+                icon={<QrCode />}
+                ariaLabel="Show QR Code"
+              />
+            </div>
           </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
+
+          <code className="block w-full px-4 py-2 text-sm text-gray-800 bg-gray-100 rounded-md dark:bg-gray-700 dark:text-gray-200 font-mono break-all">
+            {peerId}
+          </code>
+
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-3">
             {copySuccess ? (
-              <span className="text-green-600 font-medium dark:text-green-400">
+              <span className="text-green-600 font-medium dark:text-green-400 flex items-center">
+                <Check className="w-4 h-4 mr-1" />
                 ID copied to clipboard!
               </span>
             ) : (
               'Share this ID with others to let them connect to you'
             )}
           </p>
-
-          {showQRCode && (
-            <div className="mt-4">
-              <QRCodeHandler
-                mode="generate"
-                initialValue={peerId}
-                readOnly={true}
-              />
-            </div>
-          )}
         </div>
 
-        <div className="flex flex-col space-y-4">
+        {/* Connect to Peer Section */}
+        <div className="bg-white border-2 border-gray-200 rounded-lg p-6 transition-all duration-200 dark:bg-gray-800 dark:border-gray-700">
+          <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+            Connect to a Peer
+          </h4>
+
           <div className="flex items-center">
             <div className="flex-1">
               <input
@@ -106,37 +103,45 @@ export function PeerConnection({ onConnect }: PeerConnectionProps) {
                   setPeerIdInput((e.target as HTMLInputElement).value)
                 }
                 placeholder="Enter peer ID to connect"
-                className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-l-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                className="bg-gray-50 outline-gray-200 text-gray-900 outline-2 -outline-offset-2 text-sm rounded-l-md focus:outline-blue-400 block w-full p-3 transition-all duration-200 dark:bg-gray-700 dark:outline-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:outline-blue-500"
               />
             </div>
             <Button
               onClick={handleConnect}
               disabled={!peerIdInput.trim() || peerIdInput === peerId}
-              className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-r-lg text-sm px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800 rounded-l-none"
+              className="rounded-r-md rounded-l-none border-l-0 mr-2"
+              size="md"
             >
               Connect
             </Button>
-            <button
+            <IconButton
               onClick={toggleQRScanner}
-              type="button"
-              className={`ml-2 p-2.5 text-sm font-medium ${
-                showQRScanner
-                  ? 'text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800'
-                  : 'text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-200 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700'
-              } rounded-lg`}
-              aria-label="Scan QR Code"
-            >
-              <ScanLine size={20} />
-            </button>
+              variant={showQRScanner ? 'primary' : 'secondary'}
+              size="md"
+              icon={<ScanLine size={20} />}
+              ariaLabel="Scan QR Code"
+            />
           </div>
-
-          {showQRScanner && (
-            <div className="mt-2">
-              <QRCodeHandler mode="scan" onScan={handleScan} />
-            </div>
-          )}
         </div>
       </div>
-    </div>
+
+      {/* QR Code Modal */}
+      <QRCodeModal
+        isOpen={showQRCode}
+        onClose={() => setShowQRCode(false)}
+        value={peerId}
+        title="Your Peer ID"
+        mode="generate"
+      />
+
+      {/* QR Scanner Modal */}
+      <QRCodeModal
+        isOpen={showQRScanner}
+        onClose={() => setShowQRScanner(false)}
+        title="Scan QR Code"
+        mode="scan"
+        onScan={handleScan}
+      />
+    </>
   );
 }

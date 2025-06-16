@@ -12,18 +12,18 @@ const inputWrapper = tv({
 });
 
 const inputStyles = tv({
-  base: 'block p-2.5 rounded-lg focus:outline-none focus:ring-4',
+  base: 'block p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-1 transition-all duration-200',
   variants: {
     error: {
-      true: 'bg-red-50 border border-red-500 text-red-900 placeholder-red-700 focus:ring-red-500 focus:border-red-500 dark:bg-red-100 dark:border-red-400',
+      true: 'bg-red-50 border-2 border-red-400 text-red-900 placeholder-red-600 focus:ring-red-500 focus:border-red-500 dark:bg-red-900/20 dark:border-red-500 dark:text-red-200 dark:placeholder-red-400',
       false:
-        'bg-gray-50 border border-gray-300 text-gray-900 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500',
+        'bg-gray-50 border-2 border-gray-200 text-gray-900 placeholder-gray-500 focus:ring-blue-500 focus:border-blue-400 dark:bg-gray-800 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500',
     },
     icon: {
-      true: 'pl-10',
+      true: 'pl-11',
     },
     rightIcon: {
-      true: 'pr-10',
+      true: 'pr-11',
     },
     fullWidth: {
       true: 'w-full',
@@ -86,7 +86,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     return (
       <div className={fullWidth ? 'w-full' : ''}>
         {label && (
-          <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+          <label className="block mb-3 text-sm font-semibold text-gray-700 dark:text-gray-200">
             {label}
           </label>
         )}

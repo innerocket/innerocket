@@ -89,15 +89,15 @@ export function FilePreview({
   if (!previewUrl) {
     return (
       <div className="fixed inset-0 bg-gray-900/75 flex items-center justify-center z-50 p-4 overflow-x-hidden overflow-y-auto dark:bg-gray-900/80 backdrop-blur-sm">
-        <div className="relative w-full max-w-4xl max-h-[90vh] flex flex-col bg-white rounded-lg dark:bg-gray-800">
-          <div className="flex items-center justify-between p-4 border-b rounded-t dark:border-gray-600">
+        <div className="relative w-full max-w-4xl max-h-[90vh] flex flex-col bg-white rounded-md dark:bg-gray-800">
+          <div className="flex items-center justify-between p-4 border-b rounded-t-md dark:border-gray-600">
             <h3 className="text-xl font-semibold text-gray-900 dark:text-white truncate">
               {fileName}
             </h3>
             <button
               onClick={onClose}
               type="button"
-              className="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center dark:hover:bg-gray-600 dark:hover:text-white"
+              className="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-md text-sm p-1.5 ml-auto inline-flex items-center dark:hover:bg-gray-600 dark:hover:text-white"
             >
               <X size={20} />
               <span className="sr-only">Close</span>
@@ -115,15 +115,15 @@ export function FilePreview({
 
   return (
     <div className="fixed inset-0 bg-gray-900/75 flex items-center justify-center z-50 p-4 overflow-x-hidden overflow-y-auto dark:bg-gray-900/80 backdrop-blur-sm">
-      <div className="relative w-full max-w-4xl max-h-[90vh] flex flex-col bg-white rounded-lg dark:bg-gray-800">
-        <div className="flex items-center justify-between p-4 border-b rounded-t border-gray-200 dark:border-gray-600">
+      <div className="relative w-full max-w-4xl max-h-[90vh] flex flex-col bg-white rounded-md dark:bg-gray-800">
+        <div className="flex items-center justify-between p-4 border-b rounded-t-md border-gray-200 dark:border-gray-600">
           <h3 className="text-xl font-semibold text-gray-900 dark:text-white truncate">
             {fileName}
           </h3>
           <button
             onClick={onClose}
             type="button"
-            className="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center dark:hover:bg-gray-600 dark:hover:text-white"
+            className="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-md text-sm p-1.5 ml-auto inline-flex items-center dark:hover:bg-gray-600 dark:hover:text-white"
           >
             <X size={20} />
             <span className="sr-only">Close</span>
@@ -133,7 +133,7 @@ export function FilePreview({
         <div className="flex-1 overflow-auto flex items-center justify-center p-6">
           {isLoading && (
             <div className="flex items-center justify-center h-full">
-              <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-solid border-current border-e-transparent align-[-0.125em] text-blue-600 motion-reduce:animate-[spin_1.5s_linear_infinite] dark:text-blue-500"></div>
+              <div className="inline-block h-12 w-12 animate-spin rounded-lg border-4 border-solid border-current border-e-transparent align-[-0.125em] text-blue-600 motion-reduce:animate-[spin_1.5s_linear_infinite] dark:text-blue-500"></div>
             </div>
           )}
 
@@ -195,7 +195,7 @@ export function FilePreview({
             !actualFileType.startsWith('audio/') &&
             actualFileType !== 'application/pdf' && (
               <div className="text-center p-8">
-                <div className="bg-gray-100 rounded-lg p-6 inline-block mb-4 dark:bg-gray-700">
+                <div className="bg-gray-100 rounded-md p-6 inline-block mb-4 dark:bg-gray-700">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     className="h-16 w-16 text-gray-400 mx-auto dark:text-gray-300"

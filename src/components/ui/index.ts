@@ -12,3 +12,5 @@ export type { InputProps } from './Input';
 
 export { Badge, getStatusBadgeVariant } from './Badge';
 export type { BadgeProps } from './Badge';
+
+export { EmptyState } from './EmptyState';

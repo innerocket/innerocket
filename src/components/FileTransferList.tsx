@@ -1,8 +1,15 @@
 import type { FileTransfer } from '../types';
-import { ChevronRight, ChevronLeft, Eye, Download } from 'lucide-react';
-import { Badge, Button, Input, getStatusBadgeVariant } from './ui';
+import {
+  ChevronRight,
+  ChevronLeft,
+  Eye,
+  Download,
+  FolderOpen,
+} from 'lucide-react';
+import { Badge, Button, Input, getStatusBadgeVariant, EmptyState } from './ui';
 import { usePeer } from '../contexts/PeerContext';
 import { useState } from 'preact/hooks';
+import { getFileTypeConfig } from '../utils/fileTypeUtils';
 
 interface FileTransferListProps {
   transfers: FileTransfer[];
@@ -19,9 +26,13 @@ export function FileTransferList({
   const [searchQuery, setSearchQuery] = useState('');
   if (transfers.length === 0) {
     return (
-      <div className="p-4 mb-4 text-sm text-gray-500 rounded-lg border border-gray-200 bg-gray-50 dark:bg-gray-700 dark:border-gray-700 dark:text-gray-300">
-        No file transfers yet.
-      </div>
+      <EmptyState
+        icon={
+          <FolderOpen className="w-6 h-6 text-gray-500 dark:text-gray-400" />
+        }
+        title="No file transfers yet"
+        subtitle="Connect to peers and start sharing files"
+      />
     );
   }
 
@@ -57,26 +68,26 @@ export function FileTransferList({
         className="mb-4"
         fullWidth
       />
-      <div className="relative overflow-x-auto sm:rounded-lg border border-gray-200 dark:border-gray-700">
-        <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-          <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
+      <div className="relative overflow-x-auto rounded-lg border-2 border-gray-200 dark:border-gray-700">
+        <table className="w-full text-sm text-left text-gray-600 dark:text-gray-300">
+          <thead className="text-xs text-gray-700 uppercase bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 dark:text-gray-300 border-b-2 border-gray-200 dark:border-gray-600">
             <tr>
-              <th scope="col" className="px-6 py-3">
+              <th scope="col" className="px-6 py-4 font-semibold">
                 File
               </th>
-              <th scope="col" className="px-6 py-3">
+              <th scope="col" className="px-6 py-4 font-semibold">
                 Size
               </th>
-              <th scope="col" className="px-6 py-3">
+              <th scope="col" className="px-6 py-4 font-semibold">
                 Direction
               </th>
-              <th scope="col" className="px-6 py-3">
+              <th scope="col" className="px-6 py-4 font-semibold">
                 Status
               </th>
-              <th scope="col" className="px-6 py-3">
+              <th scope="col" className="px-6 py-4 font-semibold">
                 Progress
               </th>
-              <th scope="col" className="px-6 py-3">
+              <th scope="col" className="px-6 py-4 font-semibold">
                 Actions
               </th>
             </tr>
@@ -85,21 +96,36 @@ export function FileTransferList({
             {filteredTransfers.map((transfer) => (
               <tr
                 key={transfer.id}
-                className={`border-b border-gray-200 ${
-                  transfer.status === 'completed'
-                    ? 'bg-gray-50 dark:bg-gray-800 dark:border-gray-700'
-                    : 'bg-white dark:bg-gray-800 dark:border-gray-700'
-                }`}
+                className="border-b-2 border-gray-100 transition-all duration-200 dark:border-gray-600 bg-white dark:bg-gray-800"
               >
                 <td className="px-6 py-4">
-                  <div className="text-sm font-medium text-gray-900 dark:text-white truncate max-w-xs">
-                    {transfer.fileName}
-                  </div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">
-                    {transfer.fileType || 'Unknown type'}
-                  </div>
-                  <div className="text-xs text-gray-400 dark:text-gray-500">
-                    {new Date(transfer.createdAt).toLocaleString()}
+                  <div className="flex items-center space-x-3">
+                    {(() => {
+                      const fileTypeConfig = getFileTypeConfig(
+                        transfer.fileName
+                      );
+                      const Icon = fileTypeConfig.icon;
+                      return (
+                        <div
+                          className={`w-10 h-10 rounded-md flex items-center justify-center ${fileTypeConfig.backgroundColor}`}
+                        >
+                          <Icon
+                            className={`w-5 h-5 ${fileTypeConfig.textColor}`}
+                          />
+                        </div>
+                      );
+                    })()}
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium text-gray-900 dark:text-white truncate max-w-xs">
+                        {transfer.fileName}
+                      </div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                        {transfer.fileType || 'Unknown type'}
+                      </div>
+                      <div className="text-xs text-gray-400 dark:text-gray-500">
+                        {new Date(transfer.createdAt).toLocaleString()}
+                      </div>
+                    </div>
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
@@ -143,22 +169,22 @@ export function FileTransferList({
                   />
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+                  <div className="w-full bg-gray-200 rounded-lg h-3 dark:bg-gray-600 overflow-hidden">
                     <div
-                      className={`h-2.5 rounded-full ${
+                      className={`h-3 rounded-lg transition-all duration-300 ${
                         transfer.status === 'completed'
-                          ? 'bg-green-600 dark:bg-green-500'
+                          ? 'bg-gradient-to-r from-green-500 to-green-600'
                           : transfer.status === 'failed' ||
                             transfer.status === 'integrity_error'
-                          ? 'bg-red-600 dark:bg-red-500'
+                          ? 'bg-gradient-to-r from-red-500 to-red-600'
                           : transfer.status === 'verifying'
-                          ? 'bg-yellow-600 dark:bg-yellow-500'
-                          : 'bg-blue-600 dark:bg-blue-500'
+                          ? 'bg-gradient-to-r from-amber-500 to-yellow-500'
+                          : 'bg-gradient-to-r from-blue-500 to-blue-600'
                       }`}
                       style={{ width: `${transfer.progress}%` }}
                     ></div>
                   </div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  <div className="text-xs text-gray-600 dark:text-gray-300 mt-2 font-medium">
                     {transfer.progress}%
                   </div>
                 </td>

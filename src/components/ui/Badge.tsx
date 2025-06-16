@@ -18,8 +18,8 @@ const badge = tv({
       dark: 'bg-gray-700 text-gray-300 dark:bg-gray-700 dark:text-gray-300',
     },
     rounded: {
-      true: 'rounded-full',
-      false: 'rounded-lg',
+      true: 'rounded-lg',
+      false: 'rounded-md',
     },
   },
   defaultVariants: {
