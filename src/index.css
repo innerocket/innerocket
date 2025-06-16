@@ -3,3 +3,13 @@
 * {
   overscroll-behavior-y: none !important;
 }
+
+/* Hide scrollbars for table containers */
+.overflow-x-auto {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* Internet Explorer 10+ */
+}
+
+.overflow-x-auto::-webkit-scrollbar {
+  display: none; /* Safari and Chrome */
+}
