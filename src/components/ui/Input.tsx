@@ -12,12 +12,12 @@ const inputWrapper = tv({
 });
 
 const inputStyles = tv({
-  base: 'block p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-1 transition-all duration-200',
+  base: 'block p-3 rounded-lg focus:outline-none transition-all duration-200',
   variants: {
     error: {
-      true: 'bg-red-50 border-2 border-red-400 text-red-900 placeholder-red-600 focus:ring-red-500 focus:border-red-500 dark:bg-red-900/20 dark:border-red-500 dark:text-red-200 dark:placeholder-red-400',
+      true: 'bg-red-50 border-2 border-red-400 text-red-900 placeholder-red-600 focus:border-red-500 dark:bg-red-900/20 dark:border-red-500 dark:text-red-200 dark:placeholder-red-400',
       false:
-        'bg-gray-50 border-2 border-gray-200 text-gray-900 placeholder-gray-500 focus:ring-blue-500 focus:border-blue-400 dark:bg-gray-800 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500',
+        'bg-gray-50 border-2 border-gray-200 text-gray-900 placeholder-gray-500 focus:border-blue-400 dark:bg-gray-800 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:border-blue-500',
     },
     icon: {
       true: 'pl-11',
