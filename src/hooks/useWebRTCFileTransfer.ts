@@ -35,7 +35,7 @@ export function useWebRTCFileTransfer({
   removeTransfer,
   setConnectedPeers,
 }: UseWebRTCFileTransferProps) {
-  const { peerId } = usePeer();
+  const { peerId, addPrefixToId, removePrefixFromId } = usePeer();
   const [connectedPeers, setConnectedPeersLocal] = useState<string[]>([]);
   const [incomingRequests, setIncomingRequests] = useState<
     FileTransferRequest[]
@@ -44,7 +44,10 @@ export function useWebRTCFileTransfer({
     new Map<string, { peerId: string; file: File; metadata: FileMetadata }>()
   );
 
-  const webRTCService = useMemo(() => new WebRTCService(peerId), [peerId]);
+  const webRTCService = useMemo(
+    () => new WebRTCService(peerId, addPrefixToId, removePrefixFromId),
+    [peerId, addPrefixToId, removePrefixFromId]
+  );
   const fileStorageService = useMemo(() => new FileStorageService(), []);
 
   useEffect(() => {

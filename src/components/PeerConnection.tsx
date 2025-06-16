@@ -9,7 +9,7 @@ interface PeerConnectionProps {
 }
 
 export function PeerConnection({ onConnect }: PeerConnectionProps) {
-  const { peerId } = usePeer();
+  const { peerId, removePrefixFromId } = usePeer();
   const [peerIdInput, setPeerIdInput] = useState('');
   const [copySuccess, setCopySuccess] = useState(false);
   const [showQRCode, setShowQRCode] = useState(false);
@@ -17,7 +17,9 @@ export function PeerConnection({ onConnect }: PeerConnectionProps) {
 
   const handleConnect = () => {
     if (peerIdInput.trim() && peerIdInput !== peerId) {
-      onConnect(peerIdInput.trim());
+      // Remove prefix if present in the input
+      const cleanId = removePrefixFromId(peerIdInput.trim());
+      onConnect(cleanId);
       setPeerIdInput('');
     }
   };
@@ -40,7 +42,9 @@ export function PeerConnection({ onConnect }: PeerConnectionProps) {
 
   const handleScan = (data: string) => {
     if (data && data !== peerId) {
-      setPeerIdInput(data);
+      // Remove prefix if present in the scanned data
+      const cleanId = removePrefixFromId(data);
+      setPeerIdInput(cleanId);
       setShowQRScanner(false);
     }
   };
