@@ -90,7 +90,7 @@ export function FilePreview({
     return (
       <div className="fixed inset-0 bg-gray-900/75 flex items-center justify-center z-50 p-4 overflow-x-hidden overflow-y-auto dark:bg-gray-900/80 backdrop-blur-sm">
         <div className="relative w-full max-w-4xl max-h-[90vh] flex flex-col bg-white rounded-md dark:bg-gray-800">
-          <div className="flex items-center justify-between p-4 border-b rounded-t-md dark:border-gray-600">
+          <div className="flex items-center justify-between p-3 sm:p-4 border-b rounded-t-md dark:border-gray-600">
             <h3 className="text-xl font-semibold text-gray-900 dark:text-white truncate">
               {fileName}
             </h3>
@@ -103,7 +103,7 @@ export function FilePreview({
               <span className="sr-only">Close</span>
             </button>
           </div>
-          <div className="flex-1 flex items-center justify-center p-6">
+          <div className="flex-1 flex items-center justify-center p-4 sm:p-6">
             <p className="text-gray-500 dark:text-gray-400">
               Unable to preview this file.
             </p>
@@ -116,7 +116,7 @@ export function FilePreview({
   return (
     <div className="fixed inset-0 bg-gray-900/75 flex items-center justify-center z-50 p-4 overflow-x-hidden overflow-y-auto dark:bg-gray-900/80 backdrop-blur-sm">
       <div className="relative w-full max-w-4xl max-h-[90vh] flex flex-col bg-white rounded-md dark:bg-gray-800">
-        <div className="flex items-center justify-between p-4 border-b rounded-t-md border-gray-200 dark:border-gray-600">
+        <div className="flex items-center justify-between p-3 sm:p-4 border-b rounded-t-md border-gray-200 dark:border-gray-600">
           <h3 className="text-xl font-semibold text-gray-900 dark:text-white truncate">
             {fileName}
           </h3>
@@ -130,7 +130,7 @@ export function FilePreview({
           </button>
         </div>
 
-        <div className="flex-1 overflow-auto flex items-center justify-center p-6">
+        <div className="flex-1 overflow-auto flex items-center justify-center p-4 sm:p-6">
           {isLoading && (
             <div className="flex items-center justify-center h-full">
               <div className="inline-block h-12 w-12 animate-spin rounded-lg border-4 border-solid border-current border-e-transparent align-[-0.125em] text-blue-600 motion-reduce:animate-[spin_1.5s_linear_infinite] dark:text-blue-500"></div>

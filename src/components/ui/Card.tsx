@@ -29,7 +29,7 @@ export function Card({
     >
       {hasHeader && (
         <div
-          className={`p-6 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200 rounded-t-lg dark:from-gray-800 dark:to-gray-700 dark:border-gray-700 ${headerClassName}`}
+          className={`p-4 sm:p-6 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200 rounded-t-lg dark:from-gray-800 dark:to-gray-700 dark:border-gray-700 ${headerClassName}`}
         >
           {title &&
             (typeof title === 'string' ? (
@@ -50,13 +50,15 @@ export function Card({
         </div>
       )}
       <div
-        className={`p-6 ${hasHeader ? '' : 'rounded-t-lg'} ${bodyClassName}`}
+        className={`p-4 sm:p-6 ${
+          hasHeader ? '' : 'rounded-t-lg'
+        } ${bodyClassName}`}
       >
         {children}
       </div>
       {footer && (
         <div
-          className={`p-6 bg-gray-50 border-t border-gray-200 rounded-b-lg dark:bg-gray-700 dark:border-gray-600 ${footerClassName}`}
+          className={`p-4 sm:p-6 bg-gray-50 border-t border-gray-200 rounded-b-lg dark:bg-gray-700 dark:border-gray-600 ${footerClassName}`}
         >
           {footer}
         </div>

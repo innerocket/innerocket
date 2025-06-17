@@ -19,7 +19,7 @@ export function IncomingRequests({
       {requests.map((req) => (
         <div
           key={req.metadata.id}
-          className="bg-white border border-gray-200 dark:bg-gray-800 dark:border-gray-700 p-4 rounded-md shadow"
+          className="bg-white border border-gray-200 dark:bg-gray-800 dark:border-gray-700 p-3 sm:p-4 rounded-md shadow"
         >
           <p className="mb-2 text-sm text-gray-700 dark:text-gray-300">
             Incoming file:{' '}

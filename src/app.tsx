@@ -243,14 +243,14 @@ export function App() {
         <div className="w-full bg-white border-2 border-gray-200 rounded-xl transition-all duration-200 dark:bg-gray-800 dark:border-gray-700">
           <TabsProvider activeTab={activeTab} onTabChange={setActiveTab}>
             {/* Tab Navigation */}
-            <TabList className="px-6 pt-6">
+            <TabList className="px-3 pt-4 sm:px-6 sm:pt-6">
               <TabButton value="connection">Connection</TabButton>
               <TabButton value="file-transfer">File Transfer</TabButton>
               <TabButton value="history">History</TabButton>
             </TabList>
 
             {/* Tab Content */}
-            <div className="p-6">
+            <div className="p-4 sm:p-6">
               {/* Connection Tab */}
               <TabContent value="connection">
                 <div className="min-h-72 space-y-8">
@@ -258,7 +258,7 @@ export function App() {
                     <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
                       Connection
                     </h2>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 sm:mb-6">
                       Connect with peers to start sharing files
                     </p>
                     <PeerConnection onConnect={handleConnectToPeer} />
@@ -279,7 +279,7 @@ export function App() {
               {/* File Transfer Tab */}
               <TabContent value="file-transfer">
                 <div className="min-h-72 flex flex-col">
-                  <div className="mb-6">
+                  <div className="mb-4 sm:mb-6">
                     <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
                       Send Files
                     </h2>
@@ -316,7 +316,7 @@ export function App() {
           <button
             onClick={toggleHelp}
             type="button"
-            className="inline-flex items-center text-blue-600 hover:text-white border-2 border-blue-500 hover:bg-blue-600 focus:ring-2 focus:outline-none focus:ring-blue-500 focus:ring-offset-2 font-medium rounded-lg text-sm px-6 py-3 transition-all duration-200 dark:border-blue-500 dark:text-blue-400 dark:hover:text-white dark:hover:bg-blue-600 dark:focus:ring-blue-500"
+            className="inline-flex items-center text-blue-600 hover:text-white border-2 border-blue-500 hover:bg-blue-600 focus:ring-2 focus:outline-none focus:ring-blue-500 focus:ring-offset-2 font-medium rounded-lg text-sm px-4 py-2 sm:px-6 sm:py-3 transition-all duration-200 dark:border-blue-500 dark:text-blue-400 dark:hover:text-white dark:hover:bg-blue-600 dark:focus:ring-blue-500"
           >
             <HelpCircle className="h-5 w-5 mr-2" />
             <span>
@@ -327,8 +327,8 @@ export function App() {
 
         {/* Help Section - Togglable */}
         {showHelp && (
-          <div className="mt-8 mb-4 w-full bg-white border-2 border-gray-200 rounded-xl transition-all duration-200 dark:bg-gray-800 dark:border-gray-700">
-            <div className="p-4 sm:p-6 border-b-2 border-gray-200 rounded-t-xl dark:border-gray-700">
+          <div className="mt-6 sm:mt-8 mb-4 w-full bg-white border-2 border-gray-200 rounded-xl transition-all duration-200 dark:bg-gray-800 dark:border-gray-700">
+            <div className="p-3 sm:p-4 md:p-6 border-b-2 border-gray-200 rounded-t-xl dark:border-gray-700">
               <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                 About
               </h2>
@@ -337,8 +337,8 @@ export function App() {
               </p>
             </div>
 
-            <div className="p-4 sm:p-6">
-              <div className="space-y-4">
+            <div className="p-3 sm:p-4 md:p-6">
+              <div className="space-y-3 sm:space-y-4">
                 <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
                   Innerocket is a secure peer-to-peer file sharing application
                   that uses WebRTC technology to transfer files directly between
@@ -350,7 +350,7 @@ export function App() {
                   This means your files never touch our servers, ensuring
                   maximum privacy and security.
                 </p>
-                <div className="p-4 text-sm text-blue-800 border-2 border-blue-200 rounded-lg bg-blue-50 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-700">
+                <div className="p-3 sm:p-4 text-sm text-blue-800 border-2 border-blue-200 rounded-lg bg-blue-50 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-700">
                   <div className="flex">
                     <div className="flex-shrink-0">
                       <Info className="h-5 w-5 text-blue-600 dark:text-blue-400" />
@@ -398,7 +398,7 @@ export function App() {
         <div className="fixed inset-0 bg-gray-900/75 backdrop-blur-sm flex justify-center items-center z-50 dark:bg-gray-900/80">
           <div className="relative p-4 w-full max-w-md max-h-full">
             <div className="relative bg-white rounded-xl border border-gray-200 dark:bg-gray-800 dark:border-gray-700">
-              <div className="p-6 md:p-8 text-center">
+              <div className="p-4 sm:p-6 md:p-8 text-center">
                 <div className="w-16 h-16 mx-auto mb-6 bg-red-100 rounded-lg flex items-center justify-center dark:bg-red-900/20">
                   <Trash2 className="text-red-600 w-8 h-8 dark:text-red-400" />
                 </div>

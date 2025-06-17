@@ -32,7 +32,7 @@ export function ConnectedPeers({ peers, onDisconnect }: ConnectedPeersProps) {
             key={peerId}
             className="bg-white border-2 border-gray-200 rounded-lg transition-all duration-200 dark:bg-gray-800 dark:border-gray-700"
           >
-            <div className="p-4 flex justify-between items-center">
+            <div className="p-3 sm:p-4 flex justify-between items-center">
               <div className="flex-1 flex items-center truncate mr-3">
                 <div className="w-3 h-3 bg-green-500 rounded-lg mr-3 animate-pulse"></div>
                 <code className="text-sm flex-1 truncate bg-gray-100 px-3 py-2 rounded-md dark:bg-gray-700 dark:text-gray-300 font-mono">

@@ -12,7 +12,7 @@ interface NotificationProps {
 }
 
 const notificationStyles = tv({
-  base: 'flex items-center p-4 mb-4 border-2 rounded-lg backdrop-blur-sm',
+  base: 'flex items-center p-3 sm:p-4 mb-4 border-2 rounded-lg backdrop-blur-sm',
   variants: {
     type: {
       success:

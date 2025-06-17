@@ -72,7 +72,7 @@ export function FileSender({
           />
           <label
             htmlFor="file-input"
-            className={`w-full flex-1 flex flex-col items-center justify-center border-2 border-dashed rounded-xl cursor-pointer transition-all duration-200 p-8 ${
+            className={`w-full flex-1 flex flex-col items-center justify-center border-2 border-dashed rounded-xl cursor-pointer transition-all duration-200 p-6 sm:p-8 ${
               isDragging
                 ? 'border-blue-600 bg-blue-100 dark:border-blue-300 dark:bg-blue-800/40'
                 : 'border-gray-300 bg-gray-50 dark:border-gray-600 dark:bg-gray-800/30'

@@ -53,7 +53,7 @@ export function PeerConnection({ onConnect }: PeerConnectionProps) {
     <>
       <div className="space-y-6">
         {/* Your Peer ID Section */}
-        <div className="bg-white border-2 border-gray-200 rounded-lg p-6 transition-all duration-200 dark:bg-gray-800 dark:border-gray-700">
+        <div className="bg-white border-2 border-gray-200 rounded-lg p-4 sm:p-6 transition-all duration-200 dark:bg-gray-800 dark:border-gray-700">
           <div className="flex items-center justify-between mb-4">
             <h4 className="text-lg font-semibold text-gray-900 dark:text-white">
               Your Peer ID
@@ -93,7 +93,7 @@ export function PeerConnection({ onConnect }: PeerConnectionProps) {
         </div>
 
         {/* Connect to Peer Section */}
-        <div className="bg-white border-2 border-gray-200 rounded-lg p-6 transition-all duration-200 dark:bg-gray-800 dark:border-gray-700">
+        <div className="bg-white border-2 border-gray-200 rounded-lg p-4 sm:p-6 transition-all duration-200 dark:bg-gray-800 dark:border-gray-700">
           <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
             Connect to a Peer
           </h4>
@@ -114,7 +114,9 @@ export function PeerConnection({ onConnect }: PeerConnectionProps) {
             </div>
             <Button
               onClick={handleConnect}
-              disabled={!peerIdInput.trim() || peerIdInput === peerId || showQRScanner}
+              disabled={
+                !peerIdInput.trim() || peerIdInput === peerId || showQRScanner
+              }
               className="rounded-r-md rounded-l-none border-l-0 mr-2"
               size="md"
             >
