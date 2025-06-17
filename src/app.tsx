@@ -2,11 +2,12 @@ import { useState, useRef, useEffect } from 'preact/hooks';
 import { useFileTransfer } from './hooks/useFileTransfer';
 import { PeerConnection } from './components/PeerConnection';
 import { ConnectedPeers } from './components/ConnectedPeers';
-import { FileTransferList } from './components/FileTransferList';
 import { FileSender } from './components/FileSender';
 import { FilePreview } from './components/FilePreview';
 import { NotificationContainer } from './components/Notification';
 import { IncomingRequests } from './components/IncomingRequests';
+import { HistoryTab } from './components/HistoryTab';
+import { TabsProvider, TabList, TabButton, TabContent } from './components/ui';
 import type {
   NotificationItem,
   NotificationType,
@@ -41,6 +42,7 @@ export function App() {
   const [showHelp, setShowHelp] = useState<boolean>(false);
   const [showClearConfirmation, setShowClearConfirmation] =
     useState<boolean>(false);
+  const [activeTab, setActiveTab] = useState<string>('connection');
 
   // Monitor file transfers for status changes
   useEffect(() => {
@@ -237,90 +239,70 @@ export function App() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <main className="max-w-7xl mx-auto py-4 px-2 sm:py-8 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-8">
-          {/* Left Panel - Connection Info */}
-          <div className="space-y-4 sm:space-y-8">
-            <div className="w-full bg-white border-2 border-gray-200 rounded-xl transition-all duration-200 dark:bg-gray-800 dark:border-gray-700">
-              <div className="p-4 sm:p-6 border-b-2 border-gray-200 rounded-t-xl dark:border-gray-700">
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                  Connection
-                </h2>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                  Connect with peers to start sharing files
-                </p>
-              </div>
+        {/* Main Tabbed Interface */}
+        <div className="w-full bg-white border-2 border-gray-200 rounded-xl transition-all duration-200 dark:bg-gray-800 dark:border-gray-700">
+          <TabsProvider activeTab={activeTab} onTabChange={setActiveTab}>
+            {/* Tab Navigation */}
+            <TabList className="px-6 pt-6">
+              <TabButton value="connection">Connection</TabButton>
+              <TabButton value="file-transfer">File Transfer</TabButton>
+              <TabButton value="history">History</TabButton>
+            </TabList>
 
-              <div className="p-4 sm:p-6">
-                <div className="mb-8">
-                  <PeerConnection onConnect={handleConnectToPeer} />
+            {/* Tab Content */}
+            <div className="p-6">
+              {/* Connection Tab */}
+              <TabContent value="connection">
+                <div className="space-y-8">
+                  <div>
+                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                      Connection
+                    </h2>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+                      Connect with peers to start sharing files
+                    </p>
+                    <PeerConnection onConnect={handleConnectToPeer} />
+                  </div>
+
+                  <div>
+                    <h3 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
+                      Connected Peers
+                    </h3>
+                    <ConnectedPeers
+                      peers={connectedPeers}
+                      onDisconnect={handleDisconnectFromPeer}
+                    />
+                  </div>
                 </div>
+              </TabContent>
 
+              {/* File Transfer Tab */}
+              <TabContent value="file-transfer">
                 <div>
-                  <h3 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
-                    Connected Peers
-                  </h3>
-                  <ConnectedPeers
-                    peers={connectedPeers}
-                    onDisconnect={handleDisconnectFromPeer}
+                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                    Send Files
+                  </h2>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+                    Upload and share files with connected peers
+                  </p>
+                  <FileSender
+                    onSendFileToAll={handleSendFileToAll}
+                    connectedPeersCount={connectedPeers.length}
                   />
                 </div>
-              </div>
-            </div>
-          </div>
+              </TabContent>
 
-          {/* Right Panel - File Transfers */}
-          <div className="space-y-4 sm:space-y-8 lg:flex lg:flex-col lg:space-y-0 lg:gap-8">
-            {/* File Transfer Component */}
-            <div className="w-full bg-white border-2 border-gray-200 rounded-xl transition-all duration-200 dark:bg-gray-800 dark:border-gray-700 lg:flex-1 lg:flex lg:flex-col">
-              <div className="p-4 sm:p-6 border-b-2 border-gray-200 rounded-t-xl dark:border-gray-700 lg:flex-none">
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                  Send Files
-                </h2>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                  Upload and share files with connected peers
-                </p>
-              </div>
-
-              <div className="p-4 sm:p-6 lg:flex-1 lg:flex lg:flex-col">
-                <FileSender
-                  onSendFileToAll={handleSendFileToAll}
-                  connectedPeersCount={connectedPeers.length}
-                />
-              </div>
-            </div>
-
-            {/* File Transfer History */}
-            <div className="w-full bg-white border-2 border-gray-200 rounded-xl transition-all duration-200 dark:bg-gray-800 dark:border-gray-700 h-fit lg:flex-none">
-              <div className="p-4 sm:p-6 border-b-2 border-gray-200 rounded-t-xl dark:border-gray-700 flex justify-between items-center">
-                <div>
-                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                    File Transfer History
-                  </h2>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                    Track your file transfers and downloads
-                  </p>
-                </div>
-                <button
-                  onClick={handleClearFileHistory}
-                  type="button"
-                  className="inline-flex items-center text-red-600 hover:text-white border-2 border-red-500 hover:bg-red-600 focus:ring-2 focus:outline-none focus:ring-red-500 focus:ring-offset-2 font-medium rounded-md text-sm px-3 py-2 sm:px-3 sm:py-2 transition-all duration-200 dark:border-red-500 dark:text-red-400 dark:hover:text-white dark:hover:bg-red-600 dark:focus:ring-red-500"
-                  aria-label="Clear file history"
-                  title="Clear file history"
-                >
-                  <Trash2 className="h-4 w-4 sm:mr-2" />
-                  <span className="hidden sm:inline">Clear History</span>
-                </button>
-              </div>
-
-              <div className="p-4 sm:p-6">
-                <FileTransferList
+              {/* History Tab */}
+              <TabContent value="history">
+                <HistoryTab
                   transfers={fileTransfers}
                   onDownload={handleDownloadFile}
                   onPreview={handlePreviewFile}
+                  onClearHistory={handleClearFileHistory}
                 />
-              </div>
+              </TabContent>
             </div>
-          </div>
+          </TabsProvider>
         </div>
 
         {/* Help Toggle Button */}

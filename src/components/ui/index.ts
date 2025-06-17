@@ -14,3 +14,5 @@ export { Badge, getStatusBadgeVariant } from './Badge';
 export type { BadgeProps } from './Badge';
 
 export { EmptyState } from './EmptyState';
+
+export { TabsProvider, TabList, TabButton, TabContent } from './Tabs';
