@@ -20,8 +20,8 @@ export function HistoryTab({ transfers, onDownload, onPreview, onClearHistory }:
   const hasMoreTransfers = sortedTransfers.length > 5;
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
+    <div className="h-full flex flex-col space-y-4">
+      <div className="flex justify-between items-center flex-shrink-0">
         <div>
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
             File Transfer History
@@ -43,14 +43,16 @@ export function HistoryTab({ transfers, onDownload, onPreview, onClearHistory }:
         )}
       </div>
 
-      <FileTransferList
-        transfers={displayedTransfers}
-        onDownload={onDownload}
-        onPreview={onPreview}
-      />
+      <div className="flex-1 min-h-0">
+        <FileTransferList
+          transfers={displayedTransfers}
+          onDownload={onDownload}
+          onPreview={onPreview}
+        />
+      </div>
 
       {hasMoreTransfers && !showAll && (
-        <div className="flex justify-center pt-4">
+        <div className="flex justify-center pt-4 flex-shrink-0">
           <Button
             onClick={() => setShowAll(true)}
             variant="secondary"
@@ -62,7 +64,7 @@ export function HistoryTab({ transfers, onDownload, onPreview, onClearHistory }:
       )}
 
       {showAll && hasMoreTransfers && (
-        <div className="flex justify-center pt-4">
+        <div className="flex justify-center pt-4 flex-shrink-0">
           <Button
             onClick={() => setShowAll(false)}
             variant="secondary"
