@@ -253,7 +253,7 @@ export function App() {
         <div className="w-full bg-white border-2 border-gray-200 rounded-xl transition-all duration-200 dark:bg-gray-800 dark:border-gray-700">
           <TabsProvider activeTab={activeTab} onTabChange={setActiveTab}>
             {/* Tab Navigation */}
-            <TabList className="p-4 sm:px-6 sm:pt-6">
+            <TabList className="px-4 pt-4 sm:px-6 sm:pt-6">
               <TabButton value="connection">Connection</TabButton>
               <TabButton value="file-transfer">File Transfer</TabButton>
               <TabButton value="history">History</TabButton>
