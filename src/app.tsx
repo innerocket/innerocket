@@ -37,6 +37,7 @@ export function App() {
 
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const prevFileTransfers = useRef(fileTransfers);
+  const prevConnectedPeersLength = useRef(0);
   const [previewFileId, setPreviewFileId] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [showHelp, setShowHelp] = useState<boolean>(false);
@@ -107,6 +108,15 @@ export function App() {
 
     prevFileTransfers.current = fileTransfers;
   }, [fileTransfers, peerId]);
+
+  // Monitor connected peers to switch tab when first peer connects
+  useEffect(() => {
+    // If we went from 0 to 1+ connected peers, switch to file-transfer tab
+    if (prevConnectedPeersLength.current === 0 && connectedPeers.length > 0) {
+      setActiveTab('file-transfer');
+    }
+    prevConnectedPeersLength.current = connectedPeers.length;
+  }, [connectedPeers.length]);
 
   // Clean up preview URL when component unmounts
   useEffect(() => {
