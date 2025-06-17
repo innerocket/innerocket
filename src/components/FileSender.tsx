@@ -127,7 +127,6 @@ export function FileSender({
               onClick={handleSendFileToAll}
               disabled={selectedFiles.length === 0}
               variant={selectedFiles.length > 0 ? 'primary' : 'secondary'}
-              size="lg"
               icon={<Users size={18} />}
               className="w-full"
             >
