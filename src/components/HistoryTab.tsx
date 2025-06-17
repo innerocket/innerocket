@@ -11,12 +11,21 @@ interface HistoryTabProps {
   onClearHistory: () => void;
 }
 
-export function HistoryTab({ transfers, onDownload, onPreview, onClearHistory }: HistoryTabProps) {
+export function HistoryTab({
+  transfers,
+  onDownload,
+  onPreview,
+  onClearHistory,
+}: HistoryTabProps) {
   const [showAll, setShowAll] = useState(false);
-  
+
   // Sort transfers by creation date (newest first) and limit to 5 if not showing all
-  const sortedTransfers = [...transfers].sort((a, b) => b.createdAt - a.createdAt);
-  const displayedTransfers = showAll ? sortedTransfers : sortedTransfers.slice(0, 5);
+  const sortedTransfers = [...transfers].sort(
+    (a, b) => b.createdAt - a.createdAt
+  );
+  const displayedTransfers = showAll
+    ? sortedTransfers
+    : sortedTransfers.slice(0, 5);
   const hasMoreTransfers = sortedTransfers.length > 5;
 
   return (
@@ -52,7 +61,7 @@ export function HistoryTab({ transfers, onDownload, onPreview, onClearHistory }:
       </div>
 
       {hasMoreTransfers && !showAll && (
-        <div className="flex justify-center pt-4 flex-shrink-0">
+        <div className="flex justify-center flex-shrink-0">
           <Button
             onClick={() => setShowAll(true)}
             variant="secondary"
@@ -64,7 +73,7 @@ export function HistoryTab({ transfers, onDownload, onPreview, onClearHistory }:
       )}
 
       {showAll && hasMoreTransfers && (
-        <div className="flex justify-center pt-4 flex-shrink-0">
+        <div className="flex justify-center flex-shrink-0">
           <Button
             onClick={() => setShowAll(false)}
             variant="secondary"
