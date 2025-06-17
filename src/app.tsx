@@ -247,7 +247,7 @@ export function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-dvh bg-gray-50 dark:bg-gray-900">
       <main className="max-w-4xl mx-auto py-4 px-2 sm:py-8 sm:px-6 lg:px-8">
         {/* Main Tabbed Interface */}
         <div className="w-full bg-white border-2 border-gray-200 rounded-xl transition-all duration-200 dark:bg-gray-800 dark:border-gray-700">
