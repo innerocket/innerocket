@@ -76,7 +76,7 @@ export function PeerConnection({ onConnect }: PeerConnectionProps) {
             </div>
           </div>
 
-          <code className="block w-full px-4 py-2 text-sm text-gray-800 bg-gray-100 rounded-md dark:bg-gray-700 dark:text-gray-200 font-mono break-all">
+          <code className="block w-full px-3.5 py-3 text-sm text-gray-800 bg-gray-100 rounded-md dark:bg-gray-700 dark:text-gray-200 font-mono break-all">
             {peerId}
           </code>
 
