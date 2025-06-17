@@ -1,6 +1,7 @@
 import type { ReactNode } from 'preact/compat';
 import { createContext } from 'preact';
 import { useContext } from 'preact/hooks';
+import { tv } from 'tailwind-variants';
 
 interface TabsProps {
   activeTab: string;
@@ -34,6 +35,29 @@ interface TabsContextType {
 
 const TabsContext = createContext<TabsContextType | null>(null);
 
+const tabsContainer = tv({
+  base: 'w-full',
+});
+
+const tabsList = tv({
+  base: 'flex flex-nowrap overflow-x-auto border-b border-gray-200 dark:border-gray-700 scrollbar-hide',
+});
+
+const tabButton = tv({
+  base: 'px-3 py-2 sm:px-6 sm:py-3 text-sm font-medium transition-colors duration-200 border-b-2 whitespace-nowrap flex-shrink-0',
+  variants: {
+    active: {
+      true: 'text-blue-500 border-blue-500 dark:text-blue-600 dark:border-blue-600',
+      false:
+        'text-gray-600 border-transparent hover:text-gray-900 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200',
+    },
+  },
+});
+
+const tabContent = tv({
+  base: 'mt-6',
+});
+
 export function TabsProvider({
   activeTab,
   onTabChange,
@@ -42,7 +66,7 @@ export function TabsProvider({
 }: TabsProps) {
   return (
     <TabsContext.Provider value={{ activeTab, onTabChange }}>
-      <div className={`w-full ${className}`}>{children}</div>
+      <div className={tabsContainer({ className })}>{children}</div>
     </TabsContext.Provider>
   );
 }
@@ -50,7 +74,7 @@ export function TabsProvider({
 export function TabList({ children, className = '' }: TabListProps) {
   return (
     <div
-      className={`flex flex-nowrap overflow-x-auto border-b border-gray-200 dark:border-gray-700 scrollbar-hide ${className}`}
+      className={tabsList({ className })}
       style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
     >
       {children}
@@ -68,11 +92,7 @@ export function TabButton({ value, children, className = '' }: TabProps) {
   return (
     <button
       type="button"
-      className={`px-3 py-2 sm:px-6 sm:py-3 text-sm font-medium transition-colors duration-200 border-b-2 whitespace-nowrap flex-shrink-0 ${
-        isActive
-          ? 'text-blue-500 border-blue-500 dark:text-blue-600 dark:border-blue-600'
-          : 'text-gray-600 border-transparent hover:text-gray-900 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200'
-      } ${className}`}
+      className={tabButton({ active: isActive, className })}
       onClick={() => onTabChange(value)}
     >
       {children}
@@ -91,5 +111,5 @@ export function TabContent({
   const { activeTab } = context;
   if (value !== activeTab) return null;
 
-  return <div className={`mt-6 ${className}`}>{children}</div>;
+  return <div className={tabContent({ className })}>{children}</div>;
 }
