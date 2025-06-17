@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { Badge, Button, Input, getStatusBadgeVariant, EmptyState } from './ui';
 import { usePeer } from '../contexts/PeerContext';
-import { useState } from 'preact/hooks';
+import { useState, useRef, useEffect } from 'preact/hooks';
 import { getFileTypeConfig } from '../utils/fileTypeUtils';
 
 interface FileTransferListProps {
@@ -24,6 +24,56 @@ export function FileTransferList({
 }: FileTransferListProps) {
   const { peerId } = usePeer();
   const [searchQuery, setSearchQuery] = useState('');
+  const tableContainerRef = useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, scrollLeft: 0 });
+  const lastCallTimeRef = useRef<number>(0);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDragging || !tableContainerRef.current) return;
+
+      e.preventDefault();
+
+      // Throttling: Executed every 16 ms (approx. 60 FPS)
+      const now = Date.now();
+      if (now - lastCallTimeRef.current < 16) return;
+      lastCallTimeRef.current = now;
+
+      const x = e.pageX;
+
+      // Horizontal movement amount
+      const walkX = (x - dragStart.x) * 2;
+      tableContainerRef.current.scrollLeft = dragStart.scrollLeft - walkX;
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+    };
+
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove, {
+        passive: false,
+      });
+      document.addEventListener('mouseup', handleMouseUp);
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging, dragStart]);
+
+  const handleMouseDown = (e: MouseEvent) => {
+    if (!tableContainerRef.current) return;
+
+    setIsDragging(true);
+    setDragStart({
+      x: e.pageX,
+      scrollLeft: tableContainerRef.current.scrollLeft,
+    });
+  };
+
   if (transfers.length === 0) {
     return (
       <EmptyState
@@ -68,7 +118,14 @@ export function FileTransferList({
         className="mb-4"
         fullWidth
       />
-      <div className="relative overflow-x-auto rounded-lg border-2 border-gray-200 dark:border-gray-700">
+      <div
+        ref={tableContainerRef}
+        className={`relative overflow-x-auto overflow-y-visible rounded-lg border-2 border-gray-200 dark:border-gray-700 select-none ${
+          isDragging ? 'cursor-grabbing' : 'cursor-grab'
+        }`}
+        style={{ overscrollBehaviorX: 'contain' }}
+        onMouseDown={handleMouseDown}
+      >
         <table className="w-full text-sm text-left text-gray-600 dark:text-gray-300">
           <thead className="text-xs text-gray-700 uppercase bg-gray-100 dark:text-gray-300 border-b-2 border-gray-200 dark:border-gray-700 dark:bg-gray-600">
             <tr>
