@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState, useRef } from 'preact/hooks'
+import { useEffect, useMemo, useState, useRef, useCallback } from 'preact/hooks'
 import Sqlds from 'sqids'
 import { WebRTCService } from '../utils/webrtc'
-import { usePeer } from '../contexts/PeerContext'
+import { usePeer } from './usePeer'
 import { verifyChecksum } from '../utils/checksum'
 import { FileStorageService } from '../services/fileStorageService'
 import { createProgressAnimation, getFileTypeFromName } from '../utils/fileTransferUtils'
@@ -44,6 +44,35 @@ export function useWebRTCFileTransfer({
     [peerId, addPrefixToId, removePrefixFromId]
   )
   const fileStorageService = useMemo(() => new FileStorageService(), [])
+
+  const loadCompletedFiles = useCallback(async () => {
+    try {
+      const files = await fileStorageService.getAllFiles()
+
+      files.forEach(file => {
+        // Add to memory cache if not chunked
+        if (!file.isChunked && file.blob) {
+          addReceivedFile(file.id, file.blob)
+        }
+
+        // Add completed transfer
+        addTransfer({
+          id: file.id,
+          fileName: file.fileName,
+          fileSize: file.isChunked ? file.totalSize || 0 : file.blob?.size || 0,
+          fileType: file.fileType || getFileTypeFromName(file.fileName),
+          sender: 'unknown',
+          receiver: webRTCService.getMyPeerId(),
+          progress: 100,
+          status: 'completed',
+          createdAt: file.timestamp || Date.now(),
+          checksum: file.checksum,
+        })
+      })
+    } catch (error) {
+      console.error('Error loading completed files:', error)
+    }
+  }, [fileStorageService, addReceivedFile, addTransfer, webRTCService])
 
   useEffect(() => {
     const fileChunks = new Map<string, Map<number, ArrayBuffer>>()
@@ -191,36 +220,17 @@ export function useWebRTCFileTransfer({
         webRTCService.disconnectFromPeer(peerId)
       })
     }
-  }, [webRTCService])
-
-  const loadCompletedFiles = async () => {
-    try {
-      const files = await fileStorageService.getAllFiles()
-
-      files.forEach(file => {
-        // Add to memory cache if not chunked
-        if (!file.isChunked && file.blob) {
-          addReceivedFile(file.id, file.blob)
-        }
-
-        // Add completed transfer
-        addTransfer({
-          id: file.id,
-          fileName: file.fileName,
-          fileSize: file.isChunked ? file.totalSize || 0 : file.blob?.size || 0,
-          fileType: file.fileType || getFileTypeFromName(file.fileName),
-          sender: 'unknown',
-          receiver: webRTCService.getMyPeerId(),
-          progress: 100,
-          status: 'completed',
-          createdAt: file.timestamp || Date.now(),
-          checksum: file.checksum,
-        })
-      })
-    } catch (error) {
-      console.error('Error loading completed files:', error)
-    }
-  }
+  }, [
+    webRTCService,
+    loadCompletedFiles,
+    connectedPeers,
+    addReceivedFile,
+    addTransfer,
+    fileStorageService,
+    setConnectedPeers,
+    updateTransfer,
+    updateTransferProgress,
+  ])
 
   const connectToPeer = (peerId: string) => {
     webRTCService.connectToPeer(peerId)

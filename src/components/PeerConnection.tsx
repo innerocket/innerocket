@@ -1,6 +1,6 @@
 import { useState } from 'preact/hooks'
 import { Copy, Check, QrCode, ScanLine } from 'lucide-react'
-import { usePeer } from '../contexts/PeerContext'
+import { usePeer } from '../hooks/usePeer'
 import { QRCodeModal } from './QRCodeModal'
 import { Button, IconButton, Input } from './ui'
 

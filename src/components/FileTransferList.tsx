@@ -1,7 +1,7 @@
 import type { FileTransfer } from '../types'
 import { ChevronRight, ChevronLeft, Eye, Download, FolderOpen } from 'lucide-react'
 import { Badge, Button, Input, getStatusBadgeVariant, EmptyState } from './ui'
-import { usePeer } from '../contexts/PeerContext'
+import { usePeer } from '../hooks/usePeer'
 import { useState, useRef, useEffect } from 'preact/hooks'
 import { getFileTypeConfig } from '../utils/fileTypeUtils'
 

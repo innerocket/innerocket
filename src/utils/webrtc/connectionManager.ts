@@ -1,6 +1,14 @@
-import { Peer as PeerJS, DataConnection } from 'peerjs'
+import { Peer as PeerJS } from 'peerjs'
 import type { FileMetadata, Peer } from '../../types'
 import type { WebRTCCallbacks } from './types'
+
+type DataConnection = {
+  peer: string
+  open: boolean
+  send(data: unknown): void
+  close(): void
+  on(event: string, callback: (...args: unknown[]) => void): void
+}
 
 // Define a type for the data sent between peers
 export type PeerData = {
@@ -75,7 +83,7 @@ export class ConnectionManager {
       this.handleDisconnection(peerId)
     })
 
-    conn.on('error', (err: Error) => {
+    conn.on('error', (err: unknown) => {
       console.error('Connection error:', err)
       this.handleDisconnection(peerId)
     })
@@ -144,7 +152,7 @@ export class ConnectionManager {
       this.handleDisconnection(peerId)
     })
 
-    conn.on('error', (err: Error) => {
+    conn.on('error', (err: unknown) => {
       console.error('Connection error:', err)
       this.handleDisconnection(peerId)
     })

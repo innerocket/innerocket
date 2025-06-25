@@ -45,26 +45,3 @@ export function Badge({ variant, label, icon, className = '', rounded }: BadgePr
     </span>
   )
 }
-
-export function getStatusBadgeVariant(status: string): VariantProps<typeof badge>['variant'] {
-  switch (status) {
-    case 'pending':
-      return 'warning'
-    case 'preparing':
-      return 'secondary'
-    case 'transferring':
-      return 'primary'
-    case 'completed':
-      return 'success'
-    case 'rejected':
-      return 'danger'
-    case 'failed':
-      return 'danger'
-    case 'integrity_error':
-      return 'danger'
-    case 'verifying':
-      return 'info'
-    default:
-      return 'secondary'
-  }
-}

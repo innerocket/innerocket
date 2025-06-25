@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'preact/hooks'
 import { QRCodeHandler } from './QRCodeHandler'
 import { useFileTransfer } from '../hooks/useFileTransfer'
-import { usePeer } from '../contexts/PeerContext'
+import { usePeer } from '../hooks/usePeer'
 import type { NotificationType } from './Notification'
 
 interface QRCodePageProps {
