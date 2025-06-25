@@ -1,3 +1,4 @@
+import type { ElementType } from 'react'
 import {
   FileText,
   Image,
@@ -10,7 +11,7 @@ import {
 } from 'lucide-react'
 
 export interface FileTypeConfig {
-  icon: any
+  icon: ElementType
   backgroundColor: string
   textColor: string
   category: string

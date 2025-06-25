@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'preact/hooks'
 import QRCode from 'qrcode'
-import { QrReader } from 'react-qr-reader'
+import { QrReader, type OnResultFunction } from 'react-qr-reader'
 import Sqlds from 'sqids'
 import { Button } from './ui'
 
@@ -59,9 +59,9 @@ export function QRCodeHandler({
   }
 
   // Handle scan result
-  const handleScan = (result: any) => {
-    if (result?.text) {
-      const scannedText = result.text.trim()
+  const handleScan: OnResultFunction = result => {
+    if (result?.getText()) {
+      const scannedText = result.getText().trim()
       setScanResult(scannedText)
       setIsScanning(false)
 
@@ -165,3 +165,4 @@ export function QRCodeHandler({
     </div>
   )
 }
+

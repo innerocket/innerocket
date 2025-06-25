@@ -1,3 +1,5 @@
+import type { FileMetadata, FileTransferRequest, Peer } from '../../types'
+
 export interface ConnectionQuality {
   type: 'slow' | 'medium' | 'fast'
   mbps: number
@@ -11,7 +13,7 @@ export interface ChunkInfo {
 }
 
 export interface FileTransferState {
-  metadata: any
+  metadata: FileMetadata
   totalSize: number
   transferredBytes: number
   startTime: number
@@ -19,19 +21,19 @@ export interface FileTransferState {
 }
 
 export interface WebRTCCallbacks {
-  onPeerConnected: (peer: any) => void
+  onPeerConnected: (peer: Peer) => void
   onPeerDisconnected: (peerId: string) => void
-  onFileTransferRequest: (request: any) => void
+  onFileTransferRequest: (request: FileTransferRequest) => void
   onFileChunk: (
     peerId: string,
     chunk: ArrayBuffer,
-    metadata: any,
+    metadata: FileMetadata,
     progress: number,
     chunkSize?: number,
     transferSpeed?: number,
     chunkIndex?: number
   ) => void
-  onFileTransferComplete: (peerId: string, metadata: any) => void
-  onFileTransferAccepted: (peerId: string, metadata: any) => void
-  onFileTransferRejected: (peerId: string, metadata: any) => void
+  onFileTransferComplete: (peerId: string, metadata: FileMetadata) => void
+  onFileTransferAccepted: (peerId: string, metadata: FileMetadata) => void
+  onFileTransferRejected: (peerId: string, metadata: FileMetadata) => void
 }

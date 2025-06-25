@@ -3,6 +3,7 @@ import type { FileMetadata } from '../../types'
 import { calculateChecksum } from '../checksum'
 import { createFileChunkWorker } from '../workerLoader'
 import { ChunkProcessor } from './chunkProcessor'
+import type { PeerData } from './connectionManager'
 import type { ConnectionQuality, FileTransferState, WebRTCCallbacks } from './types'
 
 const sqlds = new Sqlds()
@@ -41,7 +42,7 @@ export class FileTransferService {
   }
 
   public sendFile(
-    sendDataFn: (data: any) => boolean,
+    sendDataFn: (data: PeerData) => boolean,
     file: File,
     metadata: FileMetadata,
     peerId: string
@@ -55,7 +56,7 @@ export class FileTransferService {
   }
 
   private sendFileStandard(
-    sendDataFn: (data: any) => boolean,
+    sendDataFn: (data: PeerData) => boolean,
     file: File,
     metadata: FileMetadata,
     peerId: string
@@ -156,7 +157,7 @@ export class FileTransferService {
   }
 
   private sendFileWithWorker(
-    sendDataFn: (data: any) => boolean,
+    sendDataFn: (data: PeerData) => boolean,
     file: File,
     metadata: FileMetadata,
     peerId: string

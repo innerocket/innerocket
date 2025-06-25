@@ -1,6 +1,6 @@
 import Sqlds from 'sqids'
 import type { FileMetadata, FileTransferRequest, Peer } from '../../types'
-import { ConnectionManager } from './connectionManager'
+import { ConnectionManager, type PeerData } from './connectionManager'
 import { FileTransferService } from './fileTransferService'
 import type { WebRTCCallbacks } from './types'
 
@@ -141,7 +141,7 @@ export class WebRTCService {
   public sendFile(userPeerId: string, file: File, metadata: FileMetadata): void {
     // Convert user-facing ID to internal ID before sending
     const internalPeerId = this.addPrefixToId(userPeerId)
-    const sendDataFn = (data: any) => this.connectionManager.sendData(internalPeerId, data)
+    const sendDataFn = (data: PeerData) => this.connectionManager.sendData(internalPeerId, data)
     this.fileTransferService.sendFile(sendDataFn, file, metadata, internalPeerId)
   }
 

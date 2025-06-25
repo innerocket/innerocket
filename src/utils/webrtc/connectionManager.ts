@@ -1,10 +1,22 @@
-import { Peer as PeerJS } from 'peerjs'
-import type { Peer } from '../../types'
+import { Peer as PeerJS, DataConnection } from 'peerjs'
+import type { FileMetadata, Peer } from '../../types'
 import type { WebRTCCallbacks } from './types'
+
+// Define a type for the data sent between peers
+export type PeerData = {
+  type: 'file-request' | 'file-chunk' | 'file-complete' | 'file-accept' | 'file-reject'
+  metadata: FileMetadata
+  chunk?: ArrayBuffer
+  progress?: number
+  chunkSize?: number
+  transferSpeed?: number
+  chunkIndex?: number
+  name?: string
+}
 
 export class ConnectionManager {
   private peer!: PeerJS
-  private connections: Map<string, any> = new Map()
+  private connections: Map<string, DataConnection> = new Map()
   private discoveredPeers: Map<string, Peer> = new Map()
   private myPeerId: string
   private callbacks: Partial<WebRTCCallbacks> = {}
@@ -45,7 +57,7 @@ export class ConnectionManager {
     })
   }
 
-  private handleIncomingConnection(conn: any): void {
+  private handleIncomingConnection(conn: DataConnection): void {
     const peerId = conn.peer
 
     conn.on('open', () => {
@@ -54,8 +66,8 @@ export class ConnectionManager {
       this.discoveredPeers.set(peerId, { id: peerId })
       this.callbacks.onPeerConnected?.({ id: peerId })
 
-      conn.on('data', (data: any) => {
-        this.handleDataReceived(peerId, data)
+      conn.on('data', (data: unknown) => {
+        this.handleDataReceived(peerId, data as PeerData)
       })
     })
 
@@ -76,22 +88,22 @@ export class ConnectionManager {
     this.callbacks.onPeerDisconnected?.(peerId)
   }
 
-  private handleDataReceived(peerId: string, data: any): void {
+  private handleDataReceived(peerId: string, data: PeerData): void {
     if (!data) return
 
     switch (data.type) {
       case 'file-request':
         this.callbacks.onFileTransferRequest?.({
           metadata: data.metadata,
-          from: { id: peerId, name: data.name },
+          from: { id: peerId, name: data.name || 'Anonymous' },
         })
         break
       case 'file-chunk':
         this.callbacks.onFileChunk?.(
           peerId,
-          data.chunk,
+          data.chunk as ArrayBuffer,
           data.metadata,
-          data.progress,
+          data.progress as number,
           data.chunkSize,
           data.transferSpeed,
           data.chunkIndex
@@ -124,8 +136,8 @@ export class ConnectionManager {
       this.callbacks.onPeerConnected?.({ id: peerId })
     })
 
-    conn.on('data', (data: any) => {
-      this.handleDataReceived(peerId, data)
+    conn.on('data', (data: unknown) => {
+      this.handleDataReceived(peerId, data as PeerData)
     })
 
     conn.on('close', () => {
@@ -148,7 +160,7 @@ export class ConnectionManager {
     }
   }
 
-  public getConnection(peerId: string): any {
+  public getConnection(peerId: string): DataConnection | undefined {
     return this.connections.get(peerId)
   }
 
@@ -164,7 +176,7 @@ export class ConnectionManager {
     this.callbacks = { ...this.callbacks, ...callbacks }
   }
 
-  public sendData(peerId: string, data: any): boolean {
+  public sendData(peerId: string, data: PeerData): boolean {
     const conn = this.connections.get(peerId)
     if (!conn) {
       console.error('No connection to peer:', peerId)
