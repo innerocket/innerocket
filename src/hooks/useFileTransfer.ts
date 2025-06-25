@@ -1,11 +1,11 @@
-import { useMemo, useState } from 'preact/hooks';
-import { useFileTransferState } from './useFileTransferState';
-import { useFileOperations } from './useFileOperations';
-import { useWebRTCFileTransfer } from './useWebRTCFileTransfer';
-import { FileStorageService } from '../services/fileStorageService';
+import { useMemo, useState } from 'preact/hooks'
+import { useFileTransferState } from './useFileTransferState'
+import { useFileOperations } from './useFileOperations'
+import { useWebRTCFileTransfer } from './useWebRTCFileTransfer'
+import { FileStorageService } from '../services/fileStorageService'
 
 export function useFileTransfer() {
-  const [connectedPeers, setConnectedPeers] = useState<string[]>([]);
+  const [connectedPeers, setConnectedPeers] = useState<string[]>([])
 
   const {
     fileTransfers,
@@ -17,7 +17,7 @@ export function useFileTransfer() {
     clearAllTransfers,
     addReceivedFile,
     getReceivedFile,
-  } = useFileTransferState();
+  } = useFileTransferState()
 
   const {
     connectToPeer,
@@ -35,19 +35,19 @@ export function useFileTransfer() {
     addReceivedFile,
     removeTransfer,
     setConnectedPeers,
-  });
+  })
 
   const { downloadFile, previewFile, getFileType } = useFileOperations({
     fileTransfers,
     getReceivedFile,
-  });
+  })
 
-  const fileStorageService = useMemo(() => new FileStorageService(), []);
+  const fileStorageService = useMemo(() => new FileStorageService(), [])
 
   const clearFileHistory = async () => {
-    await fileStorageService.clearAllFiles();
-    clearAllTransfers();
-  };
+    await fileStorageService.clearAllFiles()
+    clearAllTransfers()
+  }
 
   return {
     myPeerId,
@@ -65,5 +65,5 @@ export function useFileTransfer() {
     previewFile,
     getFileType,
     clearFileHistory,
-  };
+  }
 }

@@ -1,14 +1,14 @@
-import type { JSX } from 'preact';
+import type { JSX } from 'preact'
 
 export interface CardProps {
-  title?: string | JSX.Element;
-  subtitle?: string | JSX.Element;
-  children: JSX.Element | JSX.Element[] | string;
-  footer?: JSX.Element;
-  className?: string;
-  headerClassName?: string;
-  bodyClassName?: string;
-  footerClassName?: string;
+  title?: string | JSX.Element
+  subtitle?: string | JSX.Element
+  children: JSX.Element | JSX.Element[] | string
+  footer?: JSX.Element
+  className?: string
+  headerClassName?: string
+  bodyClassName?: string
+  footerClassName?: string
 }
 
 export function Card({
@@ -21,7 +21,7 @@ export function Card({
   bodyClassName = '',
   footerClassName = '',
 }: CardProps) {
-  const hasHeader = title || subtitle;
+  const hasHeader = title || subtitle
 
   return (
     <div
@@ -33,27 +33,19 @@ export function Card({
         >
           {title &&
             (typeof title === 'string' ? (
-              <h5 className="text-xl font-semibold text-gray-900 dark:text-white">
-                {title}
-              </h5>
+              <h5 className='text-xl font-semibold text-gray-900 dark:text-white'>{title}</h5>
             ) : (
               title
             ))}
           {subtitle &&
             (typeof subtitle === 'string' ? (
-              <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
-                {subtitle}
-              </p>
+              <p className='text-sm text-gray-600 dark:text-gray-300 mt-1'>{subtitle}</p>
             ) : (
               subtitle
             ))}
         </div>
       )}
-      <div
-        className={`p-4 sm:p-6 ${
-          hasHeader ? '' : 'rounded-t-lg'
-        } ${bodyClassName}`}
-      >
+      <div className={`p-4 sm:p-6 ${hasHeader ? '' : 'rounded-t-lg'} ${bodyClassName}`}>
         {children}
       </div>
       {footer && (
@@ -64,31 +56,25 @@ export function Card({
         </div>
       )}
     </div>
-  );
+  )
 }
 
 export interface CardSectionProps {
-  title?: string | JSX.Element;
-  children: JSX.Element | JSX.Element[] | string;
-  className?: string;
+  title?: string | JSX.Element
+  children: JSX.Element | JSX.Element[] | string
+  className?: string
 }
 
-export function CardSection({
-  title,
-  children,
-  className = '',
-}: CardSectionProps) {
+export function CardSection({ title, children, className = '' }: CardSectionProps) {
   return (
     <div className={`mb-4 ${className}`}>
       {title &&
         (typeof title === 'string' ? (
-          <h3 className="mb-2 text-lg font-medium text-gray-900 dark:text-white">
-            {title}
-          </h3>
+          <h3 className='mb-2 text-lg font-medium text-gray-900 dark:text-white'>{title}</h3>
         ) : (
-          <div className="mb-2">{title}</div>
+          <div className='mb-2'>{title}</div>
         ))}
       <div>{children}</div>
     </div>
-  );
+  )
 }

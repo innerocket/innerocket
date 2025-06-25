@@ -7,13 +7,13 @@ import {
   Code,
   FileSpreadsheet,
   FileType,
-} from 'lucide-react';
+} from 'lucide-react'
 
 export interface FileTypeConfig {
-  icon: any;
-  backgroundColor: string;
-  textColor: string;
-  category: string;
+  icon: any
+  backgroundColor: string
+  textColor: string
+  category: string
 }
 
 export const FILE_TYPE_CONFIGS: Record<string, FileTypeConfig> = {
@@ -282,7 +282,7 @@ export const FILE_TYPE_CONFIGS: Record<string, FileTypeConfig> = {
     textColor: 'text-gray-600 dark:text-gray-400',
     category: 'code',
   },
-};
+}
 
 // Default config for unknown file types
 const DEFAULT_CONFIG: FileTypeConfig = {
@@ -290,19 +290,19 @@ const DEFAULT_CONFIG: FileTypeConfig = {
   backgroundColor: 'bg-gray-100 dark:bg-gray-900/20',
   textColor: 'text-gray-600 dark:text-gray-400',
   category: 'unknown',
-};
+}
 
 export function getFileTypeConfig(fileName: string): FileTypeConfig {
-  const extension = fileName.split('.').pop()?.toLowerCase();
+  const extension = fileName.split('.').pop()?.toLowerCase()
 
   if (!extension) {
-    return DEFAULT_CONFIG;
+    return DEFAULT_CONFIG
   }
 
-  return FILE_TYPE_CONFIGS[extension] || DEFAULT_CONFIG;
+  return FILE_TYPE_CONFIGS[extension] || DEFAULT_CONFIG
 }
 
 export function getFileExtension(fileName: string): string {
-  const extension = fileName.split('.').pop()?.toLowerCase();
-  return extension || '';
+  const extension = fileName.split('.').pop()?.toLowerCase()
+  return extension || ''
 }

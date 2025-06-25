@@ -1,6 +1,6 @@
-import type { JSX } from 'preact';
-import { Loader } from 'lucide-react';
-import { tv, type VariantProps } from 'tailwind-variants';
+import type { JSX } from 'preact'
+import { Loader } from 'lucide-react'
+import { tv, type VariantProps } from 'tailwind-variants'
 
 const button = tv({
   base: 'inline-flex items-center justify-center font-medium rounded-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 active:scale-95',
@@ -20,7 +20,8 @@ const button = tv({
       light:
         'text-gray-600 bg-gray-100 border-2 border-gray-200 hover:bg-gray-200 hover:border-gray-300 focus:ring-gray-500 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600 dark:hover:border-gray-500',
       dark: 'text-white bg-gray-800 hover:bg-gray-900 focus:ring-gray-600 border-2 border-gray-800 hover:border-gray-900 dark:bg-gray-700 dark:hover:bg-gray-600 dark:focus:ring-gray-500',
-      ghost: 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 focus:ring-gray-500 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200',
+      ghost:
+        'text-gray-600 hover:bg-gray-100 hover:text-gray-900 focus:ring-gray-500 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200',
     },
     size: {
       xs: 'px-2.5 py-1.5 text-xs',
@@ -41,13 +42,13 @@ const button = tv({
     size: 'md',
     fullWidth: false,
   },
-});
+})
 
 export type ButtonProps = JSX.HTMLAttributes<HTMLButtonElement> &
   VariantProps<typeof button> & {
-    icon?: JSX.Element;
-    isLoading?: boolean;
-  };
+    icon?: JSX.Element
+    isLoading?: boolean
+  }
 
 export function Button({
   variant,
@@ -66,20 +67,13 @@ export function Button({
     fullWidth,
     disabled: disabled || isLoading,
     className: className as string,
-  });
+  })
 
   return (
-    <button
-      className={buttonClasses}
-      disabled={disabled || isLoading}
-      type="button"
-      {...props}
-    >
-      {isLoading && (
-        <Loader className="inline w-4 h-4 mr-3 text-current animate-spin" />
-      )}
-      {icon && !isLoading && <span className="mr-2">{icon}</span>}
+    <button className={buttonClasses} disabled={disabled || isLoading} type='button' {...props}>
+      {isLoading && <Loader className='inline w-4 h-4 mr-3 text-current animate-spin' />}
+      {icon && !isLoading && <span className='mr-2'>{icon}</span>}
       {children}
     </button>
-  );
+  )
 }

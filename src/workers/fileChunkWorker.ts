@@ -4,33 +4,30 @@
  */
 
 interface ChunkMetadata {
-  index: number;
-  totalChunks: number;
+  index: number
+  totalChunks: number
 }
 
 self.onmessage = function (e) {
-  const { file, chunkSize, offset, maxChunkSize } = e.data;
+  const { file, chunkSize, offset, maxChunkSize } = e.data
 
   if (e.data.action === 'process') {
     // Read the slice
-    const fileReader = new FileReader();
-    const slice = file.slice(offset, offset + chunkSize);
+    const fileReader = new FileReader()
+    const slice = file.slice(offset, offset + chunkSize)
 
     fileReader.onload = function (e) {
-      if (!e.target) return;
-      const chunk = e.target.result as ArrayBuffer;
-      const progress = Math.min(
-        100,
-        Math.floor(((offset + chunk.byteLength) / file.size) * 100)
-      );
+      if (!e.target) return
+      const chunk = e.target.result as ArrayBuffer
+      const progress = Math.min(100, Math.floor(((offset + chunk.byteLength) / file.size) * 100))
 
       // Create chunk metadata
-      const chunkIndex = Math.floor(offset / chunkSize);
-      const totalChunks = Math.ceil(file.size / chunkSize);
+      const chunkIndex = Math.floor(offset / chunkSize)
+      const totalChunks = Math.ceil(file.size / chunkSize)
       const metadata: ChunkMetadata = {
         index: chunkIndex,
         totalChunks: totalChunks,
-      };
+      }
 
       // Send the chunk back to the main thread
       self.postMessage({
@@ -40,46 +37,45 @@ self.onmessage = function (e) {
         offset: offset,
         nextOffset: offset + chunk.byteLength,
         metadata: metadata,
-      });
-    };
+      })
+    }
 
     fileReader.onerror = function (_e) {
       self.postMessage({
         type: 'error',
         error: 'Error reading file chunk',
-      });
-    };
+      })
+    }
 
-    fileReader.readAsArrayBuffer(slice);
+    fileReader.readAsArrayBuffer(slice)
   } else if (e.data.action === 'adjustSize') {
     // Adjust chunk size based on transfer rate
-    const { timeTaken, lastChunkSize, transferRates } = e.data;
+    const { timeTaken, lastChunkSize, transferRates } = e.data
 
     // Calculate bytes per ms
-    const bytesPerMs = lastChunkSize / timeTaken;
-    const mbps = (bytesPerMs * 1000) / (1024 * 1024);
+    const bytesPerMs = lastChunkSize / timeTaken
+    const mbps = (bytesPerMs * 1000) / (1024 * 1024)
 
     // Keep track of rates
-    transferRates.push(mbps);
-    if (transferRates.length > 5) transferRates.shift();
+    transferRates.push(mbps)
+    if (transferRates.length > 5) transferRates.shift()
 
     // Calculate average transfer rate
     const avgMbps =
-      transferRates.reduce((sum: number, rate: number) => sum + rate, 0) /
-      transferRates.length;
+      transferRates.reduce((sum: number, rate: number) => sum + rate, 0) / transferRates.length
 
     // Determine new chunk size and connection quality
-    let newChunkSize = chunkSize;
-    let connectionQuality = 'medium';
+    let newChunkSize = chunkSize
+    let connectionQuality = 'medium'
 
     if (avgMbps > 8) {
       // Very fast connection (>8 MB/s)
-      newChunkSize = Math.min(chunkSize * 1.5, maxChunkSize);
-      connectionQuality = 'fast';
+      newChunkSize = Math.min(chunkSize * 1.5, maxChunkSize)
+      connectionQuality = 'fast'
     } else if (avgMbps < 1) {
       // Slow connection (<1 MB/s)
-      newChunkSize = Math.max(chunkSize / 1.5, 256 * 1024);
-      connectionQuality = 'slow';
+      newChunkSize = Math.max(chunkSize / 1.5, 256 * 1024)
+      connectionQuality = 'slow'
     }
 
     self.postMessage({
@@ -87,6 +83,6 @@ self.onmessage = function (e) {
       newChunkSize: newChunkSize,
       connectionQuality: connectionQuality,
       transferRates: transferRates,
-    });
+    })
   }
-};
+}

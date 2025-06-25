@@ -1,7 +1,7 @@
-import type { JSX } from 'preact';
-import { cloneElement } from 'preact';
-import { Loader } from 'lucide-react';
-import { tv, type VariantProps } from 'tailwind-variants';
+import type { JSX } from 'preact'
+import { cloneElement } from 'preact'
+import { Loader } from 'lucide-react'
+import { tv, type VariantProps } from 'tailwind-variants'
 
 const iconButton = tv({
   base: 'inline-flex items-center justify-center transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 active:scale-95',
@@ -44,7 +44,7 @@ const iconButton = tv({
     size: 'md',
     rounded: false,
   },
-});
+})
 
 const iconSize = tv({
   variants: {
@@ -59,14 +59,14 @@ const iconSize = tv({
   defaultVariants: {
     size: 'md',
   },
-});
+})
 
 export type IconButtonProps = JSX.HTMLAttributes<HTMLButtonElement> &
   VariantProps<typeof iconButton> & {
-    icon: JSX.Element;
-    isLoading?: boolean;
-    ariaLabel: string;
-  };
+    icon: JSX.Element
+    isLoading?: boolean
+    ariaLabel: string
+  }
 
 export function IconButton({
   variant,
@@ -85,9 +85,9 @@ export function IconButton({
     rounded,
     disabled: disabled || isLoading,
     className: className as string,
-  });
+  })
 
-  const iconClasses = iconSize({ size });
+  const iconClasses = iconSize({ size })
 
   // Clone the icon element with the appropriate size class
   const sizedIcon = isLoading ? (
@@ -95,23 +95,21 @@ export function IconButton({
   ) : // Clone the icon element and add size class
   typeof icon === 'object' && icon !== null && 'type' in icon ? (
     cloneElement(icon as JSX.Element, {
-      className: `${
-        (icon as JSX.Element).props?.className || ''
-      } ${iconClasses}`.trim(),
+      className: `${(icon as JSX.Element).props?.className || ''} ${iconClasses}`.trim(),
     })
   ) : (
     <span className={iconClasses}>{icon}</span>
-  );
+  )
 
   return (
     <button
       className={buttonClasses}
       disabled={disabled || isLoading}
       aria-label={ariaLabel}
-      type="button"
+      type='button'
       {...props}
     >
       {sizedIcon}
     </button>
-  );
+  )
 }

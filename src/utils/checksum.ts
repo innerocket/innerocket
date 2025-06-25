@@ -1,8 +1,8 @@
 /**
  * Utility functions for file integrity checking
  */
-import { createChecksumWorker } from './workerLoader';
-import { createSHA256 } from 'hash-wasm';
+import { createChecksumWorker } from './workerLoader'
+import { createSHA256 } from 'hash-wasm'
 
 /**
  * Calculates a SHA-256 checksum for a file or blob.
@@ -15,19 +15,16 @@ export async function calculateChecksum(file: File | Blob): Promise<string> {
   if (typeof Worker !== 'undefined' && file.size > 20 * 1024 * 1024) {
     // 20MB threshold
     try {
-      return await calculateChecksumWithWorker(file);
+      return await calculateChecksumWithWorker(file)
     } catch (error) {
-      console.warn(
-        'Worker-based checksum failed, falling back to main thread:',
-        error
-      );
+      console.warn('Worker-based checksum failed, falling back to main thread:', error)
       // Fallback to main thread if worker fails
-      return calculateChecksumStreaming(file);
+      return calculateChecksumStreaming(file)
     }
   }
 
   // For smaller files, calculate on the main thread.
-  return calculateChecksumStreaming(file);
+  return calculateChecksumStreaming(file)
 }
 
 /**
@@ -37,40 +34,40 @@ async function calculateChecksumStreaming(
   file: File | Blob,
   chunkSize = 4 * 1024 * 1024 // 4MB
 ): Promise<string> {
-  const hasher = await createSHA256();
-  hasher.init();
+  const hasher = await createSHA256()
+  hasher.init()
 
-  const reader = new FileReader();
-  let offset = 0;
+  const reader = new FileReader()
+  let offset = 0
 
   return new Promise((resolve, reject) => {
     function readNextChunk() {
       if (offset >= file.size) {
-        resolve(hasher.digest('hex'));
-        return;
+        resolve(hasher.digest('hex'))
+        return
       }
 
-      const end = Math.min(offset + chunkSize, file.size);
-      const slice = file.slice(offset, end);
-      reader.readAsArrayBuffer(slice);
+      const end = Math.min(offset + chunkSize, file.size)
+      const slice = file.slice(offset, end)
+      reader.readAsArrayBuffer(slice)
     }
 
-    reader.onload = (e) => {
+    reader.onload = e => {
       if (e.target?.result) {
-        hasher.update(new Uint8Array(e.target.result as ArrayBuffer));
-        offset += (e.target.result as ArrayBuffer).byteLength;
-        readNextChunk();
+        hasher.update(new Uint8Array(e.target.result as ArrayBuffer))
+        offset += (e.target.result as ArrayBuffer).byteLength
+        readNextChunk()
       } else {
-        reject(new Error('Failed to read file chunk'));
+        reject(new Error('Failed to read file chunk'))
       }
-    };
+    }
 
-    reader.onerror = (error) => {
-      reject(error);
-    };
+    reader.onerror = error => {
+      reject(error)
+    }
 
-    readNextChunk();
-  });
+    readNextChunk()
+  })
 }
 
 /**
@@ -78,32 +75,32 @@ async function calculateChecksumStreaming(
  */
 function calculateChecksumWithWorker(file: File | Blob): Promise<string> {
   return new Promise((resolve, reject) => {
-    let worker: Worker;
+    let worker: Worker
     try {
-      worker = createChecksumWorker();
+      worker = createChecksumWorker()
     } catch (workerError) {
-      return reject(workerError);
+      return reject(workerError)
     }
 
-    worker.onmessage = (e) => {
-      const { type, hash, error } = e.data;
+    worker.onmessage = e => {
+      const { type, hash, error } = e.data
       if (type === 'complete') {
-        resolve(hash);
+        resolve(hash)
       } else if (type === 'error') {
-        reject(new Error(error));
+        reject(new Error(error))
       }
       if (type === 'complete' || type === 'error') {
-        worker.terminate();
+        worker.terminate()
       }
-    };
+    }
 
-    worker.onerror = (error) => {
-      reject(error);
-      worker.terminate();
-    };
+    worker.onerror = error => {
+      reject(error)
+      worker.terminate()
+    }
 
-    worker.postMessage(file);
-  });
+    worker.postMessage(file)
+  })
 }
 
 /**
@@ -117,18 +114,18 @@ export async function verifyChecksum(
   expectedChecksum: string
 ): Promise<boolean> {
   if (!expectedChecksum) {
-    console.warn('No expected checksum provided. Skipping verification.');
-    return true; // Or false, depending on your security policy
+    console.warn('No expected checksum provided. Skipping verification.')
+    return true // Or false, depending on your security policy
   }
 
   try {
-    const actualChecksum = await calculateChecksum(file);
+    const actualChecksum = await calculateChecksum(file)
     console.log(`Verification:
       Actual:   ${actualChecksum}
-      Expected: ${expectedChecksum}`);
-    return actualChecksum === expectedChecksum;
+      Expected: ${expectedChecksum}`)
+    return actualChecksum === expectedChecksum
   } catch (error) {
-    console.error('Error during checksum verification:', error);
-    return false; // Treat verification errors as failure
+    console.error('Error during checksum verification:', error)
+    return false // Treat verification errors as failure
   }
 }

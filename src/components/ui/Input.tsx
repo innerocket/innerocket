@@ -1,6 +1,6 @@
-import type { JSX } from 'preact';
-import { forwardRef } from 'preact/compat';
-import { tv } from 'tailwind-variants';
+import type { JSX } from 'preact'
+import { forwardRef } from 'preact/compat'
+import { tv } from 'tailwind-variants'
 
 const inputWrapper = tv({
   base: 'relative',
@@ -9,7 +9,7 @@ const inputWrapper = tv({
       true: 'w-full',
     },
   },
-});
+})
 
 const inputStyles = tv({
   base: 'block p-2.5 px-3 rounded-lg focus:outline-none transition-all duration-200 text-sm',
@@ -29,15 +29,15 @@ const inputStyles = tv({
       true: 'w-full',
     },
   },
-});
+})
 
 const iconWrapper = tv({
   base: 'flex items-center justify-center h-full w-10 flex-shrink-0',
-});
+})
 
 const leftIconWrapper = tv({
   base: 'absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none',
-});
+})
 
 const rightIconWrapper = tv({
   base: 'absolute inset-y-0 right-0 flex items-center pr-3',
@@ -47,16 +47,16 @@ const rightIconWrapper = tv({
       false: 'pointer-events-none',
     },
   },
-});
+})
 
 export interface InputProps extends JSX.InputHTMLAttributes<HTMLInputElement> {
-  label?: string;
-  error?: string;
-  hint?: string;
-  fullWidth?: boolean;
-  icon?: JSX.Element;
-  rightIcon?: JSX.Element;
-  onRightIconClick?: () => void;
+  label?: string
+  error?: string
+  hint?: string
+  fullWidth?: boolean
+  icon?: JSX.Element
+  rightIcon?: JSX.Element
+  onRightIconClick?: () => void
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
@@ -74,19 +74,19 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     },
     ref
   ) => {
-    const inputWrapperClasses = inputWrapper({ fullWidth });
+    const inputWrapperClasses = inputWrapper({ fullWidth })
     const inputClasses = inputStyles({
       error: !!error,
       icon: !!icon,
       rightIcon: !!rightIcon,
       fullWidth,
       className: className as string,
-    });
+    })
 
     return (
       <div className={fullWidth ? 'w-full' : ''}>
         {label && (
-          <label className="block mb-3 text-sm font-semibold text-gray-700 dark:text-gray-200">
+          <label className='block mb-3 text-sm font-semibold text-gray-700 dark:text-gray-200'>
             {label}
           </label>
         )}
@@ -94,7 +94,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           {icon && (
             <div className={leftIconWrapper()}>
               <div className={iconWrapper()}>
-                <span className="text-gray-500 dark:text-gray-400">{icon}</span>
+                <span className='text-gray-500 dark:text-gray-400'>{icon}</span>
               </div>
             </div>
           )}
@@ -105,9 +105,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
               onClick={onRightIconClick}
             >
               <div className={iconWrapper()}>
-                <span className="text-gray-500 dark:text-gray-400">
-                  {rightIcon}
-                </span>
+                <span className='text-gray-500 dark:text-gray-400'>{rightIcon}</span>
               </div>
             </div>
           )}
@@ -115,15 +113,13 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         {(error || hint) && (
           <p
             className={`mt-2 text-sm ${
-              error
-                ? 'text-red-600 dark:text-red-500'
-                : 'text-gray-500 dark:text-gray-400'
+              error ? 'text-red-600 dark:text-red-500' : 'text-gray-500 dark:text-gray-400'
             }`}
           >
             {error || hint}
           </p>
         )}
       </div>
-    );
+    )
   }
-);
+)

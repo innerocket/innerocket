@@ -11,11 +11,11 @@
 export function createWorker(workerPath: string): Worker {
   // Check if Web Workers are supported
   if (typeof Worker === 'undefined') {
-    throw new Error('Web Workers are not supported in this browser');
+    throw new Error('Web Workers are not supported in this browser')
   }
 
   // Create worker
-  return new Worker(workerPath, { type: 'module' });
+  return new Worker(workerPath, { type: 'module' })
 }
 
 /**
@@ -24,10 +24,9 @@ export function createWorker(workerPath: string): Worker {
  */
 export function createChecksumWorker(): Worker {
   // Use Vite's ?worker suffix to ensure proper bundling
-  return new Worker(
-    new URL('../workers/checksumWorker.ts?worker', import.meta.url),
-    { type: 'module' }
-  );
+  return new Worker(new URL('../workers/checksumWorker.ts?worker', import.meta.url), {
+    type: 'module',
+  })
 }
 
 /**
@@ -36,8 +35,7 @@ export function createChecksumWorker(): Worker {
  */
 export function createFileChunkWorker(): Worker {
   // Use Vite's ?worker suffix to ensure proper bundling
-  return new Worker(
-    new URL('../workers/fileChunkWorker.ts?worker', import.meta.url),
-    { type: 'module' }
-  );
+  return new Worker(new URL('../workers/fileChunkWorker.ts?worker', import.meta.url), {
+    type: 'module',
+  })
 }

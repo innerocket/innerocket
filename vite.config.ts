@@ -1,8 +1,8 @@
-import { defineConfig } from 'vite';
-import preact from '@preact/preset-vite';
-import tailwindcss from '@tailwindcss/vite';
-import { VitePWA } from 'vite-plugin-pwa';
-import { ViteMinifyPlugin } from 'vite-plugin-minify';
+import { defineConfig } from 'vite'
+import preact from '@preact/preset-vite'
+import tailwindcss from '@tailwindcss/vite'
+import { VitePWA } from 'vite-plugin-pwa'
+import { ViteMinifyPlugin } from 'vite-plugin-minify'
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -45,4 +45,4 @@ export default defineConfig({
   build: {
     minify: 'terser',
   },
-});
+})
