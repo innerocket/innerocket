@@ -298,14 +298,14 @@ export function App() {
         {/* Help Section - Togglable */}
         {showHelp && (
           <div className='mt-6 sm:mt-8 mb-4 w-full bg-white border-2 border-gray-200 rounded-xl transition-all duration-200 dark:bg-gray-800 dark:border-gray-700'>
-            <div className='p-3 sm:p-4 md:p-6 border-b-2 border-gray-200 rounded-t-xl dark:border-gray-700'>
+            <div className='p-4 sm:p-6 border-b-2 border-gray-200 rounded-t-xl dark:border-gray-700'>
               <h2 className='text-xl font-semibold text-gray-900 dark:text-white'>About</h2>
               <p className='text-sm text-gray-600 dark:text-gray-400 mt-1'>
                 Learn how our secure file sharing works
               </p>
             </div>
 
-            <div className='p-3 sm:p-4 md:p-6'>
+            <div className='p-4 sm:p-6'>
               <div className='space-y-3 sm:space-y-4'>
                 <p className='text-gray-700 dark:text-gray-300 leading-relaxed'>
                   Innerocket is a secure peer-to-peer file sharing application that uses WebRTC
