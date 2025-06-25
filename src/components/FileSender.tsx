@@ -1,5 +1,5 @@
 import { useRef, useState } from 'preact/hooks'
-import { Users } from 'lucide-react'
+import { Users } from 'lucide-preact'
 import { Button } from './ui'
 
 interface FileSenderProps {

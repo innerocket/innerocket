@@ -22,7 +22,7 @@
   "dependencies": {
     "@tailwindcss/vite": "^4.1.8",
     "hash-wasm": "^4.12.0",
-    "lucide-react": "^0.512.0",
+    "lucide-preact": "^0.523.0",
     "peerjs": "^1.5.1",
     "preact": "^10.26.5",
     "preact-router": "^4.1.2",

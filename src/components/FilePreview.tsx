@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'preact/hooks'
-import { X } from 'lucide-react'
+import { X } from 'lucide-preact'
 
 interface FilePreviewProps {
   fileName: string

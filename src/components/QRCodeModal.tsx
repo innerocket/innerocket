@@ -1,4 +1,4 @@
-import { X } from 'lucide-react'
+import { X } from 'lucide-preact'
 import { QRCodeHandler } from './QRCodeHandler'
 import { IconButton } from './ui'
 

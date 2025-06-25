@@ -1,5 +1,5 @@
 import type { JSX } from 'preact'
-import { Loader } from 'lucide-react'
+import { Loader } from 'lucide-preact'
 import { tv, type VariantProps } from 'tailwind-variants'
 
 const button = tv({

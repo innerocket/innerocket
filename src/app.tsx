@@ -10,7 +10,7 @@ import { HistoryTab } from './components/HistoryTab'
 import { TabsProvider, TabList, TabButton, TabContent } from './components/ui'
 import type { NotificationItem, NotificationType } from './components/Notification'
 import Sqlds from 'sqids'
-import { Info, HelpCircle, Trash2 } from 'lucide-react'
+import { Info, HelpCircle, Trash2 } from 'lucide-preact'
 import { usePeer } from './hooks/usePeer'
 
 const sqlds = new Sqlds()

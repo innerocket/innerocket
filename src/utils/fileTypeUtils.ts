@@ -8,7 +8,7 @@ import {
   Code,
   FileSpreadsheet,
   FileType,
-} from 'lucide-react'
+} from 'lucide-preact'
 
 export interface FileTypeConfig {
   icon: ElementType

@@ -1,7 +1,7 @@
 import { useState } from 'preact/hooks'
 import { FileTransferList } from './FileTransferList'
 import { Button } from './ui'
-import { Trash2 } from 'lucide-react'
+import { Trash2 } from 'lucide-preact'
 import type { FileTransfer } from '../types'
 
 interface HistoryTabProps {

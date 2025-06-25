@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'preact/hooks'
-import { CheckCircle, XCircle, AlertTriangle, Info, X } from 'lucide-react'
+import { CheckCircle, XCircle, AlertTriangle, Info, X } from 'lucide-preact'
 import { tv } from 'tailwind-variants'
 
 export type NotificationType = 'success' | 'error' | 'info' | 'warning'

@@ -1,5 +1,5 @@
 import { useState } from 'preact/hooks'
-import { X, QrCode, Users } from 'lucide-react'
+import { X, QrCode, Users } from 'lucide-preact'
 import { QRCodeModal } from './QRCodeModal'
 import { IconButton, EmptyState } from './ui'
 interface ConnectedPeersProps {
