@@ -4,6 +4,11 @@ body {
   overscroll-behavior-y: none !important;
 }
 
+html,
+body {
+  @apply bg-gray-50 dark:bg-gray-900;
+}
+
 /* Hide scrollbars for table containers and scrollable elements */
 .overflow-x-auto,
 .scrollbar-hide {
