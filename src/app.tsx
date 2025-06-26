@@ -227,7 +227,7 @@ export function App() {
               <TabContent value='connection'>
                 <div className='min-h-72 space-y-8'>
                   <div>
-                    <h2 className='text-xl font-semibold text-gray-900 dark:text-white mb-2'>
+                    <h2 className='text-xl font-semibold text-gray-900 dark:text-white mb-1'>
                       Connection
                     </h2>
                     <p className='text-sm text-gray-600 dark:text-gray-400 mb-4 sm:mb-6'>
@@ -252,7 +252,7 @@ export function App() {
               <TabContent value='file-transfer'>
                 <div className='min-h-72 flex flex-col'>
                   <div className='mb-4 sm:mb-6'>
-                    <h2 className='text-xl font-semibold text-gray-900 dark:text-white mb-2'>
+                    <h2 className='text-xl font-semibold text-gray-900 dark:text-white mb-1'>
                       Send Files
                     </h2>
                     <p className='text-sm text-gray-600 dark:text-gray-400'>
