@@ -1,5 +1,4 @@
-import type { JSX } from 'preact'
-import { forwardRef } from 'preact/compat'
+import { type JSX, Show, splitProps, type Component } from 'solid-js'
 import { tv } from 'tailwind-variants'
 
 const inputWrapper = tv({
@@ -49,7 +48,7 @@ const rightIconWrapper = tv({
   },
 })
 
-export interface InputProps extends JSX.InputHTMLAttributes<HTMLInputElement> {
+export type InputProps = JSX.InputHTMLAttributes<HTMLInputElement> & {
   label?: string
   error?: string
   hint?: string
@@ -59,67 +58,63 @@ export interface InputProps extends JSX.InputHTMLAttributes<HTMLInputElement> {
   onRightIconClick?: () => void
 }
 
-export const Input = forwardRef<HTMLInputElement, InputProps>(
-  (
-    {
-      label,
-      error,
-      hint,
-      fullWidth = false,
-      icon,
-      rightIcon,
-      onRightIconClick,
-      className = '',
-      ...props
-    },
-    ref
-  ) => {
-    const inputWrapperClasses = inputWrapper({ fullWidth })
-    const inputClasses = inputStyles({
-      error: !!error,
-      icon: !!icon,
-      rightIcon: !!rightIcon,
-      fullWidth,
-      className: className as string,
-    })
+export const Input: Component<InputProps> = props => {
+  const [local, rest] = splitProps(props, [
+    'label',
+    'error',
+    'hint',
+    'fullWidth',
+    'icon',
+    'rightIcon',
+    'onRightIconClick',
+    'class',
+  ])
 
-    return (
-      <div className={fullWidth ? 'w-full' : ''}>
-        {label && (
-          <label className='block mb-3 text-sm font-semibold text-gray-700 dark:text-gray-200'>
-            {label}
-          </label>
-        )}
-        <div className={inputWrapperClasses}>
-          {icon && (
-            <div className={leftIconWrapper()}>
-              <div className={iconWrapper()}>
-                <span className='text-gray-500 dark:text-gray-400'>{icon}</span>
-              </div>
+  const inputWrapperClasses = inputWrapper({ fullWidth: local.fullWidth })
+  const inputClasses = inputStyles({
+    error: !!local.error,
+    icon: !!local.icon,
+    rightIcon: !!local.rightIcon,
+    fullWidth: local.fullWidth,
+    class: local.class,
+  })
+
+  return (
+    <div class={local.fullWidth ? 'w-full' : ''}>
+      <Show when={local.label}>
+        <label class='block mb-3 text-sm font-semibold text-gray-700 dark:text-gray-200'>
+          {local.label}
+        </label>
+      </Show>
+      <div class={inputWrapperClasses}>
+        <Show when={local.icon}>
+          <div class={leftIconWrapper()}>
+            <div class={iconWrapper()}>
+              <span class='text-gray-500 dark:text-gray-400'>{local.icon}</span>
             </div>
-          )}
-          <input ref={ref} className={inputClasses} {...props} />
-          {rightIcon && (
-            <div
-              className={rightIconWrapper({ clickable: !!onRightIconClick })}
-              onClick={onRightIconClick}
-            >
-              <div className={iconWrapper()}>
-                <span className='text-gray-500 dark:text-gray-400'>{rightIcon}</span>
-              </div>
-            </div>
-          )}
-        </div>
-        {(error || hint) && (
-          <p
-            className={`mt-2 text-sm ${
-              error ? 'text-red-600 dark:text-red-500' : 'text-gray-500 dark:text-gray-400'
-            }`}
+          </div>
+        </Show>
+        <input class={inputClasses} {...rest} />
+        <Show when={local.rightIcon}>
+          <div
+            class={rightIconWrapper({ clickable: !!local.onRightIconClick })}
+            onClick={local.onRightIconClick}
           >
-            {error || hint}
-          </p>
-        )}
+            <div class={iconWrapper()}>
+              <span class='text-gray-500 dark:text-gray-400'>{local.rightIcon}</span>
+            </div>
+          </div>
+        </Show>
       </div>
-    )
-  }
-)
+      <Show when={local.error || local.hint}>
+        <p
+          class={`mt-2 text-sm ${
+            local.error ? 'text-red-600 dark:text-red-500' : 'text-gray-500 dark:text-gray-400'
+          }`}
+        >
+          {local.error || local.hint}
+        </p>
+      </Show>
+    </div>
+  )
+}

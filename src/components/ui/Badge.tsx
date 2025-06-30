@@ -1,4 +1,5 @@
-import type { JSX } from 'preact'
+import type { JSX } from 'solid-js'
+import { mergeProps } from 'solid-js'
 import { tv, type VariantProps } from 'tailwind-variants'
 
 const badge = tv({
@@ -28,20 +29,21 @@ const badge = tv({
 export type BadgeProps = VariantProps<typeof badge> & {
   label: string
   icon?: JSX.Element
-  className?: string
+  class?: string
 }
 
-export function Badge({ variant, label, icon, className = '', rounded }: BadgeProps) {
+export function Badge(_props: BadgeProps) {
+  const props = mergeProps({ class: '' }, _props)
   const badgeClasses = badge({
-    variant,
-    rounded,
-    className: className as string,
+    variant: props.variant,
+    rounded: props.rounded,
+    class: props.class as string,
   })
 
   return (
-    <span className={badgeClasses}>
-      {icon && <span className='mr-1 -ml-0.5'>{icon}</span>}
-      {label}
+    <span class={badgeClasses}>
+      {props.icon && <span class='mr-1 -ml-0.5'>{props.icon}</span>}
+      {props.label}
     </span>
   )
 }

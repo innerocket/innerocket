@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState, useRef, useCallback } from 'preact/hooks'
+import { createSignal, createEffect, createMemo, on, onCleanup } from 'solid-js'
 import Sqlds from 'sqids'
 import { WebRTCService } from '../utils/webrtc'
-import { usePeer } from './usePeer'
+import { usePeer } from '../contexts/PeerContext'
 import { verifyChecksum } from '../utils/checksum'
 import { FileStorageService } from '../services/fileStorageService'
 import { createProgressAnimation, getFileTypeFromName } from '../utils/fileTransferUtils'
@@ -33,36 +33,31 @@ export function useWebRTCFileTransfer({
   setConnectedPeers,
 }: UseWebRTCFileTransferProps) {
   const { peerId, addPrefixToId, removePrefixFromId } = usePeer()
-  const [connectedPeers, setConnectedPeersLocal] = useState<string[]>([])
-  const [incomingRequests, setIncomingRequests] = useState<FileTransferRequest[]>([])
-  const pendingOutgoing = useRef(
-    new Map<string, { peerId: string; file: File; metadata: FileMetadata }>()
-  )
+  const [connectedPeersLocal, setConnectedPeersLocal] = createSignal<string[]>([])
+  const [incomingRequests, setIncomingRequests] = createSignal<FileTransferRequest[]>([])
+  const pendingOutgoing = new Map<string, { peerId: string; file: File; metadata: FileMetadata }>()
 
-  const webRTCService = useMemo(
-    () => new WebRTCService(peerId, addPrefixToId, removePrefixFromId),
-    [peerId, addPrefixToId, removePrefixFromId]
+  const webRTCService = createMemo(
+    () => new WebRTCService(peerId(), addPrefixToId, removePrefixFromId),
   )
-  const fileStorageService = useMemo(() => new FileStorageService(), [])
+  const fileStorageService = new FileStorageService()
 
-  const loadCompletedFiles = useCallback(async () => {
+  const loadCompletedFiles = async () => {
     try {
       const files = await fileStorageService.getAllFiles()
 
       files.forEach(file => {
-        // Add to memory cache if not chunked
         if (!file.isChunked && file.blob) {
           addReceivedFile(file.id, file.blob)
         }
 
-        // Add completed transfer
         addTransfer({
           id: file.id,
           fileName: file.fileName,
           fileSize: file.isChunked ? file.totalSize || 0 : file.blob?.size || 0,
           fileType: file.fileType || getFileTypeFromName(file.fileName),
           sender: 'unknown',
-          receiver: webRTCService.getMyPeerId(),
+          receiver: webRTCService().getMyPeerId(),
           progress: 100,
           status: 'completed',
           createdAt: file.timestamp || Date.now(),
@@ -72,13 +67,12 @@ export function useWebRTCFileTransfer({
     } catch (error) {
       console.error('Error loading completed files:', error)
     }
-  }, [fileStorageService, addReceivedFile, addTransfer, webRTCService])
+  }
 
-  useEffect(() => {
+  createEffect(on(webRTCService, (service) => {
     const fileChunks = new Map<string, Map<number, ArrayBuffer>>()
 
-    // Set up WebRTC event handlers
-    webRTCService.setOnPeerConnected(peer => {
+    service.setOnPeerConnected(peer => {
       setConnectedPeersLocal(prev => {
         const newPeers = [...prev, peer.id]
         setConnectedPeers(newPeers)
@@ -86,7 +80,7 @@ export function useWebRTCFileTransfer({
       })
     })
 
-    webRTCService.setOnPeerDisconnected(peerId => {
+    service.setOnPeerDisconnected(peerId => {
       setConnectedPeersLocal(prev => {
         const newPeers = prev.filter(id => id !== peerId)
         setConnectedPeers(newPeers)
@@ -94,7 +88,7 @@ export function useWebRTCFileTransfer({
       })
     })
 
-    webRTCService.setOnFileTransferRequest(request => {
+    service.setOnFileTransferRequest(request => {
       const { metadata, from } = request
 
       addTransfer({
@@ -103,7 +97,7 @@ export function useWebRTCFileTransfer({
         fileSize: metadata.size,
         fileType: metadata.type,
         sender: from.id,
-        receiver: webRTCService.getMyPeerId(),
+        receiver: service.getMyPeerId(),
         progress: 0,
         status: 'pending',
         createdAt: Date.now(),
@@ -113,7 +107,7 @@ export function useWebRTCFileTransfer({
       setIncomingRequests(prev => [...prev, request])
     })
 
-    webRTCService.setOnFileChunk(
+    service.setOnFileChunk(
       (_peerId, chunk, metadata, progress, chunkSize, transferSpeed, chunkIndex) => {
         if (chunkIndex === undefined) {
           console.error('Received a chunk without an index. Ignoring.')
@@ -131,19 +125,17 @@ export function useWebRTCFileTransfer({
 
         chunksMap.set(chunkIndex, chunk)
 
-        // Update progress
         updateTransferProgress(metadata.id, progress, 'transferring', transferSpeed, chunkSize)
       }
     )
 
-    webRTCService.setOnFileTransferComplete(async (_, metadata) => {
+    service.setOnFileTransferComplete(async (_, metadata) => {
       try {
         const chunksMap = fileChunks.get(metadata.id)
         if (!chunksMap) {
           throw new Error(`No chunks found for completed transfer ${metadata.id}`)
         }
 
-        // Reconstruct file
         const sortedChunks = Array.from(chunksMap.entries())
           .sort(([indexA], [indexB]) => indexA - indexB)
           .map(([, chunkData]) => chunkData)
@@ -154,14 +146,12 @@ export function useWebRTCFileTransfer({
 
         fileChunks.delete(metadata.id)
 
-        // Verify file size
         if (blob.size !== metadata.size) {
           console.error(`File size mismatch for ${metadata.name}`)
           updateTransfer(metadata.id, { status: 'failed' })
           return
         }
 
-        // Verify integrity if checksum available
         if (metadata.checksum) {
           updateTransfer(metadata.id, {
             progress: 100,
@@ -179,13 +169,10 @@ export function useWebRTCFileTransfer({
           }
         }
 
-        // Save to storage
         await fileStorageService.saveFile(metadata.id, blob, metadata.name, metadata.checksum)
 
-        // Add to memory cache
         addReceivedFile(metadata.id, blob)
 
-        // Update status to completed
         updateTransfer(metadata.id, {
           progress: 100,
           status: 'completed',
@@ -198,61 +185,52 @@ export function useWebRTCFileTransfer({
       }
     })
 
-    webRTCService.setOnFileTransferAccepted((peerId, metadata) => {
-      const pending = pendingOutgoing.current.get(metadata.id)
+    service.setOnFileTransferAccepted((peerId, metadata) => {
+      const pending = pendingOutgoing.get(metadata.id)
       if (pending) {
-        webRTCService.sendFile(peerId, pending.file, metadata)
+        service.sendFile(peerId, pending.file, pending.metadata)
         updateTransfer(metadata.id, { status: 'transferring', progress: 0 })
-        pendingOutgoing.current.delete(metadata.id)
+        pendingOutgoing.delete(metadata.id)
       }
     })
 
-    webRTCService.setOnFileTransferRejected((_, metadata) => {
+    service.setOnFileTransferRejected((_, metadata) => {
       updateTransfer(metadata.id, { status: 'rejected' })
-      pendingOutgoing.current.delete(metadata.id)
+      pendingOutgoing.delete(metadata.id)
     })
 
-    // Load previously completed files
-    loadCompletedFiles()
-
-    return () => {
-      connectedPeers.forEach(peerId => {
-        webRTCService.disconnectFromPeer(peerId)
+    onCleanup(() => {
+      connectedPeersLocal().forEach(peerId => {
+        service.disconnectFromPeer(peerId)
       })
-    }
-  }, [
-    webRTCService,
-    loadCompletedFiles,
-    connectedPeers,
-    addReceivedFile,
-    addTransfer,
-    fileStorageService,
-    setConnectedPeers,
-    updateTransfer,
-    updateTransferProgress,
-  ])
+    })
+  }))
+
+  createEffect(() => {
+    loadCompletedFiles()
+  })
 
   const connectToPeer = (peerId: string) => {
-    webRTCService.connectToPeer(peerId)
+    webRTCService().connectToPeer(peerId)
   }
 
   const disconnectFromPeer = (peerId: string) => {
-    webRTCService.disconnectFromPeer(peerId)
+    webRTCService().disconnectFromPeer(peerId)
   }
 
   const acceptRequest = (requestId: string) => {
-    const req = incomingRequests.find(r => r.metadata.id === requestId)
+    const req = incomingRequests().find(r => r.metadata.id === requestId)
     if (!req) return
     updateTransfer(requestId, { status: 'transferring', progress: 0 })
-    webRTCService.acceptFileTransfer(req.from.id, req.metadata)
+    webRTCService().acceptFileTransfer(req.from.id, req.metadata)
     setIncomingRequests(prev => prev.filter(r => r.metadata.id !== requestId))
   }
 
   const rejectRequest = (requestId: string) => {
-    const req = incomingRequests.find(r => r.metadata.id === requestId)
+    const req = incomingRequests().find(r => r.metadata.id === requestId)
     if (!req) return
     updateTransfer(requestId, { status: 'rejected' })
-    webRTCService.rejectFileTransfer(req.from.id, req.metadata)
+    webRTCService().rejectFileTransfer(req.from.id, req.metadata)
     setIncomingRequests(prev => prev.filter(r => r.metadata.id !== requestId))
   }
 
@@ -260,25 +238,23 @@ export function useWebRTCFileTransfer({
     try {
       const tempId = sqlds.encode([Date.now(), Math.floor(Math.random() * 10000)])
 
-      // Add preparing transfer
       addTransfer({
         id: tempId,
         fileName: file.name,
         fileSize: file.size,
         fileType: file.type,
-        sender: webRTCService.getMyPeerId(),
+        sender: webRTCService().getMyPeerId(),
         receiver: peerId,
         progress: 0,
         status: 'preparing',
         createdAt: Date.now(),
       })
 
-      // Start preparing animation
       const stopAnimation = createProgressAnimation(progress => {
         updateTransferProgress(tempId, progress)
       })
 
-      const metadata = await webRTCService.sendFileRequest(peerId, file)
+      const metadata = await webRTCService().sendFileRequest(peerId, file)
 
       if (!metadata) {
         stopAnimation()
@@ -288,14 +264,13 @@ export function useWebRTCFileTransfer({
 
       stopAnimation()
 
-      // Remove temp transfer and add real one
       removeTransfer(tempId)
       addTransfer({
         id: metadata.id,
         fileName: file.name,
         fileSize: file.size,
         fileType: file.type,
-        sender: webRTCService.getMyPeerId(),
+        sender: webRTCService().getMyPeerId(),
         receiver: peerId,
         progress: 0,
         status: 'pending',
@@ -303,7 +278,7 @@ export function useWebRTCFileTransfer({
         checksum: metadata.checksum,
       })
 
-      pendingOutgoing.current.set(metadata.id, { peerId, file, metadata })
+      pendingOutgoing.set(metadata.id, { peerId, file, metadata })
 
       return metadata.id
     } catch (error) {
@@ -313,14 +288,14 @@ export function useWebRTCFileTransfer({
   }
 
   const sendFileToAllPeers = async (file: File): Promise<string[]> => {
-    if (connectedPeers.length === 0) {
+    if (connectedPeersLocal().length === 0) {
       console.warn('No connected peers to send file to')
       return []
     }
 
     const transferIds: string[] = []
 
-    for (const peerId of connectedPeers) {
+    for (const peerId of connectedPeersLocal()) {
       const transferId = await sendFile(peerId, file)
       if (transferId) {
         transferIds.push(transferId)
@@ -331,7 +306,7 @@ export function useWebRTCFileTransfer({
   }
 
   return {
-    connectedPeers,
+    connectedPeers: connectedPeersLocal,
     connectToPeer,
     disconnectFromPeer,
     sendFile,
@@ -342,3 +317,4 @@ export function useWebRTCFileTransfer({
     myPeerId: peerId,
   }
 }
+

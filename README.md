@@ -97,7 +97,7 @@ pnpm build
 
 ## Technologies Used
 
-- [Preact](https://preactjs.com/) - A fast 3kB alternative to React with the same API
+- [SolidJS](https://solidjs.com/) - Reactive UI library for the web
 - [WebRTC](https://webrtc.org/) - Real-time communication for the web
 - [PeerJS](https://peerjs.com/) - Simplifies WebRTC peer-to-peer data connections
 - [Tailwind CSS](https://tailwindcss.com/) - A utility-first CSS framework

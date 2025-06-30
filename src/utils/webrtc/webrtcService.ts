@@ -1,5 +1,6 @@
 import Sqlds from 'sqids'
-import type { FileMetadata, FileTransferRequest, Peer } from '../../types'
+import type { FileMetadata, FileTransferRequest } from '../../types'
+import type { Peer } from './types'
 import { ConnectionManager, type PeerData } from './connectionManager'
 import { FileTransferService } from './fileTransferService'
 import type { WebRTCCallbacks } from './types'

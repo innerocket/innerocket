@@ -1,11 +1,11 @@
-import { useMemo, useState } from 'preact/hooks'
+import { createSignal } from 'solid-js'
 import { useFileTransferState } from './useFileTransferState'
 import { useFileOperations } from './useFileOperations'
 import { useWebRTCFileTransfer } from './useWebRTCFileTransfer'
 import { FileStorageService } from '../services/fileStorageService'
 
 export function useFileTransfer() {
-  const [connectedPeers, setConnectedPeers] = useState<string[]>([])
+  const [connectedPeers, setConnectedPeers] = createSignal<string[]>([])
 
   const {
     fileTransfers,
@@ -42,7 +42,7 @@ export function useFileTransfer() {
     getReceivedFile,
   })
 
-  const fileStorageService = useMemo(() => new FileStorageService(), [])
+  const fileStorageService = new FileStorageService()
 
   const clearFileHistory = async () => {
     await fileStorageService.clearAllFiles()

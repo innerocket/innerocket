@@ -30,7 +30,7 @@ export const isValidSqldsId = (id: string): boolean => {
   // Check if it's a UUID format (with dashes) - these should be regenerated
   const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
   if (uuidPattern.test(cleanId)) {
-    if (process.env.NODE_ENV === 'development') {
+    if (import.meta.env.DEV) {
       console.log('Detected UUID format ID, will regenerate')
     }
     return false
@@ -39,7 +39,7 @@ export const isValidSqldsId = (id: string): boolean => {
   // Check if it's a NanoID format (typically 21 characters, URL-safe)
   // NanoIDs contain A-Za-z0-9_- and are usually 21 characters
   if (cleanId.length === 21 && /^[A-Za-z0-9_-]+$/.test(cleanId)) {
-    if (process.env.NODE_ENV === 'development') {
+    if (import.meta.env.DEV) {
       console.log('Detected NanoID format ID, will regenerate')
     }
     return false
@@ -47,7 +47,7 @@ export const isValidSqldsId = (id: string): boolean => {
 
   // Check for other long IDs that might be from previous formats
   if (cleanId.length > 18) {
-    if (process.env.NODE_ENV === 'development') {
+    if (import.meta.env.DEV) {
       console.log('Detected long ID format, will regenerate')
     }
     return false

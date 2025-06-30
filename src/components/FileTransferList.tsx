@@ -1,9 +1,18 @@
 import type { FileTransfer } from '../types'
-import { ChevronRight, ChevronLeft, Eye, Download, FolderOpen } from 'lucide-preact'
+import { ChevronRight, ChevronLeft, Eye, Download, FolderOpen } from 'lucide-solid'
 import { Badge, Button, Input, getStatusBadgeVariant, EmptyState } from './ui'
-import { usePeer } from '../hooks/usePeer'
-import { useState, useRef, useEffect } from 'preact/hooks'
-import { getFileTypeConfig } from '../utils/fileTypeUtils'
+import { usePeer } from '../contexts/PeerContext'
+import {
+  createSignal,
+  createMemo,
+  createEffect,
+  For,
+  Show,
+  type Component,
+  Switch,
+  Match,
+} from 'solid-js'
+import { getFileTypeConfig } from '../utils/fileTypeUtils.tsx'
 
 interface FileTransferListProps {
   transfers: FileTransfer[]
@@ -11,40 +20,35 @@ interface FileTransferListProps {
   onPreview: (fileId: string) => void
 }
 
-export function FileTransferList({ transfers, onDownload, onPreview }: FileTransferListProps) {
+export const FileTransferList: Component<FileTransferListProps> = props => {
   const { peerId } = usePeer()
-  const [searchQuery, setSearchQuery] = useState('')
-  const tableContainerRef = useRef<HTMLDivElement>(null)
-  const [isDragging, setIsDragging] = useState(false)
-  const [dragStart, setDragStart] = useState({ x: 0, scrollLeft: 0 })
-  const lastCallTimeRef = useRef<number>(0)
+  const [searchQuery, setSearchQuery] = createSignal('')
+  let tableContainerRef: HTMLDivElement | undefined
+  const [isDragging, setIsDragging] = createSignal(false)
+  const [dragStart, setDragStart] = createSignal({ x: 0, scrollLeft: 0 })
+  let lastCallTime = 0
 
-  useEffect(() => {
+  createEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
-      if (!isDragging || !tableContainerRef.current) return
+      if (!isDragging() || !tableContainerRef) return
 
       e.preventDefault()
 
-      // Throttling: Executed every 16 ms (approx. 60 FPS)
       const now = Date.now()
-      if (now - lastCallTimeRef.current < 16) return
-      lastCallTimeRef.current = now
+      if (now - lastCallTime < 16) return
+      lastCallTime = now
 
       const x = e.pageX
-
-      // Horizontal movement amount
-      const walkX = (x - dragStart.x) * 2
-      tableContainerRef.current.scrollLeft = dragStart.scrollLeft - walkX
+      const walkX = (x - dragStart().x) * 2
+      tableContainerRef.scrollLeft = dragStart().scrollLeft - walkX
     }
 
     const handleMouseUp = () => {
       setIsDragging(false)
     }
 
-    if (isDragging) {
-      document.addEventListener('mousemove', handleMouseMove, {
-        passive: false,
-      })
+    if (isDragging()) {
+      document.addEventListener('mousemove', handleMouseMove, { passive: false })
       document.addEventListener('mouseup', handleMouseUp)
     }
 
@@ -52,199 +56,204 @@ export function FileTransferList({ transfers, onDownload, onPreview }: FileTrans
       document.removeEventListener('mousemove', handleMouseMove)
       document.removeEventListener('mouseup', handleMouseUp)
     }
-  }, [isDragging, dragStart])
+  })
 
   const handleMouseDown = (e: MouseEvent) => {
-    if (!tableContainerRef.current) return
-
+    if (!tableContainerRef) return
     setIsDragging(true)
     setDragStart({
       x: e.pageX,
-      scrollLeft: tableContainerRef.current.scrollLeft,
+      scrollLeft: tableContainerRef.scrollLeft,
     })
   }
 
-  if (transfers.length === 0) {
-    return (
-      <EmptyState
-        icon={<FolderOpen className='w-6 h-6 text-gray-500 dark:text-gray-400' />}
-        title='No file transfers yet'
-        subtitle='Connect to peers and start sharing files'
-      />
-    )
-  }
+  const sortedTransfers = createMemo(() =>
+    [...props.transfers].sort((a, b) => {
+      if (a.status === 'completed' && b.status !== 'completed') return -1
+      if (a.status !== 'completed' && b.status === 'completed') return 1
+      return b.createdAt - a.createdAt
+    })
+  )
 
-  // Sort transfers with completed at the top and most recent first
-  const sortedTransfers = [...transfers].sort((a, b) => {
-    // First sort by status (completed first)
-    if (a.status === 'completed' && b.status !== 'completed') return -1
-    if (a.status !== 'completed' && b.status === 'completed') return 1
-
-    // Then sort by date (newest first)
-    return b.createdAt - a.createdAt
-  })
-
-  const filteredTransfers = sortedTransfers.filter(transfer => {
-    if (!searchQuery.trim()) return true
-    const query = searchQuery.toLowerCase()
-    const dateString = new Date(transfer.createdAt).toLocaleString().toLowerCase()
-    return transfer.fileName.toLowerCase().includes(query) || dateString.includes(query)
-  })
+  const filteredTransfers = createMemo(() =>
+    sortedTransfers().filter(transfer => {
+      if (!searchQuery().trim()) return true
+      const query = searchQuery().toLowerCase()
+      const dateString = new Date(transfer.createdAt).toLocaleString().toLowerCase()
+      return transfer.fileName.toLowerCase().includes(query) || dateString.includes(query)
+    })
+  )
 
   return (
-    <div>
-      <Input
-        type='text'
-        placeholder='Search by file name or date'
-        value={searchQuery}
-        onInput={e => setSearchQuery((e.target as HTMLInputElement).value)}
-        className='mb-4'
-        fullWidth
-      />
-      <div
-        ref={tableContainerRef}
-        className={`relative overflow-x-auto overflow-y-visible rounded-lg border-2 border-gray-200 dark:border-gray-700 select-none ${
-          isDragging ? 'cursor-grabbing' : 'cursor-grab'
-        }`}
-        style={{ overscrollBehaviorX: 'contain' }}
-        onMouseDown={handleMouseDown}
-      >
-        <table className='w-full text-sm text-left text-gray-600 dark:text-gray-300'>
-          <thead className='text-xs text-gray-700 uppercase bg-gray-100 dark:text-gray-300 border-b-2 border-gray-200 dark:border-gray-700 dark:bg-gray-600'>
-            <tr>
-              <th scope='col' className='px-6 py-4 font-semibold'>
-                File
-              </th>
-              <th scope='col' className='px-6 py-4 font-semibold'>
-                Size
-              </th>
-              <th scope='col' className='px-6 py-4 font-semibold'>
-                Direction
-              </th>
-              <th scope='col' className='px-6 py-4 font-semibold'>
-                Status
-              </th>
-              <th scope='col' className='px-6 py-4 font-semibold'>
-                Progress
-              </th>
-              <th scope='col' className='px-6 py-4 font-semibold'>
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className='divide-y-2 divide-gray-100 dark:divide-gray-600'>
-            {filteredTransfers.map(transfer => (
-              <tr
-                key={transfer.id}
-                className='transition-all duration-200 bg-white dark:bg-gray-800'
-              >
-                <td className='px-6 py-4'>
-                  <div className='flex items-center space-x-3'>
-                    {(() => {
-                      const fileTypeConfig = getFileTypeConfig(transfer.fileName)
-                      const Icon = fileTypeConfig.icon
-                      return (
-                        <div
-                          className={`w-10 h-10 rounded-md flex items-center justify-center ${fileTypeConfig.backgroundColor}`}
-                        >
-                          <Icon className={`w-5 h-5 ${fileTypeConfig.textColor}`} />
-                        </div>
-                      )
-                    })()}
-                    <div className='flex-1 min-w-0'>
-                      <div className='text-sm font-medium text-gray-900 dark:text-white truncate max-w-xs'>
-                        {transfer.fileName}
-                      </div>
-                      <div className='text-xs text-gray-500 dark:text-gray-400'>
-                        {transfer.fileType || 'Unknown type'}
-                      </div>
-                      <div className='text-xs text-gray-400 dark:text-gray-500'>
-                        {new Date(transfer.createdAt).toLocaleString()}
-                      </div>
-                    </div>
-                  </div>
-                </td>
-                <td className='px-6 py-4 whitespace-nowrap'>
-                  <div className='text-sm text-gray-900 dark:text-white'>
-                    {formatFileSize(transfer.fileSize)}
-                  </div>
-                  {transfer.chunkSize && transfer.status === 'transferring' && (
-                    <div className='text-xs text-gray-500 dark:text-gray-400'>
-                      Chunk: {formatFileSize(transfer.chunkSize)}
-                    </div>
-                  )}
-                </td>
-                <td className='px-6 py-4 whitespace-nowrap'>
-                  {transfer.sender === 'unknown' ? (
-                    <span className='text-sm text-gray-500 dark:text-gray-400'>Received</span>
-                  ) : transfer.sender !== transfer.receiver ? (
-                    transfer.sender === peerId ? (
-                      <span className='flex items-center text-blue-600 dark:text-blue-500'>
-                        <ChevronRight className='w-4 h-4 mr-1' />
-                        Sent
-                      </span>
-                    ) : (
-                      <span className='flex items-center text-green-600 dark:text-green-500'>
-                        <ChevronLeft className='w-4 h-4 mr-1' />
-                        Received
-                      </span>
-                    )
-                  ) : (
-                    <span className='text-sm text-gray-500 dark:text-gray-400'>-</span>
-                  )}
-                </td>
-                <td className='px-6 py-4 whitespace-nowrap'>
-                  <Badge
-                    variant={getStatusBadgeVariant(transfer.status)}
-                    label={transfer.status}
-                    rounded
-                  />
-                </td>
-                <td className='px-6 py-4 whitespace-nowrap'>
-                  <div className='w-full bg-gray-200 rounded-lg h-3 dark:bg-gray-600 overflow-hidden'>
-                    <div
-                      className={`h-3 rounded-lg transition-all duration-300 ${
-                        transfer.status === 'completed'
-                          ? 'bg-green-500'
-                          : transfer.status === 'failed' || transfer.status === 'integrity_error'
-                            ? 'bg-red-500'
-                            : transfer.status === 'verifying'
-                              ? 'bg-amber-500'
-                              : 'bg-blue-500'
-                      }`}
-                      style={{ width: `${transfer.progress}%` }}
-                    ></div>
-                  </div>
-                  <div className='text-xs text-gray-600 dark:text-gray-300 mt-2 font-medium'>
-                    {transfer.progress}%
-                  </div>
-                </td>
-                <td className='px-6 py-4 whitespace-nowrap text-sm font-medium'>
-                  {transfer.status === 'completed' && (
-                    <div className='flex space-x-2'>
-                      <Button
-                        onClick={() => onPreview(transfer.id)}
-                        size='sm'
-                        icon={<Eye size={16} />}
-                      >
-                        Preview
-                      </Button>
-                      <Button
-                        onClick={() => onDownload(transfer.id)}
-                        size='sm'
-                        icon={<Download size={16} />}
-                      >
-                        Download
-                      </Button>
-                    </div>
-                  )}
-                </td>
+    <Show
+      when={props.transfers.length > 0}
+      fallback={
+        <EmptyState
+          icon={<FolderOpen class='w-6 h-6 text-gray-500 dark:text-gray-400' />}
+          title='No file transfers yet'
+          subtitle='Connect to peers and start sharing files'
+        />
+      }
+    >
+      <div>
+        <Input
+          type='text'
+          placeholder='Search by file name or date'
+          value={searchQuery()}
+          onInput={e => setSearchQuery(e.currentTarget.value)}
+          class='mb-4'
+          fullWidth
+        />
+        <div
+          ref={tableContainerRef}
+          class={`relative overflow-x-auto overflow-y-visible rounded-lg border-2 border-gray-200 dark:border-gray-700 select-none ${
+            isDragging() ? 'cursor-grabbing' : 'cursor-grab'
+          }`}
+          style={{ 'overscroll-behavior-x': 'contain' }}
+          onMouseDown={handleMouseDown}
+        >
+          <table class='w-full text-sm text-left text-gray-600 dark:text-gray-300'>
+            <thead class='text-xs text-gray-700 uppercase bg-gray-100 dark:text-gray-300 border-b-2 border-gray-200 dark:border-gray-700 dark:bg-gray-600'>
+              <tr>
+                <th scope='col' class='px-6 py-4 font-semibold'>
+                  File
+                </th>
+                <th scope='col' class='px-6 py-4 font-semibold'>
+                  Size
+                </th>
+                <th scope='col' class='px-6 py-4 font-semibold'>
+                  Direction
+                </th>
+                <th scope='col' class='px-6 py-4 font-semibold'>
+                  Status
+                </th>
+                <th scope='col' class='px-6 py-4 font-semibold'>
+                  Progress
+                </th>
+                <th scope='col' class='px-6 py-4 font-semibold'>
+                  Actions
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody class='divide-y-2 divide-gray-100 dark:divide-gray-600'>
+              <For each={filteredTransfers()}>
+                {transfer => {
+                  const fileTypeConfig = getFileTypeConfig(transfer.fileName)
+                  return (
+                    <tr class='transition-all duration-200 bg-white dark:bg-gray-800'>
+                      <td class='px-6 py-4'>
+                        <div class='flex items-center space-x-3'>
+                          <div
+                            class={`w-10 h-10 rounded-md flex items-center justify-center ${fileTypeConfig.backgroundColor}`}
+                          >
+                            <div class={`w-5 h-5 ${fileTypeConfig.textColor}`}>
+                              {fileTypeConfig.icon()}
+                            </div>
+                          </div>
+                          <div class='flex-1 min-w-0'>
+                            <div class='text-sm font-medium text-gray-900 dark:text-white truncate max-w-xs'>
+                              {transfer.fileName}
+                            </div>
+                            <div class='text-xs text-gray-500 dark:text-gray-400'>
+                              {transfer.fileType || 'Unknown type'}
+                            </div>
+                            <div class='text-xs text-gray-400 dark:text-gray-500'>
+                              {new Date(transfer.createdAt).toLocaleString()}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td class='px-6 py-4 whitespace-nowrap'>
+                        <div class='text-sm text-gray-900 dark:text-white'>
+                          {formatFileSize(transfer.fileSize)}
+                        </div>
+                        <Show when={transfer.chunkSize && transfer.status === 'transferring'}>
+                          <div class='text-xs text-gray-500 dark:text-gray-400'>
+                            Chunk: {formatFileSize(transfer.chunkSize!)}
+                          </div>
+                        </Show>
+                      </td>
+                      <td class='px-6 py-4 whitespace-nowrap'>
+                        <Switch
+                          fallback={<span class='text-sm text-gray-500 dark:text-gray-400'>-</span>}
+                        >
+                          <Match when={transfer.sender === 'unknown'}>
+                            <span class='text-sm text-gray-500 dark:text-gray-400'>Received</span>
+                          </Match>
+                          <Match when={transfer.sender !== transfer.receiver}>
+                            <Show
+                              when={transfer.sender === peerId()}
+                              fallback={
+                                <span class='flex items-center text-green-600 dark:text-green-500'>
+                                  <ChevronLeft class='w-4 h-4 mr-1' />
+                                  Received
+                                </span>
+                              }
+                            >
+                              <span class='flex items-center text-blue-600 dark:text-blue-500'>
+                                <ChevronRight class='w-4 h-4 mr-1' />
+                                Sent
+                              </span>
+                            </Show>
+                          </Match>
+                        </Switch>
+                      </td>
+                      <td class='px-6 py-4 whitespace-nowrap'>
+                        <Badge
+                          variant={getStatusBadgeVariant(transfer.status)}
+                          label={transfer.status}
+                          rounded
+                        />
+                      </td>
+                      <td class='px-6 py-4 whitespace-nowrap'>
+                        <div class='w-full bg-gray-200 rounded-lg h-3 dark:bg-gray-600 overflow-hidden'>
+                          <div
+                            class={`h-3 rounded-lg transition-all duration-300 ${
+                              transfer.status === 'completed'
+                                ? 'bg-green-500'
+                                : transfer.status === 'failed' ||
+                                    transfer.status === 'integrity_error'
+                                  ? 'bg-red-500'
+                                  : transfer.status === 'verifying'
+                                    ? 'bg-amber-500'
+                                    : 'bg-blue-500'
+                            }`}
+                            style={{ width: `${transfer.progress}%` }}
+                          ></div>
+                        </div>
+                        <div class='text-xs text-gray-600 dark:text-gray-300 mt-2 font-medium'>
+                          {transfer.progress}%
+                        </div>
+                      </td>
+                      <td class='px-6 py-4 whitespace-nowrap text-sm font-medium'>
+                        <Show when={transfer.status === 'completed'}>
+                          <div class='flex space-x-2'>
+                            <Button
+                              onClick={() => props.onPreview(transfer.id)}
+                              size='sm'
+                              icon={<Eye class='w-4 h-4' />}
+                            >
+                              Preview
+                            </Button>
+                            <Button
+                              onClick={() => props.onDownload(transfer.id)}
+                              size='sm'
+                              icon={<Download class='w-4 h-4' />}
+                            >
+                              Download
+                            </Button>
+                          </div>
+                        </Show>
+                      </td>
+                    </tr>
+                  )
+                }}
+              </For>
+            </tbody>
+          </table>
+        </div>
       </div>
-    </div>
+    </Show>
   )
 }
 

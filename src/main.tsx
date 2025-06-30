@@ -1,11 +1,18 @@
-import { render } from 'preact'
+import { render } from 'solid-js/web'
+
 import './index.css'
 import { App } from './app'
 import { PeerProvider } from './contexts/PeerContext'
 
-render(
-  <PeerProvider>
-    <App />
-  </PeerProvider>,
-  document.getElementById('app')!
-)
+const root = document.getElementById('app')
+
+if (root) {
+  render(
+    () => (
+      <PeerProvider>
+        <App />
+      </PeerProvider>
+    ),
+    root
+  )
+}

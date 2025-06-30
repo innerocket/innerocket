@@ -1,14 +1,16 @@
 import { defineConfig } from 'vite'
-import preact from '@preact/preset-vite'
+import solid from 'vite-plugin-solid'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import { ViteMinifyPlugin } from 'vite-plugin-minify'
+import lucidePreprocess from 'vite-plugin-lucide-preprocess'
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
-    preact(),
+    solid(),
     tailwindcss(),
+    lucidePreprocess(),
     VitePWA({
       registerType: 'autoUpdate',
       manifest: {

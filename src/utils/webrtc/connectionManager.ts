@@ -1,6 +1,6 @@
 import { Peer as PeerJS } from 'peerjs'
-import type { FileMetadata, Peer } from '../../types'
-import type { WebRTCCallbacks } from './types'
+import type { FileMetadata } from '../../types'
+import type { WebRTCCallbacks, Peer } from './types'
 
 type DataConnection = {
   peer: string

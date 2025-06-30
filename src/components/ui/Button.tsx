@@ -1,5 +1,5 @@
-import type { JSX } from 'preact'
-import { Loader } from 'lucide-preact'
+import { type JSX, Show, splitProps, type Component } from 'solid-js'
+import { Loader } from 'lucide-solid'
 import { tv, type VariantProps } from 'tailwind-variants'
 
 const button = tv({
@@ -34,46 +34,59 @@ const button = tv({
       true: 'w-full',
     },
     disabled: {
-      true: 'opacity-50 cursor-not-allowed pointer-events-none',
+      true: 'opacity-50 cursor-not-allowed pointer-events-none hover:bg-current focus:ring-0',
+      false: '',
     },
   },
   defaultVariants: {
     variant: 'primary',
     size: 'md',
     fullWidth: false,
+    disabled: false,
   },
 })
 
-export type ButtonProps = JSX.HTMLAttributes<HTMLButtonElement> &
+export type ButtonProps = JSX.ButtonHTMLAttributes<HTMLButtonElement> &
   VariantProps<typeof button> & {
     icon?: JSX.Element
     isLoading?: boolean
   }
 
-export function Button({
-  variant,
-  size,
-  icon,
-  fullWidth,
-  isLoading = false,
-  disabled = false,
-  className = '',
-  children,
-  ...props
-}: ButtonProps) {
-  const buttonClasses = button({
-    variant,
-    size,
-    fullWidth,
-    disabled: disabled || isLoading,
-    className: className as string,
-  })
+export const Button: Component<ButtonProps> = props => {
+  const [local, rest] = splitProps(props, [
+    'variant',
+    'size',
+    'icon',
+    'fullWidth',
+    'isLoading',
+    'disabled',
+    'class',
+    'children',
+  ])
+
+  // Explicitly compute the disabled state to ensure reactivity
+  const isDisabled = () => local.disabled || local.isLoading
 
   return (
-    <button className={buttonClasses} disabled={disabled || isLoading} type='button' {...props}>
-      {isLoading && <Loader className='inline w-4 h-4 mr-3 text-current animate-spin' />}
-      {icon && !isLoading && <span className='mr-2'>{icon}</span>}
-      {children}
+    <button
+      class={button({
+        variant: local.variant,
+        size: local.size,
+        fullWidth: local.fullWidth,
+        disabled: isDisabled(),
+        class: local.class,
+      })}
+      disabled={isDisabled()}
+      type='button'
+      {...rest}
+    >
+      <Show when={local.isLoading}>
+        <Loader class='inline w-4 h-4 mr-3 text-current animate-spin' />
+      </Show>
+      <Show when={!local.isLoading && local.icon}>
+        <span class='mr-2'>{local.icon}</span>
+      </Show>
+      {local.children}
     </button>
   )
 }

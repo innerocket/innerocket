@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'preact/hooks'
-import { CheckCircle, XCircle, AlertTriangle, Info, X } from 'lucide-preact'
+import { createSignal, createEffect, onCleanup, For, Switch, Match, type Component } from 'solid-js'
+import { CheckCircle, XCircle, AlertTriangle, Info, X } from 'lucide-solid'
 import { tv } from 'tailwind-variants'
 
 export type NotificationType = 'success' | 'error' | 'info' | 'warning'
@@ -26,56 +26,62 @@ const notificationStyles = tv({
   },
 })
 
-export function Notification({ message, type, duration = 5000, onClose }: NotificationProps) {
-  const [isVisible, setIsVisible] = useState(true)
+export const Notification: Component<NotificationProps> = props => {
+  const [isVisible, setIsVisible] = createSignal(true)
 
-  useEffect(() => {
+  createEffect(() => {
+    const duration = props.duration ?? 5000
     const timer = setTimeout(() => {
       setIsVisible(false)
-      setTimeout(onClose, 300) // Wait for animation to complete
+      setTimeout(props.onClose, 300) // Wait for animation to complete
     }, duration)
 
-    return () => {
+    onCleanup(() => {
       clearTimeout(timer)
-    }
-  }, [duration, onClose])
+    })
+  })
 
   const getIcon = () => {
-    switch (type) {
-      case 'success':
-        return <CheckCircle className='w-5 h-5' />
-      case 'error':
-        return <XCircle className='w-5 h-5' />
-      case 'warning':
-        return <AlertTriangle className='w-5 h-5' />
-      case 'info':
-      default:
-        return <Info className='w-5 h-5' />
-    }
+    return (
+      <Switch>
+        <Match when={props.type === 'success'}>
+          <CheckCircle class='w-5 h-5' />
+        </Match>
+        <Match when={props.type === 'error'}>
+          <XCircle class='w-5 h-5' />
+        </Match>
+        <Match when={props.type === 'warning'}>
+          <AlertTriangle class='w-5 h-5' />
+        </Match>
+        <Match when={props.type === 'info'}>
+          <Info class='w-5 h-5' />
+        </Match>
+      </Switch>
+    )
   }
 
   return (
     <div
-      className={`fixed top-4 right-4 z-50 transition-opacity duration-300 max-w-[calc(100dvw-2rem)] ${
-        isVisible ? 'opacity-100' : 'opacity-0'
+      class={`fixed top-4 right-4 z-50 transition-opacity duration-300 max-w-[calc(100dvw-2rem)] ${
+        isVisible() ? 'opacity-100' : 'opacity-0'
       }`}
     >
-      <div className={notificationStyles({ type })} role='alert'>
-        <div className='inline-flex items-center justify-center flex-shrink-0 w-10 h-10 mr-4 rounded-lg bg-white/50 dark:bg-gray-800/50'>
+      <div class={notificationStyles({ type: props.type })} role='alert'>
+        <div class='inline-flex items-center justify-center flex-shrink-0 w-10 h-10 mr-4 rounded-lg bg-white/50 dark:bg-gray-800/50'>
           {getIcon()}
         </div>
-        <div className='text-sm font-medium flex-1'>{message}</div>
+        <div class='text-sm font-medium flex-1'>{props.message}</div>
         <button
           type='button'
           onClick={() => {
             setIsVisible(false)
-            setTimeout(onClose, 300)
+            setTimeout(props.onClose, 300)
           }}
-          className='ml-4 -mx-1.5 -my-1.5 rounded-md focus:ring-2 p-2 inline-flex items-center justify-center h-8 w-8 hover:bg-white/50 dark:hover:bg-gray-800/50 transition-colors duration-200'
+          class='ml-4 -mx-1.5 -my-1.5 rounded-md focus:ring-2 p-2 inline-flex items-center justify-center h-8 w-8 hover:bg-white/50 dark:hover:bg-gray-800/50 transition-colors duration-200'
           aria-label='Close'
         >
-          <span className='sr-only'>Close</span>
-          <X className='w-4 h-4' />
+          <span class='sr-only'>Close</span>
+          <X class='w-4 h-4' />
         </button>
       </div>
     </div>
@@ -93,17 +99,16 @@ interface NotificationContainerProps {
   onRemove: (id: string) => void
 }
 
-export function NotificationContainer({ notifications, onRemove }: NotificationContainerProps) {
+export const NotificationContainer: Component<NotificationContainerProps> = props => {
   return (
-    <>
-      {notifications.map(notification => (
+    <For each={props.notifications}>
+      {notification => (
         <Notification
-          key={notification.id}
           message={notification.message}
           type={notification.type}
-          onClose={() => onRemove(notification.id)}
+          onClose={() => props.onRemove(notification.id)}
         />
-      ))}
-    </>
+      )}
+    </For>
   )
 }

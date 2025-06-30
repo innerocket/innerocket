@@ -1,39 +1,24 @@
-import type { ReactNode } from 'preact/compat'
-import { createContext } from 'preact'
-import { useContext } from 'preact/hooks'
+import {
+  createContext,
+  useContext,
+  type Component,
+  type ParentProps,
+  Show,
+  type JSX,
+} from 'solid-js'
 import { tv } from 'tailwind-variants'
-
-interface TabsProps {
-  activeTab: string
-  onTabChange: (tab: string) => void
-  children: ReactNode
-  className?: string
-}
-
-interface TabListProps {
-  children: ReactNode
-  className?: string
-}
-
-interface TabProps {
-  value: string
-  children: ReactNode
-  className?: string
-}
-
-interface TabPanelProps {
-  value: string
-  activeTab: string
-  children: ReactNode
-  className?: string
-}
-
 interface TabsContextType {
-  activeTab: string
+  activeTab: () => string
   onTabChange: (tab: string) => void
 }
 
-const TabsContext = createContext<TabsContextType | null>(null)
+const TabsContext = createContext<TabsContextType>()
+
+const useTabs = () => {
+  const context = useContext(TabsContext)
+  if (!context) throw new Error('useTabs must be used within a TabsProvider')
+  return context
+}
 
 const tabsContainer = tv({
   base: 'w-full',
@@ -58,49 +43,70 @@ const tabContent = tv({
   base: 'mt-6',
 })
 
-export function TabsProvider({ activeTab, onTabChange, children, className = '' }: TabsProps) {
+export type TabsProviderProps = ParentProps<{
+  activeTab: string
+  onTabChange: (tab: string) => void
+  class?: string
+}>
+
+export const TabsProvider: Component<TabsProviderProps> = props => {
+  const value = {
+    activeTab: () => props.activeTab,
+    onTabChange: props.onTabChange,
+  }
+
   return (
-    <TabsContext.Provider value={{ activeTab, onTabChange }}>
-      <div className={tabsContainer({ className })}>{children}</div>
+    <TabsContext.Provider value={value}>
+      <div class={tabsContainer({ class: props.class })}>{props.children}</div>
     </TabsContext.Provider>
   )
 }
 
-export function TabList({ children, className = '' }: TabListProps) {
+export type TabListProps = ParentProps<{
+  class?: string
+}>
+
+export const TabList: Component<TabListProps> = props => {
   return (
     <div
-      className={tabsList({ className })}
-      style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+      class={tabsList({ class: props.class })}
+      style={{ 'scrollbar-width': 'none', '-ms-overflow-style': 'none' } as JSX.CSSProperties}
     >
-      {children}
+      {props.children}
     </div>
   )
 }
 
-export function TabButton({ value, children, className = '' }: TabProps) {
-  const context = useContext(TabsContext)
-  if (!context) throw new Error('TabButton must be used within TabsProvider')
+export type TabButtonProps = ParentProps<{
+  value: string
+  class?: string
+}>
 
-  const { activeTab, onTabChange } = context
-  const isActive = activeTab === value
+export const TabButton: Component<TabButtonProps> = props => {
+  const { activeTab, onTabChange } = useTabs()
+  const isActive = () => activeTab() === props.value
 
   return (
     <button
       type='button'
-      className={tabButton({ active: isActive, className })}
-      onClick={() => onTabChange(value)}
+      class={tabButton({ active: isActive(), class: props.class })}
+      onClick={() => onTabChange(props.value)}
     >
-      {children}
+      {props.children}
     </button>
   )
 }
 
-export function TabContent({ value, children, className = '' }: Omit<TabPanelProps, 'activeTab'>) {
-  const context = useContext(TabsContext)
-  if (!context) throw new Error('TabContent must be used within TabsProvider')
+export type TabContentProps = ParentProps<{
+  value: string
+  class?: string
+}>
 
-  const { activeTab } = context
-  if (value !== activeTab) return null
-
-  return <div className={tabContent({ className })}>{children}</div>
+export const TabContent: Component<TabContentProps> = props => {
+  const { activeTab } = useTabs()
+  return (
+    <Show when={activeTab() === props.value}>
+      <div class={tabContent({ class: props.class })}>{props.children}</div>
+    </Show>
+  )
 }

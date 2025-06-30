@@ -1,20 +1,25 @@
-import { useState, useEffect } from 'preact/hooks'
+import { createSignal, createEffect, on } from 'solid-js'
 import type { FileTransfer } from '../types'
 
 const TRANSFERS_STORAGE_KEY = 'innerocket_transfers'
 
 export function useFileTransferState() {
-  const [fileTransfers, setFileTransfers] = useState<FileTransfer[]>(() => {
+  // Function to get initial transfers from localStorage
+  const getInitialTransfers = (): FileTransfer[] => {
     const savedTransfers = localStorage.getItem(TRANSFERS_STORAGE_KEY)
     return savedTransfers ? JSON.parse(savedTransfers) : []
-  })
+  }
 
-  const [receivedFiles, setReceivedFiles] = useState<Map<string, Blob>>(new Map())
+  const [fileTransfers, setFileTransfers] = createSignal<FileTransfer[]>(getInitialTransfers())
+
+  const [receivedFiles, setReceivedFiles] = createSignal<Map<string, Blob>>(new Map())
 
   // Save transfers to localStorage whenever they change
-  useEffect(() => {
-    localStorage.setItem(TRANSFERS_STORAGE_KEY, JSON.stringify(fileTransfers))
-  }, [fileTransfers])
+  createEffect(
+    on(fileTransfers, currentFileTransfers => {
+      localStorage.setItem(TRANSFERS_STORAGE_KEY, JSON.stringify(currentFileTransfers))
+    })
+  )
 
   const addTransfer = (transfer: FileTransfer) => {
     setFileTransfers(prev => {
@@ -72,11 +77,11 @@ export function useFileTransferState() {
   }
 
   const getReceivedFile = (fileId: string): Blob | undefined => {
-    return receivedFiles.get(fileId)
+    return receivedFiles().get(fileId)
   }
 
   const getTransfer = (transferId: string): FileTransfer | undefined => {
-    return fileTransfers.find(t => t.id === transferId)
+    return fileTransfers().find(t => t.id === transferId)
   }
 
   return {

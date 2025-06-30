@@ -1,6 +1,5 @@
-import type { JSX } from 'preact'
-import { cloneElement } from 'preact'
-import { Loader } from 'lucide-preact'
+import { type JSX, Show, splitProps, type Component } from 'solid-js'
+import { Loader } from 'lucide-solid'
 import { tv, type VariantProps } from 'tailwind-variants'
 
 const iconButton = tv({
@@ -61,55 +60,46 @@ const iconSize = tv({
   },
 })
 
-export type IconButtonProps = JSX.HTMLAttributes<HTMLButtonElement> &
+export type IconButtonProps = JSX.ButtonHTMLAttributes<HTMLButtonElement> &
   VariantProps<typeof iconButton> & {
     icon: JSX.Element
     isLoading?: boolean
     ariaLabel: string
   }
 
-export function IconButton({
-  variant,
-  size,
-  icon,
-  disabled = false,
-  isLoading = false,
-  ariaLabel,
-  rounded,
-  className = '',
-  ...props
-}: IconButtonProps) {
+export const IconButton: Component<IconButtonProps> = props => {
+  const [local, rest] = splitProps(props, [
+    'variant',
+    'size',
+    'icon',
+    'disabled',
+    'isLoading',
+    'ariaLabel',
+    'rounded',
+    'class',
+  ])
+
   const buttonClasses = iconButton({
-    variant,
-    size,
-    rounded,
-    disabled: disabled || isLoading,
-    className: className as string,
+    variant: local.variant,
+    size: local.size,
+    rounded: local.rounded,
+    disabled: local.disabled || local.isLoading,
+    class: local.class,
   })
 
-  const iconClasses = iconSize({ size })
-
-  // Clone the icon element with the appropriate size class
-  const sizedIcon = isLoading ? (
-    <Loader className={`animate-spin ${iconClasses}`} />
-  ) : // Clone the icon element and add size class
-  typeof icon === 'object' && icon !== null && 'type' in icon ? (
-    cloneElement(icon as JSX.Element, {
-      className: `${(icon as JSX.Element).props?.className || ''} ${iconClasses}`.trim(),
-    })
-  ) : (
-    <span className={iconClasses}>{icon}</span>
-  )
+  const iconClasses = iconSize({ size: local.size })
 
   return (
     <button
-      className={buttonClasses}
-      disabled={disabled || isLoading}
-      aria-label={ariaLabel}
+      class={buttonClasses}
+      disabled={local.disabled || local.isLoading}
+      aria-label={local.ariaLabel}
       type='button'
-      {...props}
+      {...rest}
     >
-      {sizedIcon}
+      <Show when={local.isLoading} fallback={<span class={iconClasses}>{local.icon}</span>}>
+        <Loader class={`animate-spin ${iconClasses}`} />
+      </Show>
     </button>
   )
 }

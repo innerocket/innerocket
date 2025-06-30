@@ -1,4 +1,3 @@
-import { useMemo } from 'preact/hooks'
 import type { FileTransfer } from '../types'
 import { FileStorageService } from '../services/fileStorageService'
 import {
@@ -8,15 +7,15 @@ import {
 } from '../utils/fileTransferUtils'
 
 interface UseFileOperationsProps {
-  fileTransfers: FileTransfer[]
+  fileTransfers: () => FileTransfer[]
   getReceivedFile: (fileId: string) => Blob | undefined
 }
 
 export function useFileOperations({ fileTransfers, getReceivedFile }: UseFileOperationsProps) {
-  const fileStorageService = useMemo(() => new FileStorageService(), [])
+  const fileStorageService = new FileStorageService()
 
   const downloadFile = async (fileId: string): Promise<void> => {
-    const transfer = fileTransfers.find(t => t.id === fileId)
+    const transfer = fileTransfers().find(t => t.id === fileId)
     if (!transfer) {
       console.error('Transfer not found:', fileId)
       return
@@ -69,7 +68,7 @@ export function useFileOperations({ fileTransfers, getReceivedFile }: UseFileOpe
   }
 
   const getFileType = (fileId: string): string | null => {
-    const transfer = fileTransfers.find(t => t.id === fileId)
+    const transfer = fileTransfers().find(t => t.id === fileId)
     if (transfer && transfer.fileType) {
       return transfer.fileType
     }
@@ -91,7 +90,7 @@ export function useFileOperations({ fileTransfers, getReceivedFile }: UseFileOpe
     // Try memory first
     const fileFromMemory = getReceivedFile(fileId)
     if (fileFromMemory) {
-      const transfer = fileTransfers.find(t => t.id === fileId)
+      const transfer = fileTransfers().find(t => t.id === fileId)
       return {
         blob: fileFromMemory,
         fileName: transfer?.fileName || 'unknown-file',

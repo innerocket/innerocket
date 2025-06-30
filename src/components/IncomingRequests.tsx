@@ -1,5 +1,6 @@
 import type { FileTransferRequest } from '../types'
 import { Button } from './ui'
+import { For, Show, type Component } from 'solid-js'
 
 interface IncomingRequestsProps {
   requests: FileTransferRequest[]
@@ -7,31 +8,30 @@ interface IncomingRequestsProps {
   onReject: (id: string) => void
 }
 
-export function IncomingRequests({ requests, onAccept, onReject }: IncomingRequestsProps) {
-  if (requests.length === 0) return null
-
+export const IncomingRequests: Component<IncomingRequestsProps> = props => {
   return (
-    <div className='fixed bottom-4 right-4 space-y-2 z-50'>
-      {requests.map(req => (
-        <div
-          key={req.metadata.id}
-          className='bg-white border border-gray-200 dark:bg-gray-800 dark:border-gray-700 p-3 sm:p-4 rounded-md shadow'
-        >
-          <p className='mb-2 text-sm text-gray-700 dark:text-gray-300'>
-            Incoming file: <span className='font-medium'>{req.metadata.name}</span> (
-            {formatFileSize(req.metadata.size)})
-          </p>
-          <div className='flex justify-end gap-2'>
-            <Button size='sm' variant='danger' onClick={() => onReject(req.metadata.id)}>
-              Reject
-            </Button>
-            <Button size='sm' onClick={() => onAccept(req.metadata.id)}>
-              Accept
-            </Button>
-          </div>
-        </div>
-      ))}
-    </div>
+    <Show when={props.requests.length > 0}>
+      <div class='fixed bottom-4 right-4 space-y-2 z-50'>
+        <For each={props.requests}>
+          {req => (
+            <div class='bg-white border border-gray-200 dark:bg-gray-800 dark:border-gray-700 p-3 sm:p-4 rounded-md shadow'>
+              <p class='mb-2 text-sm text-gray-700 dark:text-gray-300'>
+                Incoming file: <span class='font-medium'>{req.metadata.name}</span> (
+                {formatFileSize(req.metadata.size)})
+              </p>
+              <div class='flex justify-end gap-2'>
+                <Button size='sm' variant='danger' onClick={() => props.onReject(req.metadata.id)}>
+                  Reject
+                </Button>
+                <Button size='sm' onClick={() => props.onAccept(req.metadata.id)}>
+                  Accept
+                </Button>
+              </div>
+            </div>
+          )}
+        </For>
+      </div>
+    </Show>
   )
 }
 

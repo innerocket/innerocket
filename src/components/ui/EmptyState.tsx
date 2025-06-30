@@ -1,24 +1,25 @@
-import type { ComponentChildren } from 'preact'
+import { type JSX, Show, type ParentProps, type Component } from 'solid-js'
 
-interface EmptyStateProps {
-  icon: ComponentChildren
+interface EmptyStateProps extends ParentProps {
+  icon: JSX.Element
   title: string
   subtitle?: string
-  children?: ComponentChildren
 }
 
-export function EmptyState({ icon, title, subtitle, children }: EmptyStateProps) {
+export const EmptyState: Component<EmptyStateProps> = props => {
   return (
-    <div className='p-4 sm:p-6 text-center text-gray-600 rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 dark:bg-gray-800/50 dark:border-gray-600 dark:text-gray-400'>
-      <div className='flex flex-col items-center space-y-3'>
-        <div className='w-12 h-12 bg-gray-300 rounded-full flex items-center justify-center dark:bg-gray-600'>
-          {icon}
+    <div class='p-4 sm:p-6 text-center text-gray-600 rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 dark:bg-gray-800/50 dark:border-gray-600 dark:text-gray-400'>
+      <div class='flex flex-col items-center space-y-3'>
+        <div class='w-12 h-12 bg-gray-300 rounded-full flex items-center justify-center dark:bg-gray-600'>
+          {props.icon}
         </div>
         <div>
-          <p className='font-medium'>{title}</p>
-          {subtitle && <p className='text-sm text-gray-500 dark:text-gray-500 mt-1'>{subtitle}</p>}
+          <p class='font-medium'>{props.title}</p>
+          <Show when={props.subtitle}>
+            <p class='text-sm text-gray-500 dark:text-gray-500 mt-1'>{props.subtitle}</p>
+          </Show>
         </div>
-        {children}
+        {props.children}
       </div>
     </div>
   )

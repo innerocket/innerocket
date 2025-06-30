@@ -1,5 +1,7 @@
 import type { FileMetadata, FileTransferRequest, Peer } from '../../types'
 
+export type { Peer }
+
 export interface ConnectionQuality {
   type: 'slow' | 'medium' | 'fast'
   mbps: number
