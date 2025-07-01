@@ -2,6 +2,7 @@
 
 body {
   overscroll-behavior-y: none !important;
+  @apply antialiased;
 }
 
 html,
