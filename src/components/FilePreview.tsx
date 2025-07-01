@@ -1,6 +1,7 @@
 import { createSignal, createEffect, on, Show, Switch, Match, type Component } from 'solid-js'
 import { X } from 'lucide-solid'
 import { ZipPreview } from './ZipPreview'
+import { TextPreview } from './TextPreview'
 
 interface FilePreviewProps {
   fileName: string
@@ -46,6 +47,10 @@ export const FilePreview: Component<FilePreviewProps> = props => {
                 else if (ext === 'mov') detectedType = 'video/quicktime'
                 else if (ext === 'avi') detectedType = 'video/x-msvideo'
                 console.log(`Detected video type from filename: ${detectedType}`)
+              }
+
+              if (props.fileType.startsWith('text/') || props.fileName.endsWith('.txt')) {
+                detectedType = 'text/plain'
               }
 
               if (props.fileType === 'application/zip' || props.fileName.endsWith('.zip')) {
@@ -177,6 +182,9 @@ export const FilePreview: Component<FilePreviewProps> = props => {
                   style={{ 'min-height': '70vh' }}
                   onError={() => setError('Failed to load PDF')}
                 />
+              </Match>
+              <Match when={actualFileType().startsWith('text/') && fileBlob()}>
+                <TextPreview file={fileBlob()!} />
               </Match>
               <Match when={actualFileType() === 'application/zip' && fileBlob()}>
                 <ZipPreview file={fileBlob()!} />
