@@ -146,7 +146,7 @@ export const FileTransferList: Component<FileTransferListProps> = props => {
                           <div
                             class={`w-10 h-10 rounded-md flex items-center justify-center ${fileTypeConfig.backgroundColor}`}
                           >
-                            <div class={`w-5 h-5 ${fileTypeConfig.textColor}`}>
+                            <div class={`w-6 h-6 ${fileTypeConfig.textColor}`}>
                               {fileTypeConfig.icon()}
                             </div>
                           </div>
