@@ -18,8 +18,8 @@ const sqlds = new Sqlds()
 export function App() {
   const { peerId } = usePeer()
   const {
-    connectedPeers,
     fileTransfers,
+    connectedPeers,
     connectToPeer,
     disconnectFromPeer,
     sendFileToAllPeers,
@@ -30,6 +30,7 @@ export function App() {
     previewFile,
     getFileType,
     clearFileHistory,
+    isTransferring,
   } = useFileTransfer()
 
   const [notifications, setNotifications] = createSignal<NotificationItem[]>([])
@@ -275,6 +276,7 @@ export function App() {
                     <FileSender
                       onSendFileToAll={handleSendFileToAll}
                       connectedPeersCount={connectedPeers().length}
+                      isTransferring={isTransferring()}
                     />
                   </div>
                 </div>

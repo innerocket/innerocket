@@ -22,6 +22,7 @@ interface UseWebRTCFileTransferProps {
   addReceivedFile: (fileId: string, blob: Blob) => void
   removeTransfer: (transferId: string) => void
   setConnectedPeers: (peers: string[]) => void
+  setIsTransferring: (isTransferring: boolean) => void
 }
 
 export function useWebRTCFileTransfer({
@@ -31,6 +32,7 @@ export function useWebRTCFileTransfer({
   addReceivedFile,
   removeTransfer,
   setConnectedPeers,
+  setIsTransferring,
 }: UseWebRTCFileTransferProps) {
   const { peerId, addPrefixToId, removePrefixFromId } = usePeer()
   const [connectedPeersLocal, setConnectedPeersLocal] = createSignal<string[]>([])
@@ -237,6 +239,7 @@ export function useWebRTCFileTransfer({
   }
 
   const sendFile = async (peerId: string, file: File): Promise<string | null> => {
+    setIsTransferring(true)
     try {
       const tempId = sqlds.encode([Date.now(), Math.floor(Math.random() * 10000)])
 
@@ -286,6 +289,8 @@ export function useWebRTCFileTransfer({
     } catch (error) {
       console.error('Error sending file:', error)
       return null
+    } finally {
+      setIsTransferring(false)
     }
   }
 

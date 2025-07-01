@@ -5,6 +5,7 @@ import { useWebRTCFileTransfer } from './useWebRTCFileTransfer'
 import { FileStorageService } from '../services/fileStorageService'
 
 export function useFileTransfer() {
+  const [isTransferring, setIsTransferring] = createSignal(false)
   const [connectedPeers, setConnectedPeers] = createSignal<string[]>([])
 
   const {
@@ -35,6 +36,7 @@ export function useFileTransfer() {
     addReceivedFile,
     removeTransfer,
     setConnectedPeers,
+    setIsTransferring,
   })
 
   const { downloadFile, previewFile, getFileType } = useFileOperations({
@@ -65,5 +67,6 @@ export function useFileTransfer() {
     previewFile,
     getFileType,
     clearFileHistory,
+    isTransferring,
   }
 }

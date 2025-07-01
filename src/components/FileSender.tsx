@@ -5,6 +5,7 @@ import { Button } from './ui'
 interface FileSenderProps {
   onSendFileToAll: (file: File) => void | Promise<void>
   connectedPeersCount?: number
+  isTransferring?: boolean
 }
 
 export const FileSender: Component<FileSenderProps> = props => {
@@ -122,7 +123,7 @@ export const FileSender: Component<FileSenderProps> = props => {
           <div class='flex w-full flex-col gap-3'>
             <Button
               onClick={handleSendFileToAll}
-              disabled={selectedFiles().length === 0}
+              disabled={selectedFiles().length === 0 || props.isTransferring}
               variant={selectedFiles().length > 0 ? 'primary' : 'secondary'}
               icon={<Users class='h-4 w-4' />}
               class='w-full'
