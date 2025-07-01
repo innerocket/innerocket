@@ -30,7 +30,7 @@ export const TextPreview: Component<TextPreviewProps> = props => {
   )
 
   return (
-    <div class='h-full w-full overflow-auto bg-gray-50 p-4 dark:bg-gray-900'>
+    <div class='w-full overflow-auto rounded-md bg-gray-50 p-4 dark:bg-gray-900'>
       <Show when={isLoading()}>
         <div class='flex h-full items-center justify-center'>
           <div class='text-gray-500'>Loading...</div>
@@ -42,7 +42,7 @@ export const TextPreview: Component<TextPreviewProps> = props => {
         </div>
       </Show>
       <Show when={!isLoading() && !error()}>
-        <pre class='whitespace-pre-wrap text-sm text-gray-800 dark:text-gray-200'>
+        <pre class='text-sm whitespace-pre-wrap text-gray-800 dark:text-gray-200'>
           {textContent()}
         </pre>
       </Show>

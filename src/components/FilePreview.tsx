@@ -89,6 +89,13 @@ export const FilePreview: Component<FilePreviewProps> = props => {
     }
   }
 
+  const getContainerClass = () => {
+    if (actualFileType().startsWith('text/')) {
+      return 'flex flex-1 overflow-auto p-4 sm:p-6'
+    }
+    return 'flex flex-1 items-center justify-center overflow-auto p-4 sm:p-6'
+  }
+
   return (
     <div class='fixed inset-0 z-50 flex items-center justify-center overflow-x-hidden overflow-y-auto bg-gray-900/75 p-4 backdrop-blur-sm dark:bg-gray-900/80'>
       <div class='relative flex max-h-[90vh] w-full max-w-4xl flex-col rounded-md bg-white dark:bg-gray-800'>
@@ -106,7 +113,7 @@ export const FilePreview: Component<FilePreviewProps> = props => {
           </button>
         </div>
 
-        <div class='flex flex-1 items-center justify-center overflow-auto p-4 sm:p-6'>
+        <div class={getContainerClass()}>
           <Show when={isLoading()}>
             <div class='flex h-full items-center justify-center'>
               <div class='inline-block h-12 w-12 animate-spin rounded-lg border-4 border-solid border-current border-e-transparent align-[-0.125em] text-blue-600 motion-reduce:animate-[spin_1.5s_linear_infinite] dark:text-blue-500'></div>
