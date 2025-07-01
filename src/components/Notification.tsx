@@ -45,16 +45,16 @@ export const Notification: Component<NotificationProps> = props => {
     return (
       <Switch>
         <Match when={props.type === 'success'}>
-          <CheckCircle class='w-5 h-5' />
+          <CheckCircle class='h-5 w-5' />
         </Match>
         <Match when={props.type === 'error'}>
-          <XCircle class='w-5 h-5' />
+          <XCircle class='h-5 w-5' />
         </Match>
         <Match when={props.type === 'warning'}>
-          <AlertTriangle class='w-5 h-5' />
+          <AlertTriangle class='h-5 w-5' />
         </Match>
         <Match when={props.type === 'info'}>
-          <Info class='w-5 h-5' />
+          <Info class='h-5 w-5' />
         </Match>
       </Switch>
     )
@@ -62,26 +62,26 @@ export const Notification: Component<NotificationProps> = props => {
 
   return (
     <div
-      class={`fixed top-4 right-4 z-50 transition-opacity duration-300 max-w-[calc(100dvw-2rem)] ${
+      class={`fixed top-4 right-4 z-50 max-w-[calc(100dvw-2rem)] transition-opacity duration-300 ${
         isVisible() ? 'opacity-100' : 'opacity-0'
       }`}
     >
       <div class={notificationStyles({ type: props.type })} role='alert'>
-        <div class='inline-flex items-center justify-center flex-shrink-0 w-10 h-10 mr-4 rounded-lg bg-white/50 dark:bg-gray-800/50'>
+        <div class='mr-4 inline-flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-white/50 dark:bg-gray-800/50'>
           {getIcon()}
         </div>
-        <div class='text-sm font-medium flex-1'>{props.message}</div>
+        <div class='flex-1 text-sm font-medium'>{props.message}</div>
         <button
           type='button'
           onClick={() => {
             setIsVisible(false)
             setTimeout(props.onClose, 300)
           }}
-          class='ml-4 -mx-1.5 -my-1.5 rounded-md focus:ring-2 p-2 inline-flex items-center justify-center h-8 w-8 hover:bg-white/50 dark:hover:bg-gray-800/50 transition-colors duration-200'
+          class='-mx-1.5 -my-1.5 ml-4 inline-flex h-8 w-8 items-center justify-center rounded-md p-2 transition-colors duration-200 hover:bg-white/50 focus:ring-2 dark:hover:bg-gray-800/50'
           aria-label='Close'
         >
           <span class='sr-only'>Close</span>
-          <X class='w-4 h-4' />
+          <X class='h-4 w-4' />
         </button>
       </div>
     </div>

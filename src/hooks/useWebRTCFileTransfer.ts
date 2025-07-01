@@ -38,7 +38,7 @@ export function useWebRTCFileTransfer({
   const pendingOutgoing = new Map<string, { peerId: string; file: File; metadata: FileMetadata }>()
 
   const webRTCService = createMemo(
-    () => new WebRTCService(peerId(), addPrefixToId, removePrefixFromId),
+    () => new WebRTCService(peerId(), addPrefixToId, removePrefixFromId)
   )
   const fileStorageService = new FileStorageService()
 
@@ -69,142 +69,144 @@ export function useWebRTCFileTransfer({
     }
   }
 
-  createEffect(on(webRTCService, (service) => {
-    const fileChunks = new Map<string, Map<number, ArrayBuffer>>()
+  createEffect(
+    on(webRTCService, service => {
+      const fileChunks = new Map<string, Map<number, ArrayBuffer>>()
 
-    service.setOnPeerConnected(peer => {
-      setConnectedPeersLocal(prev => {
-        const newPeers = [...prev, peer.id]
-        setConnectedPeers(newPeers)
-        return newPeers
-      })
-    })
-
-    service.setOnPeerDisconnected(peerId => {
-      setConnectedPeersLocal(prev => {
-        const newPeers = prev.filter(id => id !== peerId)
-        setConnectedPeers(newPeers)
-        return newPeers
-      })
-    })
-
-    service.setOnFileTransferRequest(request => {
-      const { metadata, from } = request
-
-      addTransfer({
-        id: metadata.id,
-        fileName: metadata.name,
-        fileSize: metadata.size,
-        fileType: metadata.type,
-        sender: from.id,
-        receiver: service.getMyPeerId(),
-        progress: 0,
-        status: 'pending',
-        createdAt: Date.now(),
-        checksum: metadata.checksum,
-      })
-
-      setIncomingRequests(prev => [...prev, request])
-    })
-
-    service.setOnFileChunk(
-      (_peerId, chunk, metadata, progress, chunkSize, transferSpeed, chunkIndex) => {
-        if (chunkIndex === undefined) {
-          console.error('Received a chunk without an index. Ignoring.')
-          return
-        }
-
-        if (!fileChunks.has(metadata.id)) {
-          fileChunks.set(metadata.id, new Map<number, ArrayBuffer>())
-        }
-
-        const chunksMap = fileChunks.get(metadata.id)
-        if (!chunksMap || chunksMap.has(chunkIndex)) {
-          return // Ignore duplicates
-        }
-
-        chunksMap.set(chunkIndex, chunk)
-
-        updateTransferProgress(metadata.id, progress, 'transferring', transferSpeed, chunkSize)
-      }
-    )
-
-    service.setOnFileTransferComplete(async (_, metadata) => {
-      try {
-        const chunksMap = fileChunks.get(metadata.id)
-        if (!chunksMap) {
-          throw new Error(`No chunks found for completed transfer ${metadata.id}`)
-        }
-
-        const sortedChunks = Array.from(chunksMap.entries())
-          .sort(([indexA], [indexB]) => indexA - indexB)
-          .map(([, chunkData]) => chunkData)
-
-        const blob = new Blob(sortedChunks, {
-          type: metadata.type || 'application/octet-stream',
+      service.setOnPeerConnected(peer => {
+        setConnectedPeersLocal(prev => {
+          const newPeers = [...prev, peer.id]
+          setConnectedPeers(newPeers)
+          return newPeers
         })
+      })
 
-        fileChunks.delete(metadata.id)
+      service.setOnPeerDisconnected(peerId => {
+        setConnectedPeersLocal(prev => {
+          const newPeers = prev.filter(id => id !== peerId)
+          setConnectedPeers(newPeers)
+          return newPeers
+        })
+      })
 
-        if (blob.size !== metadata.size) {
-          console.error(`File size mismatch for ${metadata.name}`)
-          updateTransfer(metadata.id, { status: 'failed' })
-          return
-        }
+      service.setOnFileTransferRequest(request => {
+        const { metadata, from } = request
 
-        if (metadata.checksum) {
-          updateTransfer(metadata.id, {
-            progress: 100,
-            status: 'verifying',
-          })
-
-          const isValid = await verifyChecksum(blob, metadata.checksum)
-
-          if (!isValid) {
-            updateTransfer(metadata.id, {
-              progress: 100,
-              status: 'integrity_error',
-            })
-            return
-          }
-        }
-
-        await fileStorageService.saveFile(metadata.id, blob, metadata.name, metadata.checksum)
-
-        addReceivedFile(metadata.id, blob)
-
-        updateTransfer(metadata.id, {
-          progress: 100,
-          status: 'completed',
+        addTransfer({
+          id: metadata.id,
+          fileName: metadata.name,
+          fileSize: metadata.size,
+          fileType: metadata.type,
+          sender: from.id,
+          receiver: service.getMyPeerId(),
+          progress: 0,
+          status: 'pending',
+          createdAt: Date.now(),
           checksum: metadata.checksum,
         })
-      } catch (error) {
-        console.error('Error processing completed file transfer:', error)
-        updateTransfer(metadata.id, { status: 'failed' })
-        fileChunks.delete(metadata.id)
-      }
-    })
 
-    service.setOnFileTransferAccepted((peerId, metadata) => {
-      const pending = pendingOutgoing.get(metadata.id)
-      if (pending) {
-        service.sendFile(peerId, pending.file, pending.metadata)
-        updateTransfer(metadata.id, { status: 'transferring', progress: 0 })
+        setIncomingRequests(prev => [...prev, request])
+      })
+
+      service.setOnFileChunk(
+        (_peerId, chunk, metadata, progress, chunkSize, transferSpeed, chunkIndex) => {
+          if (chunkIndex === undefined) {
+            console.error('Received a chunk without an index. Ignoring.')
+            return
+          }
+
+          if (!fileChunks.has(metadata.id)) {
+            fileChunks.set(metadata.id, new Map<number, ArrayBuffer>())
+          }
+
+          const chunksMap = fileChunks.get(metadata.id)
+          if (!chunksMap || chunksMap.has(chunkIndex)) {
+            return // Ignore duplicates
+          }
+
+          chunksMap.set(chunkIndex, chunk)
+
+          updateTransferProgress(metadata.id, progress, 'transferring', transferSpeed, chunkSize)
+        }
+      )
+
+      service.setOnFileTransferComplete(async (_, metadata) => {
+        try {
+          const chunksMap = fileChunks.get(metadata.id)
+          if (!chunksMap) {
+            throw new Error(`No chunks found for completed transfer ${metadata.id}`)
+          }
+
+          const sortedChunks = Array.from(chunksMap.entries())
+            .sort(([indexA], [indexB]) => indexA - indexB)
+            .map(([, chunkData]) => chunkData)
+
+          const blob = new Blob(sortedChunks, {
+            type: metadata.type || 'application/octet-stream',
+          })
+
+          fileChunks.delete(metadata.id)
+
+          if (blob.size !== metadata.size) {
+            console.error(`File size mismatch for ${metadata.name}`)
+            updateTransfer(metadata.id, { status: 'failed' })
+            return
+          }
+
+          if (metadata.checksum) {
+            updateTransfer(metadata.id, {
+              progress: 100,
+              status: 'verifying',
+            })
+
+            const isValid = await verifyChecksum(blob, metadata.checksum)
+
+            if (!isValid) {
+              updateTransfer(metadata.id, {
+                progress: 100,
+                status: 'integrity_error',
+              })
+              return
+            }
+          }
+
+          await fileStorageService.saveFile(metadata.id, blob, metadata.name, metadata.checksum)
+
+          addReceivedFile(metadata.id, blob)
+
+          updateTransfer(metadata.id, {
+            progress: 100,
+            status: 'completed',
+            checksum: metadata.checksum,
+          })
+        } catch (error) {
+          console.error('Error processing completed file transfer:', error)
+          updateTransfer(metadata.id, { status: 'failed' })
+          fileChunks.delete(metadata.id)
+        }
+      })
+
+      service.setOnFileTransferAccepted((peerId, metadata) => {
+        const pending = pendingOutgoing.get(metadata.id)
+        if (pending) {
+          service.sendFile(peerId, pending.file, pending.metadata)
+          updateTransfer(metadata.id, { status: 'transferring', progress: 0 })
+          pendingOutgoing.delete(metadata.id)
+        }
+      })
+
+      service.setOnFileTransferRejected((_, metadata) => {
+        updateTransfer(metadata.id, { status: 'rejected' })
         pendingOutgoing.delete(metadata.id)
-      }
-    })
+      })
 
-    service.setOnFileTransferRejected((_, metadata) => {
-      updateTransfer(metadata.id, { status: 'rejected' })
-      pendingOutgoing.delete(metadata.id)
-    })
-
-    onCleanup(() => {
-      connectedPeersLocal().forEach(peerId => {
-        service.disconnectFromPeer(peerId)
+      onCleanup(() => {
+        connectedPeersLocal().forEach(peerId => {
+          service.disconnectFromPeer(peerId)
+        })
       })
     })
-  }))
+  )
 
   createEffect(() => {
     loadCompletedFiles()
@@ -317,4 +319,3 @@ export function useWebRTCFileTransfer({
     myPeerId: peerId,
   }
 }
-

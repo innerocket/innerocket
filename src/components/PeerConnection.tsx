@@ -60,38 +60,38 @@ export const PeerConnection: Component<PeerConnectionProps> = props => {
     <>
       <div class='space-y-6'>
         {/* Your Peer ID Section */}
-        <div class='bg-white border-2 border-gray-200 rounded-lg p-4 sm:p-6 transition-all duration-200 dark:bg-gray-800 dark:border-gray-700'>
-          <div class='flex items-center justify-between mb-4'>
+        <div class='rounded-lg border-2 border-gray-200 bg-white p-4 transition-all duration-200 sm:p-6 dark:border-gray-700 dark:bg-gray-800'>
+          <div class='mb-4 flex items-center justify-between'>
             <h4 class='text-lg font-semibold text-gray-900 dark:text-white'>Your Peer ID</h4>
             <div class='flex space-x-2'>
               <IconButton
                 onClick={copyMyPeerId}
                 variant={copySuccess() ? 'success' : 'ghost'}
                 size='sm'
-                icon={copySuccess() ? <Check class='w-4 h-4' /> : <Copy class='w-4 h-4' />}
+                icon={copySuccess() ? <Check class='h-4 w-4' /> : <Copy class='h-4 w-4' />}
                 ariaLabel='Copy to clipboard'
               />
               <IconButton
                 onClick={toggleQRCode}
                 variant='ghost'
                 size='sm'
-                icon={<QrCode class='w-4 h-4' />}
+                icon={<QrCode class='h-4 w-4' />}
                 ariaLabel='Show QR Code'
               />
             </div>
           </div>
 
-          <code class='block w-full px-3.5 py-3 text-sm text-gray-800 bg-gray-100 rounded-md dark:bg-gray-700 dark:text-gray-200 font-mono break-all'>
+          <code class='block w-full rounded-md bg-gray-100 px-3.5 py-3 font-mono text-sm break-all text-gray-800 dark:bg-gray-700 dark:text-gray-200'>
             {peerId()}
           </code>
 
-          <p class='text-sm text-gray-600 dark:text-gray-400 mt-3'>
+          <p class='mt-3 text-sm text-gray-600 dark:text-gray-400'>
             <Show
               when={copySuccess()}
               fallback={'Share this ID with others to let them connect to you'}
             >
-              <span class='text-green-600 font-medium dark:text-green-400 flex items-center'>
-                <Check class='w-4 h-4 mr-1' />
+              <span class='flex items-center font-medium text-green-600 dark:text-green-400'>
+                <Check class='mr-1 h-4 w-4' />
                 ID copied to clipboard!
               </span>
             </Show>
@@ -99,8 +99,8 @@ export const PeerConnection: Component<PeerConnectionProps> = props => {
         </div>
 
         {/* Connect to Peer Section */}
-        <div class='bg-white border-2 border-gray-200 rounded-lg p-4 sm:p-6 transition-all duration-200 dark:bg-gray-800 dark:border-gray-700'>
-          <h4 class='text-lg font-semibold text-gray-900 dark:text-white mb-4'>
+        <div class='rounded-lg border-2 border-gray-200 bg-white p-4 transition-all duration-200 sm:p-6 dark:border-gray-700 dark:bg-gray-800'>
+          <h4 class='mb-4 text-lg font-semibold text-gray-900 dark:text-white'>
             Connect to a Peer
           </h4>
 
@@ -119,7 +119,7 @@ export const PeerConnection: Component<PeerConnectionProps> = props => {
             <Button
               onClick={handleConnect}
               disabled={isConnectDisabled()}
-              class='rounded-r-md rounded-l-none border-l-0 mr-2'
+              class='mr-2 rounded-l-none rounded-r-md border-l-0'
               size='md'
             >
               Connect
@@ -128,7 +128,7 @@ export const PeerConnection: Component<PeerConnectionProps> = props => {
               onClick={toggleQRScanner}
               variant={showQRScanner() ? 'primary' : 'secondary'}
               size='md'
-              icon={<ScanLine class='w-5 h-5' />}
+              icon={<ScanLine class='h-5 w-5' />}
               ariaLabel='Scan QR Code'
             />
           </div>

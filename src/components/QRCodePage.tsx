@@ -69,11 +69,11 @@ export const QRCodePage: Component<QRCodePageProps> = props => {
   }
 
   return (
-    <div class='qr-code-page max-w-4xl mx-auto py-6'>
-      <h2 class='text-2xl font-bold text-gray-800 mb-6'>QR Code Connection</h2>
+    <div class='qr-code-page mx-auto max-w-4xl py-6'>
+      <h2 class='mb-6 text-2xl font-bold text-gray-800'>QR Code Connection</h2>
 
-      <div class='bg-white rounded-lg p-6 mb-6'>
-        <h3 class='text-xl font-bold text-gray-800 mb-4'>Your QR Code</h3>
+      <div class='mb-6 rounded-lg bg-white p-6'>
+        <h3 class='mb-4 text-xl font-bold text-gray-800'>Your QR Code</h3>
         <p class='mb-4 text-gray-600'>
           Share this QR code with others to let them connect to you. It contains your unique peer
           ID.
@@ -81,16 +81,16 @@ export const QRCodePage: Component<QRCodePageProps> = props => {
         <QRCodeHandler mode='generate' initialValue={peerId()} readOnly={true} />
       </div>
 
-      <div class='bg-white rounded-lg p-6 mb-6'>
-        <h3 class='text-xl font-bold text-gray-800 mb-4'>Scan QR Code</h3>
+      <div class='mb-6 rounded-lg bg-white p-6'>
+        <h3 class='mb-4 text-xl font-bold text-gray-800'>Scan QR Code</h3>
         <p class='mb-4 text-gray-600'>Scan someone else's QR code to connect with them.</p>
         <QRCodeHandler mode='scan' onScan={handleScan} />
 
         <Show when={scannedValue()}>
           <div class='mt-6'>
-            <div class='bg-gray-50 p-4 rounded-sm mb-4'>
+            <div class='mb-4 rounded-sm bg-gray-50 p-4'>
               <h4 class='text-md font-medium text-gray-700'>Scanned Peer ID:</h4>
-              <p class='text-sm break-all mt-1'>{scannedValue()}</p>
+              <p class='mt-1 text-sm break-all'>{scannedValue()}</p>
             </div>
 
             <Show

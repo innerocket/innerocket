@@ -15,10 +15,10 @@ interface QRCodeModalProps {
 export const QRCodeModal: Component<QRCodeModalProps> = props => {
   return (
     <Show when={props.isOpen && (props.mode !== 'generate' || props.value)}>
-      <div class='fixed inset-0 bg-gray-900/75 backdrop-blur-sm flex justify-center items-center z-50 p-4'>
-        <div class='relative bg-white rounded-xl border-2 border-gray-200 dark:bg-gray-800 dark:border-gray-700 max-w-sm w-full'>
+      <div class='fixed inset-0 z-50 flex items-center justify-center bg-gray-900/75 p-4 backdrop-blur-sm'>
+        <div class='relative w-full max-w-sm rounded-xl border-2 border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800'>
           {/* Header */}
-          <div class='p-6 bg-gray-50 border-b-2 border-gray-200 rounded-t-xl dark:bg-gray-800 dark:border-gray-700 flex justify-between items-center'>
+          <div class='flex items-center justify-between rounded-t-xl border-b-2 border-gray-200 bg-gray-50 p-6 dark:border-gray-700 dark:bg-gray-800'>
             <h3 class='text-lg font-semibold text-gray-900 dark:text-white'>
               {props.title || 'QR Code'}
             </h3>

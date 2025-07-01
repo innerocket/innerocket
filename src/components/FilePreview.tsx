@@ -85,32 +85,32 @@ export const FilePreview: Component<FilePreviewProps> = props => {
   }
 
   return (
-    <div class='fixed inset-0 bg-gray-900/75 flex items-center justify-center z-50 p-4 overflow-x-hidden overflow-y-auto dark:bg-gray-900/80 backdrop-blur-sm'>
-      <div class='relative w-full max-w-4xl max-h-[90vh] flex flex-col bg-white rounded-md dark:bg-gray-800'>
-        <div class='flex items-center justify-between p-3 sm:p-4 border-b rounded-t-md border-gray-200 dark:border-gray-600'>
-          <h3 class='text-xl font-semibold text-gray-900 dark:text-white truncate'>
+    <div class='fixed inset-0 z-50 flex items-center justify-center overflow-x-hidden overflow-y-auto bg-gray-900/75 p-4 backdrop-blur-sm dark:bg-gray-900/80'>
+      <div class='relative flex max-h-[90vh] w-full max-w-4xl flex-col rounded-md bg-white dark:bg-gray-800'>
+        <div class='flex items-center justify-between rounded-t-md border-b border-gray-200 p-3 sm:p-4 dark:border-gray-600'>
+          <h3 class='truncate text-xl font-semibold text-gray-900 dark:text-white'>
             {props.fileName}
           </h3>
           <button
             onClick={props.onClose}
             type='button'
-            class='text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-md text-sm p-1.5 ml-auto inline-flex items-center dark:hover:bg-gray-600 dark:hover:text-white'
+            class='ml-auto inline-flex items-center rounded-md bg-transparent p-1.5 text-sm text-gray-400 hover:bg-gray-200 hover:text-gray-900 dark:hover:bg-gray-600 dark:hover:text-white'
           >
-            <X class='w-4 h-4' />
+            <X class='h-4 w-4' />
             <span class='sr-only'>Close</span>
           </button>
         </div>
 
-        <div class='flex-1 overflow-auto flex items-center justify-center p-4 sm:p-6'>
+        <div class='flex flex-1 items-center justify-center overflow-auto p-4 sm:p-6'>
           <Show when={isLoading()}>
-            <div class='flex items-center justify-center h-full'>
+            <div class='flex h-full items-center justify-center'>
               <div class='inline-block h-12 w-12 animate-spin rounded-lg border-4 border-solid border-current border-e-transparent align-[-0.125em] text-blue-600 motion-reduce:animate-[spin_1.5s_linear_infinite] dark:text-blue-500'></div>
             </div>
           </Show>
 
           <Show when={error() && !isLoading()}>
-            <div class='text-center p-8'>
-              <p class='text-red-500 mb-2'>{error()}</p>
+            <div class='p-8 text-center'>
+              <p class='mb-2 text-red-500'>{error()}</p>
               <p class='text-sm text-gray-500 dark:text-gray-400'>
                 Try downloading the file instead.
               </p>
@@ -120,11 +120,11 @@ export const FilePreview: Component<FilePreviewProps> = props => {
           <Show when={!isLoading() && !error()}>
             <Switch
               fallback={
-                <div class='text-center p-8'>
-                  <div class='bg-gray-100 rounded-md p-6 inline-block mb-4 dark:bg-gray-700'>
+                <div class='p-8 text-center'>
+                  <div class='mb-4 inline-block rounded-md bg-gray-100 p-6 dark:bg-gray-700'>
                     <svg
                       xmlns='http://www.w3.org/2000/svg'
-                      class='h-16 w-16 text-gray-400 mx-auto dark:text-gray-300'
+                      class='mx-auto h-16 w-16 text-gray-400 dark:text-gray-300'
                       fill='none'
                       viewBox='0 0 24 24'
                       stroke='currentColor'
@@ -150,7 +150,7 @@ export const FilePreview: Component<FilePreviewProps> = props => {
                 <img
                   src={props.previewUrl!}
                   alt={props.fileName}
-                  class='max-w-full max-h-full object-contain'
+                  class='max-h-full max-w-full object-contain'
                   onError={() => setError('Failed to load image')}
                 />
               </Match>
@@ -158,7 +158,7 @@ export const FilePreview: Component<FilePreviewProps> = props => {
                 <video
                   src={props.previewUrl!}
                   controls
-                  class='max-w-full max-h-full'
+                  class='max-h-full max-w-full'
                   onError={handleVideoError}
                 />
               </Match>
@@ -173,7 +173,7 @@ export const FilePreview: Component<FilePreviewProps> = props => {
               <Match when={actualFileType() === 'application/pdf'}>
                 <iframe
                   src={props.previewUrl!}
-                  class='w-full h-full'
+                  class='h-full w-full'
                   style={{ 'min-height': '70vh' }}
                   onError={() => setError('Failed to load PDF')}
                 />

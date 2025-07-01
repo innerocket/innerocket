@@ -82,7 +82,7 @@ export const Input: Component<InputProps> = props => {
   return (
     <div class={local.fullWidth ? 'w-full' : ''}>
       <Show when={local.label}>
-        <label class='block mb-3 text-sm font-semibold text-gray-700 dark:text-gray-200'>
+        <label class='mb-3 block text-sm font-semibold text-gray-700 dark:text-gray-200'>
           {local.label}
         </label>
       </Show>

@@ -64,21 +64,21 @@ const Node: Component<{ node: TreeNode; onToggle: (path: string) => void }> = pr
   return (
     <li>
       <div
-        class='flex items-center text-sm text-gray-800 dark:text-gray-200 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 rounded-md p-1'
+        class='flex cursor-pointer items-center rounded-md p-1 text-sm text-gray-800 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-600'
         style={getPadding()}
         onClick={() => props.onToggle(props.node.path)}
       >
         {props.node.type === 'folder' ? (
           <>
             {props.node.isOpen ? (
-              <ChevronDown class='w-4 h-4 mr-2 text-gray-500' />
+              <ChevronDown class='mr-2 h-4 w-4 text-gray-500' />
             ) : (
-              <ChevronRight class='w-4 h-4 mr-2 text-gray-500' />
+              <ChevronRight class='mr-2 h-4 w-4 text-gray-500' />
             )}
-            <Folder class='w-4 h-4 mr-2 text-yellow-500' />
+            <Folder class='mr-2 h-4 w-4 text-yellow-500' />
           </>
         ) : (
-          <File class='w-4 h-4 mr-2 text-gray-400 ml-6' />
+          <File class='mr-2 ml-6 h-4 w-4 text-gray-400' />
         )}
         <span>{props.node.name}</span>
       </div>
@@ -133,16 +133,16 @@ export const ZipPreview: Component<ZipPreviewProps> = props => {
   })
 
   return (
-    <div class='p-4 bg-gray-50 dark:bg-gray-700 rounded-md h-full overflow-auto'>
+    <div class='h-full overflow-auto rounded-md bg-gray-50 p-4 dark:bg-gray-700'>
       <Show when={isLoading()}>
-        <div class='flex items-center justify-center h-full'>
+        <div class='flex h-full items-center justify-center'>
           <div class='inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-e-transparent align-[-0.125em] text-blue-600 motion-reduce:animate-[spin_1.5s_linear_infinite] dark:text-blue-500'></div>
         </div>
       </Show>
 
       <Show when={error()}>
-        <div class='text-center p-8'>
-          <p class='text-red-500 mb-2'>{error()}</p>
+        <div class='p-8 text-center'>
+          <p class='mb-2 text-red-500'>{error()}</p>
           <p class='text-sm text-gray-500 dark:text-gray-400'>Try downloading the file instead.</p>
         </div>
       </Show>

@@ -81,7 +81,7 @@ export const Button: Component<ButtonProps> = props => {
       {...rest}
     >
       <Show when={local.isLoading}>
-        <Loader class='inline w-4 h-4 mr-3 text-current animate-spin' />
+        <Loader class='mr-3 inline h-4 w-4 animate-spin text-current' />
       </Show>
       <Show when={!local.isLoading && local.icon}>
         <span class='mr-2'>{local.icon}</span>

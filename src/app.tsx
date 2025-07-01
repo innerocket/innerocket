@@ -222,9 +222,9 @@ export function App() {
 
   return (
     <div class='min-h-dvh bg-gray-50 dark:bg-gray-900'>
-      <main class='max-w-4xl mx-auto py-4 px-2 sm:py-8 sm:px-6 lg:px-8'>
+      <main class='mx-auto max-w-4xl px-2 py-4 sm:px-6 sm:py-8 lg:px-8'>
         {/* Main Tabbed Interface */}
-        <div class='w-full bg-white border-2 border-gray-200 rounded-xl transition-all duration-200 dark:bg-gray-800 dark:border-gray-700'>
+        <div class='w-full rounded-xl border-2 border-gray-200 bg-white transition-all duration-200 dark:border-gray-700 dark:bg-gray-800'>
           <TabsProvider activeTab={activeTab()} onTabChange={setActiveTab}>
             {/* Tab Navigation */}
             <TabList class='px-4 pt-4 sm:px-6 sm:pt-6'>
@@ -239,10 +239,10 @@ export function App() {
               <TabContent value='connection'>
                 <div class='min-h-72 space-y-8'>
                   <div>
-                    <h2 class='text-xl font-semibold text-gray-900 dark:text-white mb-1'>
+                    <h2 class='mb-1 text-xl font-semibold text-gray-900 dark:text-white'>
                       Connection
                     </h2>
-                    <p class='text-sm text-gray-600 dark:text-gray-400 mb-4 sm:mb-6'>
+                    <p class='mb-4 text-sm text-gray-600 sm:mb-6 dark:text-gray-400'>
                       Connect with peers to start sharing files
                     </p>
                     <PeerConnection onConnect={handleConnectToPeer} />
@@ -262,9 +262,9 @@ export function App() {
 
               {/* File Transfer Tab */}
               <TabContent value='file-transfer'>
-                <div class='min-h-72 flex flex-col'>
+                <div class='flex min-h-72 flex-col'>
                   <div class='mb-4 sm:mb-6'>
-                    <h2 class='text-xl font-semibold text-gray-900 dark:text-white mb-1'>
+                    <h2 class='mb-1 text-xl font-semibold text-gray-900 dark:text-white'>
                       Send Files
                     </h2>
                     <p class='text-sm text-gray-600 dark:text-gray-400'>
@@ -300,36 +300,36 @@ export function App() {
           <button
             onClick={toggleHelp}
             type='button'
-            class='inline-flex items-center text-blue-600 hover:text-white border-2 border-blue-500 hover:bg-blue-600 focus:ring-2 focus:outline-none focus:ring-blue-500 focus:ring-offset-2 font-medium rounded-lg text-sm px-4 py-2 sm:px-6 sm:py-3 transition-all duration-200 dark:border-blue-500 dark:text-blue-400 dark:hover:text-white dark:hover:bg-blue-600 dark:focus:ring-blue-500'
+            class='inline-flex items-center rounded-lg border-2 border-blue-500 px-4 py-2 text-sm font-medium text-blue-600 transition-all duration-200 hover:bg-blue-600 hover:text-white focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none sm:px-6 sm:py-3 dark:border-blue-500 dark:text-blue-400 dark:hover:bg-blue-600 dark:hover:text-white dark:focus:ring-blue-500'
           >
-            <HelpCircle class='h-5 w-5 mr-2' />
+            <HelpCircle class='mr-2 h-5 w-5' />
             <span>{showHelp() ? 'Hide information' : 'Click for more information'}</span>
           </button>
         </div>
 
         {/* Help Section - Togglable */}
         <Show when={showHelp()}>
-          <div class='mt-6 sm:mt-8 mb-4 w-full bg-white border-2 border-gray-200 rounded-xl transition-all duration-200 dark:bg-gray-800 dark:border-gray-700'>
-            <div class='p-4 sm:p-6 border-b-2 border-gray-200 rounded-t-xl dark:border-gray-700'>
+          <div class='mt-6 mb-4 w-full rounded-xl border-2 border-gray-200 bg-white transition-all duration-200 sm:mt-8 dark:border-gray-700 dark:bg-gray-800'>
+            <div class='rounded-t-xl border-b-2 border-gray-200 p-4 sm:p-6 dark:border-gray-700'>
               <h2 class='text-xl font-semibold text-gray-900 dark:text-white'>About</h2>
-              <p class='text-sm text-gray-600 dark:text-gray-400 mt-1'>
+              <p class='mt-1 text-sm text-gray-600 dark:text-gray-400'>
                 Learn how our secure file sharing works
               </p>
             </div>
 
             <div class='p-4 sm:p-6'>
               <div class='space-y-3 sm:space-y-4'>
-                <p class='text-gray-700 dark:text-gray-300 leading-relaxed'>
+                <p class='leading-relaxed text-gray-700 dark:text-gray-300'>
                   Innerocket is a secure peer-to-peer file sharing application that uses WebRTC
                   technology to transfer files directly between users without sending any file data
                   through servers.
                 </p>
-                <p class='text-gray-700 dark:text-gray-300 leading-relaxed'>
+                <p class='leading-relaxed text-gray-700 dark:text-gray-300'>
                   All file transfers are end-to-end encrypted and take place directly between your
                   browser and the recipient's browser. This means your files never touch our
                   servers, ensuring maximum privacy and security.
                 </p>
-                <div class='p-3 sm:p-4 text-sm text-blue-800 border-2 border-blue-200 rounded-lg bg-blue-50 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-700'>
+                <div class='rounded-lg border-2 border-blue-200 bg-blue-50 p-3 text-sm text-blue-800 sm:p-4 dark:border-blue-700 dark:bg-blue-900/20 dark:text-blue-300'>
                   <div class='flex'>
                     <div class='flex-shrink-0'>
                       <Info class='h-5 w-5 text-blue-600 dark:text-blue-400' />
@@ -367,12 +367,12 @@ export function App() {
 
       {/* Confirmation Dialog */}
       <Show when={showClearConfirmation()}>
-        <div class='fixed inset-0 bg-gray-900/75 backdrop-blur-sm flex justify-center items-center z-50 dark:bg-gray-900/80'>
-          <div class='relative p-4 w-full max-w-md max-h-full'>
-            <div class='relative bg-white rounded-xl border border-gray-200 dark:bg-gray-800 dark:border-gray-700'>
-              <div class='p-4 sm:p-6 md:p-8 text-center'>
-                <div class='w-16 h-16 mx-auto mb-6 bg-red-100 rounded-lg flex items-center justify-center dark:bg-red-900/20'>
-                  <Trash2 class='text-red-600 w-8 h-8 dark:text-red-400' />
+        <div class='fixed inset-0 z-50 flex items-center justify-center bg-gray-900/75 backdrop-blur-sm dark:bg-gray-900/80'>
+          <div class='relative max-h-full w-full max-w-md p-4'>
+            <div class='relative rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800'>
+              <div class='p-4 text-center sm:p-6 md:p-8'>
+                <div class='mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-lg bg-red-100 dark:bg-red-900/20'>
+                  <Trash2 class='h-8 w-8 text-red-600 dark:text-red-400' />
                 </div>
                 <h3 class='mb-6 text-lg font-semibold text-gray-900 dark:text-white'>
                   Clear File Transfer History?
@@ -380,22 +380,22 @@ export function App() {
                 <p class='mb-6 text-gray-600 dark:text-gray-300'>
                   Are you sure you want to clear all file transfer history?
                   <br />
-                  <span class='text-red-600 font-medium dark:text-red-400'>
+                  <span class='font-medium text-red-600 dark:text-red-400'>
                     This action cannot be undone.
                   </span>
                 </p>
-                <div class='flex space-x-3 justify-center'>
+                <div class='flex justify-center space-x-3'>
                   <button
                     onClick={confirmClearFileHistory}
                     type='button'
-                    class='text-white bg-red-600 hover:bg-red-700 focus:ring-2 focus:outline-none focus:ring-red-500 focus:ring-offset-2 font-medium rounded-md text-sm inline-flex items-center px-5 py-2.5 transition-all duration-200 dark:focus:ring-red-500'
+                    class='inline-flex items-center rounded-md bg-red-600 px-5 py-2.5 text-sm font-medium text-white transition-all duration-200 hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:outline-none dark:focus:ring-red-500'
                   >
                     Yes, clear history
                   </button>
                   <button
                     onClick={cancelClearFileHistory}
                     type='button'
-                    class='text-gray-700 bg-white hover:bg-gray-50 focus:ring-2 focus:outline-none focus:ring-gray-500 focus:ring-offset-2 rounded-md border-2 border-gray-300 text-sm font-medium px-5 py-2.5 hover:border-gray-400 transition-all duration-200 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-gray-500'
+                    class='rounded-md border-2 border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 transition-all duration-200 hover:border-gray-400 hover:bg-gray-50 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 dark:hover:text-white dark:focus:ring-gray-500'
                   >
                     Cancel
                   </button>

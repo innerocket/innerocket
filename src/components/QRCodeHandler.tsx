@@ -51,7 +51,7 @@ export const QRCodeHandler: Component<QRCodeHandlerProps> = props => {
         setScannerError('')
         qrScanner = new QrScanner(
           videoRef,
-          (result) => {
+          result => {
             const scannedText = result.data.trim()
             setScanResult(scannedText)
             setIsScanning(false)
@@ -133,7 +133,7 @@ export const QRCodeHandler: Component<QRCodeHandlerProps> = props => {
         <div class='qr-generator'>
           <Show when={!props.readOnly}>
             <div class='mb-4'>
-              <label class='block mb-2 text-sm font-medium text-gray-900 dark:text-white'>
+              <label class='mb-2 block text-sm font-medium text-gray-900 dark:text-white'>
                 Value
               </label>
               <div class='flex gap-3'>
@@ -141,7 +141,7 @@ export const QRCodeHandler: Component<QRCodeHandlerProps> = props => {
                   type='text'
                   value={qrValue()}
                   onInput={e => setQrValue(e.currentTarget.value)}
-                  class='bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-md focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500'
+                  class='block w-full rounded-md border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500'
                 />
                 <Button onClick={generateNewUUID} variant='primary'>
                   Generate ID
@@ -152,7 +152,7 @@ export const QRCodeHandler: Component<QRCodeHandlerProps> = props => {
 
           <Show when={qrCodeDataURL()}>
             <div class='qr-display flex flex-col items-center'>
-              <img src={qrCodeDataURL()} alt='QR Code' class='select-none pointer-events-none' />
+              <img src={qrCodeDataURL()} alt='QR Code' class='pointer-events-none select-none' />
             </div>
           </Show>
         </div>
@@ -162,7 +162,7 @@ export const QRCodeHandler: Component<QRCodeHandlerProps> = props => {
         <div class='qr-scanner'>
           <div class='w-full bg-white dark:bg-gray-800'>
             <Show when={props.mode !== 'scan'}>
-              <div class='flex items-center justify-between mb-4'>
+              <div class='mb-4 flex items-center justify-between'>
                 <h3 class='text-xl font-bold text-gray-900 dark:text-white'>QR Code Scanner</h3>
                 <Button
                   onClick={isScannerActive() ? toggleScanner : startScanner}
@@ -178,26 +178,29 @@ export const QRCodeHandler: Component<QRCodeHandlerProps> = props => {
             <Show when={isScannerActive()}>
               <div class='scanner-container mb-4 overflow-hidden'>
                 <div class='mx-auto max-w-sm'>
-                  <video ref={videoRef} class='w-full rounded-lg border-2 border-gray-300 dark:border-gray-600'></video>
+                  <video
+                    ref={videoRef}
+                    class='w-full rounded-lg border-2 border-gray-300 dark:border-gray-600'
+                  ></video>
                 </div>
-                <p class='text-xs text-gray-500 dark:text-gray-400 text-center mt-2'>
+                <p class='mt-2 text-center text-xs text-gray-500 dark:text-gray-400'>
                   Point your camera at a QR code to scan
                 </p>
               </div>
             </Show>
 
             <Show when={scannerError()}>
-              <div class='p-4 bg-red-50 border border-red-200 rounded-lg mb-4 dark:bg-red-900/20 dark:border-red-700'>
+              <div class='mb-4 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-700 dark:bg-red-900/20'>
                 <p class='text-sm text-red-600 dark:text-red-400'>{scannerError()}</p>
               </div>
             </Show>
 
             <Show when={scanResult()}>
-              <div class='p-4 bg-gray-50 dark:bg-gray-700'>
+              <div class='bg-gray-50 p-4 dark:bg-gray-700'>
                 <h4 class='mb-2 text-sm font-medium text-gray-900 dark:text-white'>Scan Result:</h4>
                 <p class='text-sm break-all text-gray-700 dark:text-gray-300'>{scanResult()}</p>
                 <Show when={props.mode === 'scan' && isValidPeerIdFormat(scanResult())}>
-                  <p class='text-sm text-green-600 dark:text-green-400 mt-2'>
+                  <p class='mt-2 text-sm text-green-600 dark:text-green-400'>
                     ✓ Valid format detected - closing scanner...
                   </p>
                 </Show>

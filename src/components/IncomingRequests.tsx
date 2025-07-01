@@ -11,10 +11,10 @@ interface IncomingRequestsProps {
 export const IncomingRequests: Component<IncomingRequestsProps> = props => {
   return (
     <Show when={props.requests.length > 0}>
-      <div class='fixed bottom-4 right-4 space-y-2 z-50'>
+      <div class='fixed right-4 bottom-4 z-50 space-y-2'>
         <For each={props.requests}>
           {req => (
-            <div class='bg-white border border-gray-200 dark:bg-gray-800 dark:border-gray-700 p-3 sm:p-4 rounded-md shadow'>
+            <div class='rounded-md border border-gray-200 bg-white p-3 shadow sm:p-4 dark:border-gray-700 dark:bg-gray-800'>
               <p class='mb-2 text-sm text-gray-700 dark:text-gray-300'>
                 Incoming file: <span class='font-medium'>{req.metadata.name}</span> (
                 {formatFileSize(req.metadata.size)})

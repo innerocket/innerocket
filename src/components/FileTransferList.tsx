@@ -89,7 +89,7 @@ export const FileTransferList: Component<FileTransferListProps> = props => {
       when={props.transfers.length > 0}
       fallback={
         <EmptyState
-          icon={<FolderOpen class='w-6 h-6 text-gray-500 dark:text-gray-400' />}
+          icon={<FolderOpen class='h-6 w-6 text-gray-500 dark:text-gray-400' />}
           title='No file transfers yet'
           subtitle='Connect to peers and start sharing files'
         />
@@ -106,14 +106,14 @@ export const FileTransferList: Component<FileTransferListProps> = props => {
         />
         <div
           ref={tableContainerRef}
-          class={`relative overflow-x-auto overflow-y-visible rounded-lg border-2 border-gray-200 dark:border-gray-700 select-none ${
+          class={`relative overflow-x-auto overflow-y-visible rounded-lg border-2 border-gray-200 select-none dark:border-gray-700 ${
             isDragging() ? 'cursor-grabbing' : 'cursor-grab'
           }`}
           style={{ 'overscroll-behavior-x': 'contain' }}
           onMouseDown={handleMouseDown}
         >
-          <table class='w-full text-sm text-left text-gray-600 dark:text-gray-300'>
-            <thead class='text-xs text-gray-700 uppercase bg-gray-100 dark:text-gray-300 border-b-2 border-gray-200 dark:border-gray-700 dark:bg-gray-600'>
+          <table class='w-full text-left text-sm text-gray-600 dark:text-gray-300'>
+            <thead class='border-b-2 border-gray-200 bg-gray-100 text-xs text-gray-700 uppercase dark:border-gray-700 dark:bg-gray-600 dark:text-gray-300'>
               <tr>
                 <th scope='col' class='px-6 py-4 font-semibold'>
                   File
@@ -140,18 +140,18 @@ export const FileTransferList: Component<FileTransferListProps> = props => {
                 {transfer => {
                   const fileTypeConfig = getFileTypeConfig(transfer.fileName)
                   return (
-                    <tr class='transition-all duration-200 bg-white dark:bg-gray-800'>
+                    <tr class='bg-white transition-all duration-200 dark:bg-gray-800'>
                       <td class='px-6 py-4'>
                         <div class='flex items-center space-x-3'>
                           <div
-                            class={`w-10 h-10 rounded-md flex items-center justify-center ${fileTypeConfig.backgroundColor}`}
+                            class={`flex h-10 w-10 items-center justify-center rounded-md ${fileTypeConfig.backgroundColor}`}
                           >
-                            <div class={`w-6 h-6 ${fileTypeConfig.textColor}`}>
+                            <div class={`h-6 w-6 ${fileTypeConfig.textColor}`}>
                               {fileTypeConfig.icon()}
                             </div>
                           </div>
-                          <div class='flex-1 min-w-0'>
-                            <div class='text-sm font-medium text-gray-900 dark:text-white truncate max-w-xs'>
+                          <div class='min-w-0 flex-1'>
+                            <div class='max-w-xs truncate text-sm font-medium text-gray-900 dark:text-white'>
                               {transfer.fileName}
                             </div>
                             <div class='text-xs text-gray-500 dark:text-gray-400'>
@@ -185,13 +185,13 @@ export const FileTransferList: Component<FileTransferListProps> = props => {
                               when={transfer.sender === peerId()}
                               fallback={
                                 <span class='flex items-center text-green-600 dark:text-green-500'>
-                                  <ChevronLeft class='w-4 h-4 mr-1' />
+                                  <ChevronLeft class='mr-1 h-4 w-4' />
                                   Received
                                 </span>
                               }
                             >
                               <span class='flex items-center text-blue-600 dark:text-blue-500'>
-                                <ChevronRight class='w-4 h-4 mr-1' />
+                                <ChevronRight class='mr-1 h-4 w-4' />
                                 Sent
                               </span>
                             </Show>
@@ -206,7 +206,7 @@ export const FileTransferList: Component<FileTransferListProps> = props => {
                         />
                       </td>
                       <td class='px-6 py-4 whitespace-nowrap'>
-                        <div class='w-full bg-gray-200 rounded-lg h-3 dark:bg-gray-600 overflow-hidden'>
+                        <div class='h-3 w-full overflow-hidden rounded-lg bg-gray-200 dark:bg-gray-600'>
                           <div
                             class={`h-3 rounded-lg transition-all duration-300 ${
                               transfer.status === 'completed'
@@ -221,24 +221,24 @@ export const FileTransferList: Component<FileTransferListProps> = props => {
                             style={{ width: `${transfer.progress}%` }}
                           ></div>
                         </div>
-                        <div class='text-xs text-gray-600 dark:text-gray-300 mt-2 font-medium'>
+                        <div class='mt-2 text-xs font-medium text-gray-600 dark:text-gray-300'>
                           {transfer.progress}%
                         </div>
                       </td>
-                      <td class='px-6 py-4 whitespace-nowrap text-sm font-medium'>
+                      <td class='px-6 py-4 text-sm font-medium whitespace-nowrap'>
                         <Show when={transfer.status === 'completed'}>
                           <div class='flex space-x-2'>
                             <Button
                               onClick={() => props.onPreview(transfer.id)}
                               size='sm'
-                              icon={<Eye class='w-4 h-4' />}
+                              icon={<Eye class='h-4 w-4' />}
                             >
                               Preview
                             </Button>
                             <Button
                               onClick={() => props.onDownload(transfer.id)}
                               size='sm'
-                              icon={<Download class='w-4 h-4' />}
+                              icon={<Download class='h-4 w-4' />}
                             >
                               Download
                             </Button>
