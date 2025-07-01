@@ -1,5 +1,6 @@
 import { createSignal, createEffect, on, Show, Switch, Match, type Component } from 'solid-js'
 import { X } from 'lucide-solid'
+import { ZipPreview } from './ZipPreview'
 
 interface FilePreviewProps {
   fileName: string
@@ -13,6 +14,7 @@ export const FilePreview: Component<FilePreviewProps> = props => {
   const [error, setError] = createSignal<string | null>(null)
   const [actualFileType, setActualFileType] = createSignal(props.fileType)
   const [videoPlaybackAttempted, setVideoPlaybackAttempted] = createSignal(false)
+  const [fileBlob, setFileBlob] = createSignal<Blob | null>(null)
 
   createEffect(
     on(
@@ -21,6 +23,7 @@ export const FilePreview: Component<FilePreviewProps> = props => {
         setIsLoading(true)
         setError(null)
         setVideoPlaybackAttempted(false)
+        setFileBlob(null)
 
         if (previewUrl) {
           console.log(`FilePreview: Loading preview for ${props.fileName} (${props.fileType})`)
@@ -29,6 +32,7 @@ export const FilePreview: Component<FilePreviewProps> = props => {
             .then(response => response.blob())
             .then(blob => {
               console.log(`Preview blob type: ${blob.type}, size: ${blob.size} bytes`)
+              setFileBlob(blob)
 
               let detectedType = blob.type
               if (
@@ -42,6 +46,10 @@ export const FilePreview: Component<FilePreviewProps> = props => {
                 else if (ext === 'mov') detectedType = 'video/quicktime'
                 else if (ext === 'avi') detectedType = 'video/x-msvideo'
                 console.log(`Detected video type from filename: ${detectedType}`)
+              }
+
+              if (props.fileType === 'application/zip' || props.fileName.endsWith('.zip')) {
+                detectedType = 'application/zip'
               }
 
               if (detectedType && detectedType !== 'application/octet-stream') {
@@ -169,6 +177,9 @@ export const FilePreview: Component<FilePreviewProps> = props => {
                   style={{ 'min-height': '70vh' }}
                   onError={() => setError('Failed to load PDF')}
                 />
+              </Match>
+              <Match when={actualFileType() === 'application/zip' && fileBlob()}>
+                <ZipPreview file={fileBlob()!} />
               </Match>
             </Switch>
           </Show>

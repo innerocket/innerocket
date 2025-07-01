@@ -69,12 +69,17 @@ export function useFileOperations({ fileTransfers, getReceivedFile }: UseFileOpe
 
   const getFileType = (fileId: string): string | null => {
     const transfer = fileTransfers().find(t => t.id === fileId)
+    if (transfer && transfer.fileName.toLowerCase().endsWith('.zip')) {
+      return 'application/zip'
+    }
+
     if (transfer && transfer.fileType) {
       return transfer.fileType
     }
 
     const file = getReceivedFile(fileId)
     if (file) {
+      if (file.type === 'application/zip') return 'application/zip'
       return file.type
     }
 
