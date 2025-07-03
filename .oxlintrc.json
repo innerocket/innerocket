@@ -1,0 +1,23 @@
+{
+  "ignorePatterns": ["dist/", "node_modules/", "*.min.js", ".vscode/", ".git/"],
+  "plugins": ["react", "typescript", "unicorn", "oxc"],
+  "env": {
+    "browser": true,
+    "es2022": true,
+    "node": true
+  },
+  "globals": {
+    "process": "readonly"
+  },
+  "rules": {
+    "no-unused-vars": "warn",
+    "no-debugger": "warn",
+    "eqeqeq": "warn",
+    "no-console": "off"
+  },
+  "settings": {
+    "react": {
+      "version": "detect"
+    }
+  }
+}

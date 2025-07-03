@@ -1,14 +1,16 @@
 import js from '@eslint/js'
 import globals from 'globals'
 import solid from 'eslint-plugin-solid'
-import tseslint from '@typescript-eslint/eslint-plugin'
-import tsParser from '@typescript-eslint/parser'
+import tseslint from 'typescript-eslint'
 import prettier from 'eslint-config-prettier'
+import oxlint from 'eslint-plugin-oxlint'
 
 export default [
   {
     ignores: ['dist'],
   },
+  js.configs.recommended,
+  ...tseslint.configs.recommended,
   {
     files: ['**/*.{ts,tsx}'],
     languageOptions: {
@@ -18,7 +20,6 @@ export default [
         ...globals.node,
         process: 'readonly',
       },
-      parser: tsParser,
       parserOptions: {
         ecmaFeatures: {
           jsx: true,
@@ -27,12 +28,9 @@ export default [
       },
     },
     plugins: {
-      '@typescript-eslint': tseslint,
       solid: solid,
     },
     rules: {
-      ...js.configs.recommended.rules,
-      ...tseslint.configs.recommended.rules,
       '@typescript-eslint/no-unused-vars': [
         'error',
         {
@@ -51,4 +49,13 @@ export default [
     },
   },
   prettier,
+  // Oxlint configuration to disable conflicting rules
+  {
+    plugins: {
+      oxlint: oxlint,
+    },
+    rules: {
+      ...oxlint.configs['flat/recommended'].rules,
+    },
+  },
 ]
