@@ -1,2 +1,2 @@
-pnpm lint
+oxlint
 pnpm tsc --noEmit
