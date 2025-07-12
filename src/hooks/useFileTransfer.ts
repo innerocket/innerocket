@@ -3,6 +3,7 @@ import { useFileTransferState } from './useFileTransferState'
 import { useFileOperations } from './useFileOperations'
 import { useWebRTCFileTransfer } from './useWebRTCFileTransfer'
 import { FileStorageService } from '../services/fileStorageService'
+import { debugLog, debugWarn } from '../utils/debug'
 
 const COMPRESSION_STORAGE_KEY = 'innerocket-compression-enabled'
 
@@ -12,15 +13,15 @@ function loadCompressionSetting(): boolean {
     const saved = localStorage.getItem(COMPRESSION_STORAGE_KEY)
     if (saved !== null) {
       const enabled = JSON.parse(saved)
-      console.log(`[STORAGE] Loaded compression setting: ${enabled}`)
+      debugLog(`[STORAGE] Loaded compression setting: ${enabled}`)
       return enabled
     }
   } catch (error) {
-    console.warn('[STORAGE] Failed to load compression setting:', error)
+    debugWarn('[STORAGE] Failed to load compression setting:', error)
   }
   
   // Default to enabled if no setting found
-  console.log('[STORAGE] Using default compression setting: true')
+  debugLog('[STORAGE] Using default compression setting: true')
   return true
 }
 
@@ -28,9 +29,9 @@ function loadCompressionSetting(): boolean {
 function saveCompressionSetting(enabled: boolean): void {
   try {
     localStorage.setItem(COMPRESSION_STORAGE_KEY, JSON.stringify(enabled))
-    console.log(`[STORAGE] Saved compression setting: ${enabled}`)
+    debugLog(`[STORAGE] Saved compression setting: ${enabled}`)
   } catch (error) {
-    console.warn('[STORAGE] Failed to save compression setting:', error)
+    debugWarn('[STORAGE] Failed to save compression setting:', error)
   }
 }
 
@@ -87,7 +88,7 @@ export function useFileTransfer() {
   // Initialize WebRTC compression setting with loaded value
   createEffect(() => {
     const enabled = compressionEnabled()
-    console.log(`[INIT] Setting initial compression state: ${enabled}`)
+    debugLog(`[INIT] Setting initial compression state: ${enabled}`)
     setWebRTCCompressionEnabled(enabled)
   })
 
@@ -98,7 +99,7 @@ export function useFileTransfer() {
   })
 
   const handleCompressionToggle = (enabled: boolean) => {
-    console.log(`[UI] Compression toggle changed to: ${enabled}`)
+    debugLog(`[UI] Compression toggle changed to: ${enabled}`)
     setCompressionEnabled(enabled)
     // The createEffect above will handle saving to localStorage and WebRTC setting
   }

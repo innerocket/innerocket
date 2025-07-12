@@ -13,6 +13,7 @@ import type { NotificationItem, NotificationType } from './components/Notificati
 import Sqlds from 'sqids'
 import { Info, HelpCircle, Trash2 } from 'lucide-solid'
 import { usePeer } from './contexts/PeerContext'
+import { isDevelopment } from './utils/debug'
 
 const sqlds = new Sqlds()
 
@@ -351,12 +352,16 @@ export function App() {
                           will be automatically compressed during transfer.
                         </p>
                         <div class='mt-3 rounded border border-green-300 bg-green-100 p-2 text-xs text-green-800 dark:border-green-600 dark:bg-green-800/20 dark:text-green-200'>
-                          <div class='mb-1'>
-                            <strong>Status:</strong> Compression active and saved to browser storage
-                          </div>
-                          <div>
-                            <strong>Debug:</strong> Check browser console for compression logs when sending files
-                          </div>
+                          <Show when={isDevelopment}>
+                            <div class='mb-1'>
+                              <strong>Status:</strong> Compression active and saved to browser
+                              storage
+                            </div>
+                            <div>
+                              <strong>Debug:</strong> Check browser console for compression logs
+                              when sending files
+                            </div>
+                          </Show>
                         </div>
                       </div>
                     </Show>

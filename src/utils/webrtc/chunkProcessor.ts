@@ -1,5 +1,6 @@
 import type { ConnectionQuality } from './types'
 import { compressDataSync, decompressDataSync, shouldCompress, getOptimalCompressionLevel } from '../compressionUtils'
+import { debugLog } from '../debug'
 
 // Configuration constants
 const DEFAULT_CHUNK_SIZE = 1024 * 1024 // 1MB
@@ -123,10 +124,10 @@ export class ChunkProcessor {
     mimeType: string
   ): ChunkData {
     const shouldCompr = shouldCompress(filename, mimeType, chunkData.length)
-    console.log(`[COMPRESSION] Processing chunk ${chunkIndex} for ${filename} (${mimeType}): compression=${this.compressionEnabled}, shouldCompress=${shouldCompr}`)
+    debugLog(`[COMPRESSION] Processing chunk ${chunkIndex} for ${filename} (${mimeType}): compression=${this.compressionEnabled}, shouldCompress=${shouldCompr}`)
     
     if (!this.compressionEnabled || !shouldCompr) {
-      console.log(`[COMPRESSION] Skipping compression for chunk ${chunkIndex}: enabled=${this.compressionEnabled}, should=${shouldCompr}`)
+      debugLog(`[COMPRESSION] Skipping compression for chunk ${chunkIndex}: enabled=${this.compressionEnabled}, should=${shouldCompr}`)
       return {
         data: chunkData,
         index: chunkIndex,
@@ -170,7 +171,7 @@ export class ChunkProcessor {
    * Enable or disable compression
    */
   public setCompressionEnabled(enabled: boolean): void {
-    console.log(`[COMPRESSION] ChunkProcessor compression ${enabled ? 'ENABLED' : 'DISABLED'}`)
+    debugLog(`[COMPRESSION] ChunkProcessor compression ${enabled ? 'ENABLED' : 'DISABLED'}`)
     this.compressionEnabled = enabled
   }
 

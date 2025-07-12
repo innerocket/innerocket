@@ -6,6 +6,7 @@ import { verifyChecksum } from '../utils/checksum'
 import { FileStorageService } from '../services/fileStorageService'
 import { createProgressAnimation, getFileTypeFromName } from '../utils/fileTransferUtils'
 import type { FileTransfer, FileTransferRequest, FileMetadata } from '../types'
+import { debugLog, debugError } from '../utils/debug'
 
 const sqlds = new Sqlds()
 
@@ -142,9 +143,9 @@ export function useWebRTCFileTransfer({
               const newView = new Uint8Array(newBuffer)
               newView.set(decompressedData)
               processedChunk = newBuffer
-              console.log(`[COMPRESSION] Decompressed chunk ${chunkIndex}: ${chunk.byteLength} bytes → ${processedChunk.byteLength} bytes`)
+              debugLog(`[COMPRESSION] Decompressed chunk ${chunkIndex}: ${chunk.byteLength} bytes → ${processedChunk.byteLength} bytes`)
             } catch (error) {
-              console.error(`Failed to decompress chunk ${chunkIndex}:`, error)
+              debugError(`Failed to decompress chunk ${chunkIndex}:`, error)
               return
             }
           }
@@ -347,7 +348,7 @@ export function useWebRTCFileTransfer({
     myPeerId: peerId,
     setWebRTCCompressionEnabled: (enabled: boolean) => {
       webRTCService().setCompressionEnabled(enabled)
-      console.log('Compression enabled:', enabled)
+      debugLog('Compression enabled:', enabled)
     },
     getCompressionStats: (transferId: string) => {
       return webRTCService().getCompressionStats(transferId)

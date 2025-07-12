@@ -6,6 +6,7 @@ import { ChunkProcessor, type ChunkData } from './chunkProcessor'
 import type { PeerData } from './connectionManager'
 import type { ConnectionQuality, FileTransferState, WebRTCCallbacks } from './types'
 import { type CompressionResult } from '../compressionUtils'
+import { debugLog } from '../debug'
 
 const sqlds = new Sqlds()
 const LARGE_FILE_THRESHOLD = 100 * 1024 * 1024 // 100MB
@@ -25,7 +26,7 @@ export class FileTransferService {
   }
 
   public setCompressionEnabled(enabled: boolean): void {
-    console.log(`[COMPRESSION] Setting compression ${enabled ? 'ENABLED' : 'DISABLED'}`)
+    debugLog(`[COMPRESSION] Setting compression ${enabled ? 'ENABLED' : 'DISABLED'}`)
     this.chunkProcessor.setCompressionEnabled(enabled)
   }
 
@@ -141,9 +142,9 @@ export class FileTransferService {
       // Log compression result
       if (processedChunk.isCompressed) {
         const savings = ((processedChunk.originalSize - processedChunk.data.length) / processedChunk.originalSize * 100).toFixed(1)
-        console.log(`[COMPRESSION] Chunk ${chunkIndex}: ${processedChunk.originalSize} bytes → ${processedChunk.data.length} bytes (${savings}% saved)`)
+        debugLog(`[COMPRESSION] Chunk ${chunkIndex}: ${processedChunk.originalSize} bytes → ${processedChunk.data.length} bytes (${savings}% saved)`)
       } else {
-        console.log(`[COMPRESSION] Chunk ${chunkIndex}: No compression applied (${processedChunk.originalSize} bytes)`)
+        debugLog(`[COMPRESSION] Chunk ${chunkIndex}: No compression applied (${processedChunk.originalSize} bytes)`)
       }
 
       // Track compression stats
