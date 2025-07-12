@@ -5,8 +5,8 @@ import { useWebRTCFileTransfer } from './useWebRTCFileTransfer'
 import { FileStorageService } from '../services/fileStorageService'
 import { debugLog, debugWarn } from '../utils/debug'
 
-const COMPRESSION_STORAGE_KEY = 'innerocket-compression-enabled'
-const AUTO_ACCEPT_STORAGE_KEY = 'innerocket-auto-accept-files'
+const COMPRESSION_STORAGE_KEY = 'innerocket_compression_enabled'
+const AUTO_ACCEPT_STORAGE_KEY = 'innerocket_auto_accept_files'
 
 // Load compression setting from localStorage
 function loadCompressionSetting(): boolean {
