@@ -20,6 +20,7 @@ interface ConnectionHistoryProps {
   formatDuration: (ms: number) => string
   onClearHistory: () => void
   onAddTrustedPeer?: (peerId: string) => boolean
+  privacyMode?: () => boolean
 }
 
 export function ConnectionHistory(props: ConnectionHistoryProps) {
@@ -138,112 +139,131 @@ export function ConnectionHistory(props: ConnectionHistoryProps) {
       {/* Connection History List */}
       <div class="space-y-3">
         <Show
-          when={props.connectionHistory().length > 0}
+          when={props.privacyMode?.()}
           fallback={
-            <div class="rounded-lg border-2 border-dashed border-gray-300 p-6 text-center dark:border-gray-600">
-              <Clock class="mx-auto h-8 w-8 text-gray-400 dark:text-gray-500" />
-              <h5 class="mt-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                No connection history yet
-              </h5>
-              <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                Connection history will appear here once you connect to peers
-              </p>
-            </div>
-          }
-        >
-          <div class="space-y-2">
-            <For each={sortedHistory()}>
-              {(entry) => {
-                const isConnected = isCurrentlyConnected(entry.peerId)
-                
-                return (
-                  <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-600 dark:bg-gray-800">
-                    <div class="flex items-center justify-between">
-                      <div class="flex items-center space-x-3">
-                        <div class="flex items-center space-x-2">
-                          {isConnected ? (
-                            <Wifi class="h-4 w-4 text-green-500" />
-                          ) : (
-                            <WifiOff class="h-4 w-4 text-gray-400 dark:text-gray-500" />
-                          )}
-                          <div
-                            class={`h-2 w-2 rounded-full ${
-                              isConnected ? 'bg-green-500' : 'bg-gray-400 dark:bg-gray-500'
-                            }`}
-                          />
-                        </div>
-                        <div class="min-w-0 flex-1">
+            <Show
+              when={props.connectionHistory().length > 0}
+              fallback={
+                <div class="rounded-lg border-2 border-dashed border-gray-300 p-6 text-center dark:border-gray-600">
+                  <Clock class="mx-auto h-8 w-8 text-gray-400 dark:text-gray-500" />
+                  <h5 class="mt-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                    No connection history yet
+                  </h5>
+                  <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    Connection history will appear here once you connect to peers
+                  </p>
+                </div>
+              }
+            >
+              <div class="space-y-2">
+                <For each={sortedHistory()}>
+                  {(entry) => {
+                    const isConnected = isCurrentlyConnected(entry.peerId)
+                    
+                    return (
+                      <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-600 dark:bg-gray-800">
+                        <div class="flex items-center justify-between">
+                          <div class="flex items-center space-x-3">
+                            <div class="flex items-center space-x-2">
+                              {isConnected ? (
+                                <Wifi class="h-4 w-4 text-green-500" />
+                              ) : (
+                                <WifiOff class="h-4 w-4 text-gray-400 dark:text-gray-500" />
+                              )}
+                              <div
+                                class={`h-2 w-2 rounded-full ${
+                                  isConnected ? 'bg-green-500' : 'bg-gray-400 dark:bg-gray-500'
+                                }`}
+                              />
+                            </div>
+                            <div class="min-w-0 flex-1">
+                              <div class="flex items-center space-x-2">
+                                <span class="font-mono text-sm font-medium text-gray-900 dark:text-white">
+                                  {entry.peerId}
+                                </span>
+                                {isConnected && (
+                                  <span class="rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-800 dark:bg-green-900/20 dark:text-green-300">
+                                    Connected
+                                  </span>
+                                )}
+                              </div>
+                              <div class="mt-1 flex items-center space-x-4 text-xs text-gray-500 dark:text-gray-400">
+                                <div class="flex items-center space-x-1">
+                                  <Calendar class="h-3 w-3" />
+                                  <span>Last seen: {formatTimestamp(entry.lastSeen)}</span>
+                                </div>
+                                <div class="flex items-center space-x-1">
+                                  <RotateCcw class="h-3 w-3" />
+                                  <span>{entry.connectionCount} connections</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
                           <div class="flex items-center space-x-2">
-                            <span class="font-mono text-sm font-medium text-gray-900 dark:text-white">
-                              {entry.peerId}
-                            </span>
-                            {isConnected && (
-                              <span class="rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-800 dark:bg-green-900/20 dark:text-green-300">
-                                Connected
-                              </span>
+                            {props.onAddTrustedPeer && (
+                              <button
+                                onClick={() => props.onAddTrustedPeer!(entry.peerId)}
+                                class="text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                              >
+                                Trust
+                              </button>
                             )}
                           </div>
-                          <div class="mt-1 flex items-center space-x-4 text-xs text-gray-500 dark:text-gray-400">
-                            <div class="flex items-center space-x-1">
-                              <Calendar class="h-3 w-3" />
-                              <span>Last seen: {formatTimestamp(entry.lastSeen)}</span>
+                        </div>
+
+                        {/* Statistics */}
+                        <div class="mt-3 grid grid-cols-3 gap-4 border-t border-gray-200 pt-3 dark:border-gray-600">
+                          <div class="text-center">
+                            <div class="flex items-center justify-center space-x-1">
+                              <FileText class="h-3 w-3 text-blue-600 dark:text-blue-400" />
+                              <span class="text-sm font-medium text-gray-900 dark:text-white">
+                                {entry.filesTransferred}
+                              </span>
                             </div>
-                            <div class="flex items-center space-x-1">
-                              <RotateCcw class="h-3 w-3" />
-                              <span>{entry.connectionCount} connections</span>
+                            <div class="text-xs text-gray-500 dark:text-gray-400">Files</div>
+                          </div>
+
+                          <div class="text-center">
+                            <div class="flex items-center justify-center space-x-1">
+                              <HardDrive class="h-3 w-3 text-green-600 dark:text-green-400" />
+                              <span class="text-sm font-medium text-gray-900 dark:text-white">
+                                {props.formatFileSize(entry.totalBytesTransferred)}
+                              </span>
                             </div>
+                            <div class="text-xs text-gray-500 dark:text-gray-400">Data</div>
+                          </div>
+
+                          <div class="text-center">
+                            <div class="flex items-center justify-center space-x-1">
+                              <Clock class="h-3 w-3 text-purple-600 dark:text-purple-400" />
+                              <span class="text-sm font-medium text-gray-900 dark:text-white">
+                                {entry.duration ? props.formatDuration(entry.duration) : 'Active'}
+                              </span>
+                            </div>
+                            <div class="text-xs text-gray-500 dark:text-gray-400">Duration</div>
                           </div>
                         </div>
                       </div>
-
-                      <div class="flex items-center space-x-2">
-                        {props.onAddTrustedPeer && (
-                          <button
-                            onClick={() => props.onAddTrustedPeer!(entry.peerId)}
-                            class="text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
-                          >
-                            Trust
-                          </button>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Statistics */}
-                    <div class="mt-3 grid grid-cols-3 gap-4 border-t border-gray-200 pt-3 dark:border-gray-600">
-                      <div class="text-center">
-                        <div class="flex items-center justify-center space-x-1">
-                          <FileText class="h-3 w-3 text-blue-600 dark:text-blue-400" />
-                          <span class="text-sm font-medium text-gray-900 dark:text-white">
-                            {entry.filesTransferred}
-                          </span>
-                        </div>
-                        <div class="text-xs text-gray-500 dark:text-gray-400">Files</div>
-                      </div>
-
-                      <div class="text-center">
-                        <div class="flex items-center justify-center space-x-1">
-                          <HardDrive class="h-3 w-3 text-green-600 dark:text-green-400" />
-                          <span class="text-sm font-medium text-gray-900 dark:text-white">
-                            {props.formatFileSize(entry.totalBytesTransferred)}
-                          </span>
-                        </div>
-                        <div class="text-xs text-gray-500 dark:text-gray-400">Data</div>
-                      </div>
-
-                      <div class="text-center">
-                        <div class="flex items-center justify-center space-x-1">
-                          <Clock class="h-3 w-3 text-purple-600 dark:text-purple-400" />
-                          <span class="text-sm font-medium text-gray-900 dark:text-white">
-                            {entry.duration ? props.formatDuration(entry.duration) : 'Active'}
-                          </span>
-                        </div>
-                        <div class="text-xs text-gray-500 dark:text-gray-400">Duration</div>
-                      </div>
-                    </div>
-                  </div>
-                )
-              }}
-            </For>
+                    )
+                  }}
+                </For>
+              </div>
+            </Show>
+          }
+        >
+          {/* Privacy mode message */}
+          <div class="rounded-lg border-2 border-dashed border-indigo-300 bg-indigo-50 p-6 text-center dark:border-indigo-600 dark:bg-indigo-900/20">
+            <WifiOff class="mx-auto h-8 w-8 text-indigo-500 dark:text-indigo-400" />
+            <h5 class="mt-2 text-sm font-medium text-indigo-700 dark:text-indigo-300">
+              Privacy Mode Enabled
+            </h5>
+            <p class="mt-1 text-xs text-indigo-600 dark:text-indigo-400">
+              Connection history tracking is disabled for enhanced privacy
+            </p>
+            <p class="mt-2 text-xs text-indigo-500 dark:text-indigo-500">
+              To view connection history, disable privacy mode in the Privacy settings below
+            </p>
           </div>
         </Show>
       </div>

@@ -11,6 +11,40 @@ const TRUSTED_PEERS_STORAGE_KEY = 'innerocket_trusted_peers'
 const MAX_FILE_SIZE_STORAGE_KEY = 'innerocket_max_file_size'
 const COMPRESSION_LEVEL_STORAGE_KEY = 'innerocket_compression_level'
 const CONNECTION_HISTORY_STORAGE_KEY = 'innerocket_connection_history'
+const CONNECTION_METHOD_STORAGE_KEY = 'innerocket_connection_method'
+const PRIVACY_MODE_STORAGE_KEY = 'innerocket_privacy_mode'
+
+// Connection method options
+export const CONNECTION_METHODS = {
+  'auto': {
+    label: 'Automatic',
+    description: 'Automatically choose the best connection method',
+    priority: ['direct', 'relay', 'turn']
+  },
+  'direct': {
+    label: 'Direct P2P',
+    description: 'Direct peer-to-peer connection (fastest, may not work behind NAT)',
+    priority: ['direct']
+  },
+  'relay': {
+    label: 'Relay Server',
+    description: 'Use relay servers when direct connection fails',
+    priority: ['direct', 'relay']
+  },
+  'turn': {
+    label: 'TURN Server',
+    description: 'Use TURN servers for connections behind strict firewalls',
+    priority: ['direct', 'turn']
+  },
+  'fallback': {
+    label: 'Adaptive Fallback',
+    description: 'Try direct first, then fallback to relay/TURN as needed',
+    priority: ['direct', 'relay', 'turn']
+  }
+} as const
+
+export type ConnectionMethod = keyof typeof CONNECTION_METHODS
+const DEFAULT_CONNECTION_METHOD: ConnectionMethod = 'auto'
 
 // Connection history entry interface
 export interface ConnectionHistoryEntry {
@@ -231,6 +265,60 @@ function saveConnectionHistory(history: ConnectionHistoryEntry[]): void {
   }
 }
 
+// Load connection method from localStorage
+function loadConnectionMethod(): ConnectionMethod {
+  try {
+    const saved = localStorage.getItem(CONNECTION_METHOD_STORAGE_KEY)
+    if (saved !== null) {
+      const method = JSON.parse(saved)
+      debugLog(`[STORAGE] Loaded connection method: ${method}`)
+      return method && method in CONNECTION_METHODS ? method : DEFAULT_CONNECTION_METHOD
+    }
+  } catch (error) {
+    debugWarn('[STORAGE] Failed to load connection method:', error)
+  }
+
+  debugLog(`[STORAGE] Using default connection method: ${DEFAULT_CONNECTION_METHOD}`)
+  return DEFAULT_CONNECTION_METHOD
+}
+
+// Save connection method to localStorage
+function saveConnectionMethod(method: ConnectionMethod): void {
+  try {
+    localStorage.setItem(CONNECTION_METHOD_STORAGE_KEY, JSON.stringify(method))
+    debugLog(`[STORAGE] Saved connection method: ${method}`)
+  } catch (error) {
+    debugWarn('[STORAGE] Failed to save connection method:', error)
+  }
+}
+
+// Load privacy mode from localStorage
+function loadPrivacyMode(): boolean {
+  try {
+    const saved = localStorage.getItem(PRIVACY_MODE_STORAGE_KEY)
+    if (saved !== null) {
+      const enabled = JSON.parse(saved)
+      debugLog(`[STORAGE] Loaded privacy mode: ${enabled}`)
+      return enabled
+    }
+  } catch (error) {
+    debugWarn('[STORAGE] Failed to load privacy mode:', error)
+  }
+
+  debugLog('[STORAGE] Using default privacy mode: false')
+  return false
+}
+
+// Save privacy mode to localStorage
+function savePrivacyMode(enabled: boolean): void {
+  try {
+    localStorage.setItem(PRIVACY_MODE_STORAGE_KEY, JSON.stringify(enabled))
+    debugLog(`[STORAGE] Saved privacy mode: ${enabled}`)
+  } catch (error) {
+    debugWarn('[STORAGE] Failed to save privacy mode:', error)
+  }
+}
+
 export function useFileTransfer() {
   const [isTransferring, setIsTransferring] = createSignal(false)
   const [connectedPeers, setConnectedPeers] = createSignal<string[]>([])
@@ -240,6 +328,8 @@ export function useFileTransfer() {
   const [maxFileSize, setMaxFileSize] = createSignal<number>(loadMaxFileSize())
   const [compressionLevel, setCompressionLevel] = createSignal<CompressionLevelPreset>(loadCompressionLevel())
   const [connectionHistory, setConnectionHistory] = createSignal<ConnectionHistoryEntry[]>(loadConnectionHistory())
+  const [connectionMethod, setConnectionMethod] = createSignal<ConnectionMethod>(loadConnectionMethod())
+  const [privacyMode, setPrivacyMode] = createSignal<boolean>(loadPrivacyMode())
 
   // Track active connections with their start times
   const activeConnections = new Map<string, number>()
@@ -344,8 +434,29 @@ export function useFileTransfer() {
     saveConnectionHistory(history)
   })
 
+  // Save to localStorage whenever connection method changes
+  createEffect(() => {
+    const method = connectionMethod()
+    saveConnectionMethod(method)
+  })
+
+  // Save to localStorage whenever privacy mode changes
+  createEffect(() => {
+    const enabled = privacyMode()
+    savePrivacyMode(enabled)
+    
+    // If privacy mode is enabled, clear existing history
+    if (enabled) {
+      setConnectionHistory([])
+      debugLog('[PRIVACY] Privacy mode enabled, clearing connection history')
+    }
+  })
+
   // Monitor connected peers for history tracking
   createEffect(() => {
+    // Skip history tracking if privacy mode is enabled
+    if (privacyMode()) return
+
     const currentPeers = connectedPeers()
     const now = Date.now()
 
@@ -491,6 +602,9 @@ export function useFileTransfer() {
   }
 
   const updateFileTransferStats = (peerId: string, fileSize: number) => {
+    // Skip stats update if privacy mode is enabled
+    if (privacyMode()) return
+
     setConnectionHistory(prev => {
       const existingIndex = prev.findIndex(entry => entry.peerId === peerId)
       if (existingIndex !== -1) {
@@ -517,6 +631,18 @@ export function useFileTransfer() {
     if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`
     if (ms < 3600000) return `${(ms / 60000).toFixed(1)}m`
     return `${(ms / 3600000).toFixed(1)}h`
+  }
+
+  const handleConnectionMethodChange = (method: ConnectionMethod) => {
+    setConnectionMethod(method)
+    debugLog(`[CONNECTION_METHOD] Changed to: ${method}`)
+    // Note: Actual WebRTC configuration would need to be updated here
+    // This is a UI/preference setting that would be used by the connection manager
+  }
+
+  const handlePrivacyModeToggle = (enabled: boolean) => {
+    setPrivacyMode(enabled)
+    debugLog(`[PRIVACY] Privacy mode changed to: ${enabled}`)
   }
 
   return {
@@ -556,5 +682,9 @@ export function useFileTransfer() {
     clearConnectionHistory,
     updateFileTransferStats,
     formatDuration,
+    connectionMethod,
+    setConnectionMethod: handleConnectionMethodChange,
+    privacyMode,
+    setPrivacyMode: handlePrivacyModeToggle,
   }
 }

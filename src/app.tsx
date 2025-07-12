@@ -13,6 +13,8 @@ import { TrustedPeersList } from './components/TrustedPeersList'
 import { FileSizeSettings } from './components/FileSizeSettings'
 import { CompressionLevelSettings } from './components/CompressionLevelSettings'
 import { ConnectionHistory } from './components/ConnectionHistory'
+import { ConnectionMethodSettings } from './components/ConnectionMethodSettings'
+import { PrivacySettings } from './components/PrivacySettings'
 import type { NotificationItem, NotificationType } from './components/Notification'
 import Sqlds from 'sqids'
 import { Info, HelpCircle, Trash2 } from 'lucide-solid'
@@ -53,6 +55,10 @@ export function App() {
     connectionHistory,
     clearConnectionHistory,
     formatDuration,
+    connectionMethod,
+    setConnectionMethod,
+    privacyMode,
+    setPrivacyMode,
   } = useFileTransfer()
 
   const [notifications, setNotifications] = createSignal<NotificationItem[]>([])
@@ -522,6 +528,37 @@ export function App() {
                           formatDuration={formatDuration}
                           onClearHistory={clearConnectionHistory}
                           onAddTrustedPeer={addTrustedPeer}
+                          privacyMode={privacyMode}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Connection Method Settings */}
+                    <div class="space-y-4">
+                      <h3 class="text-lg font-medium text-gray-900 dark:text-white">
+                        Connection Method
+                      </h3>
+
+                      <div class="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+                        <ConnectionMethodSettings
+                          connectionMethod={connectionMethod}
+                          onSetConnectionMethod={setConnectionMethod}
+                          connectedPeers={connectedPeers}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Privacy Settings */}
+                    <div class="space-y-4">
+                      <h3 class="text-lg font-medium text-gray-900 dark:text-white">
+                        Privacy
+                      </h3>
+
+                      <div class="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+                        <PrivacySettings
+                          privacyMode={privacyMode}
+                          onSetPrivacyMode={setPrivacyMode}
+                          connectionHistoryCount={() => connectionHistory().length}
                         />
                       </div>
                     </div>
