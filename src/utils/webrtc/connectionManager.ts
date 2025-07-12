@@ -20,6 +20,10 @@ export type PeerData = {
   transferSpeed?: number
   chunkIndex?: number
   name?: string
+  isCompressed?: boolean
+  originalChunkSize?: number
+  compressionRatio?: number
+  compressionSavings?: { savedBytes: number; savedPercentage: number }
 }
 
 export class ConnectionManager {
@@ -114,7 +118,10 @@ export class ConnectionManager {
           data.progress as number,
           data.chunkSize,
           data.transferSpeed,
-          data.chunkIndex
+          data.chunkIndex,
+          data.isCompressed,
+          data.originalChunkSize,
+          data.compressionRatio
         )
         break
       case 'file-complete':

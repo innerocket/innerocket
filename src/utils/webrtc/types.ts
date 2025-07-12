@@ -33,7 +33,10 @@ export interface WebRTCCallbacks {
     progress: number,
     chunkSize?: number,
     transferSpeed?: number,
-    chunkIndex?: number
+    chunkIndex?: number,
+    isCompressed?: boolean,
+    originalChunkSize?: number,
+    compressionRatio?: number
   ) => void
   onFileTransferComplete: (peerId: string, metadata: FileMetadata) => void
   onFileTransferAccepted: (peerId: string, metadata: FileMetadata) => void

@@ -65,7 +65,10 @@ export class WebRTCService {
         progress: number,
         chunkSize?: number,
         transferSpeed?: number,
-        chunkIndex?: number
+        chunkIndex?: number,
+        isCompressed?: boolean,
+        originalChunkSize?: number,
+        compressionRatio?: number
       ) => {
         // Convert internal ID back to user-facing ID
         const userFacingId = this.removePrefixFromId(peerId)
@@ -76,7 +79,10 @@ export class WebRTCService {
           progress,
           chunkSize,
           transferSpeed,
-          chunkIndex
+          chunkIndex,
+          isCompressed,
+          originalChunkSize,
+          compressionRatio
         )
       },
       onFileTransferComplete: (peerId: string, metadata: FileMetadata) => {
@@ -185,7 +191,10 @@ export class WebRTCService {
       progress: number,
       chunkSize?: number,
       transferSpeed?: number,
-      chunkIndex?: number
+      chunkIndex?: number,
+      isCompressed?: boolean,
+      originalChunkSize?: number,
+      compressionRatio?: number
     ) => void
   ): void {
     this.callbacks.onFileChunk = callback
@@ -216,5 +225,22 @@ export class WebRTCService {
 
   public cancelTransfer(transferId: string): void {
     this.fileTransferService.cancelTransfer(transferId)
+  }
+
+  // Compression methods
+  public setCompressionEnabled(enabled: boolean): void {
+    this.fileTransferService.setCompressionEnabled(enabled)
+  }
+
+  public getCompressionInfo() {
+    return this.fileTransferService.getCompressionInfo()
+  }
+
+  public getCompressionStats(transferId: string) {
+    return this.fileTransferService.getTotalCompressionSavings(transferId)
+  }
+
+  public processReceivedChunk(chunkData: any) {
+    return this.fileTransferService.processReceivedChunk(chunkData)
   }
 }

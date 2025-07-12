@@ -8,6 +8,7 @@ import { NotificationContainer } from './components/Notification'
 import { IncomingRequests } from './components/IncomingRequests'
 import { HistoryTab } from './components/HistoryTab'
 import { TabsProvider, TabList, TabButton, TabContent } from './components/ui'
+import { Toggle } from './components/ui/Toggle'
 import type { NotificationItem, NotificationType } from './components/Notification'
 import Sqlds from 'sqids'
 import { Info, HelpCircle, Trash2 } from 'lucide-solid'
@@ -31,6 +32,8 @@ export function App() {
     getFileType,
     clearFileHistory,
     isTransferring,
+    compressionEnabled,
+    setCompressionEnabled,
   } = useFileTransfer()
 
   const [notifications, setNotifications] = createSignal<NotificationItem[]>([])
@@ -232,6 +235,7 @@ export function App() {
               <TabButton value='connection'>Connection</TabButton>
               <TabButton value='file-transfer'>File Transfer</TabButton>
               <TabButton value='history'>History</TabButton>
+              <TabButton value='settings'>Settings</TabButton>
             </TabList>
 
             {/* Tab Content */}
@@ -291,6 +295,79 @@ export function App() {
                     onPreview={handlePreviewFile}
                     onClearHistory={handleClearFileHistory}
                   />
+                </div>
+              </TabContent>
+
+              {/* Settings Tab */}
+              <TabContent value='settings'>
+                <div class='min-h-72 space-y-6'>
+                  <div>
+                    <h2 class='mb-1 text-xl font-semibold text-gray-900 dark:text-white'>
+                      Settings
+                    </h2>
+                    <p class='mb-6 text-sm text-gray-600 dark:text-gray-400'>
+                      Configure your file transfer preferences
+                    </p>
+                  </div>
+
+                  {/* Compression Settings */}
+                  <div class='space-y-4'>
+                    <h3 class='text-lg font-medium text-gray-900 dark:text-white'>
+                      File Compression
+                    </h3>
+
+                    <div class='rounded-lg border border-gray-200 p-4 dark:border-gray-700'>
+                      <Toggle
+                        id='compression-toggle'
+                        checked={compressionEnabled?.()}
+                        onChange={setCompressionEnabled}
+                        label='Enable file compression'
+                        description='Automatically compress compatible files to reduce transfer time and bandwidth usage'
+                        variant='success'
+                        size='md'
+                      />
+
+                      <div class='mt-4 text-sm text-gray-600 dark:text-gray-400'>
+                        <p class='mb-2'>
+                          <strong>How it works:</strong> Text files, JSON, HTML, CSS, and other
+                          compatible formats are automatically compressed before transfer,
+                          potentially reducing file sizes by 70-90%.
+                        </p>
+                        <p>
+                          <strong>Note:</strong> Already compressed files (ZIP, images, videos) are
+                          not processed to avoid unnecessary overhead.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Compression Statistics */}
+                    <Show when={compressionEnabled?.()}>
+                      <div class='rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-700 dark:bg-green-900/20'>
+                        <h4 class='text-sm font-medium text-green-800 dark:text-green-300'>
+                          Compression Status
+                        </h4>
+                        <p class='text-sm text-green-700 dark:text-green-400'>
+                          File compression is currently <strong>enabled</strong>. Compatible files
+                          will be automatically compressed during transfer.
+                        </p>
+                        <div class='mt-3 rounded border border-green-300 bg-green-100 p-2 text-xs text-green-800 dark:border-green-600 dark:bg-green-800/20 dark:text-green-200'>
+                          <strong>Debug:</strong> Check browser console for compression logs when sending files
+                        </div>
+                      </div>
+                    </Show>
+
+                    <Show when={!compressionEnabled?.()}>
+                      <div class='rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-600 dark:bg-gray-800'>
+                        <h4 class='text-sm font-medium text-gray-700 dark:text-gray-300'>
+                          Compression Status
+                        </h4>
+                        <p class='text-sm text-gray-600 dark:text-gray-400'>
+                          File compression is currently <strong>disabled</strong>. Files will be
+                          transferred without compression.
+                        </p>
+                      </div>
+                    </Show>
+                  </div>
                 </div>
               </TabContent>
             </div>

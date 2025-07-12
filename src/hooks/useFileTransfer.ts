@@ -7,6 +7,7 @@ import { FileStorageService } from '../services/fileStorageService'
 export function useFileTransfer() {
   const [isTransferring, setIsTransferring] = createSignal(false)
   const [connectedPeers, setConnectedPeers] = createSignal<string[]>([])
+  const [compressionEnabled, setCompressionEnabled] = createSignal(true)
 
   const {
     fileTransfers,
@@ -29,6 +30,8 @@ export function useFileTransfer() {
     acceptRequest,
     rejectRequest,
     myPeerId,
+    setWebRTCCompressionEnabled,
+    getCompressionStats,
   } = useWebRTCFileTransfer({
     addTransfer,
     updateTransfer,
@@ -51,6 +54,12 @@ export function useFileTransfer() {
     clearAllTransfers()
   }
 
+  const handleCompressionToggle = (enabled: boolean) => {
+    console.log(`[UI] Compression toggle changed to: ${enabled}`)
+    setCompressionEnabled(enabled)
+    setWebRTCCompressionEnabled(enabled)
+  }
+
   return {
     myPeerId,
     connectedPeers,
@@ -68,5 +77,8 @@ export function useFileTransfer() {
     getFileType,
     clearFileHistory,
     isTransferring,
+    compressionEnabled,
+    setCompressionEnabled: handleCompressionToggle,
+    getCompressionStats,
   }
 }

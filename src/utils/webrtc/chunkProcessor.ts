@@ -1,9 +1,18 @@
 import type { ConnectionQuality } from './types'
+import { compressDataSync, decompressDataSync, shouldCompress, getOptimalCompressionLevel } from '../compressionUtils'
 
 // Configuration constants
 const DEFAULT_CHUNK_SIZE = 1024 * 1024 // 1MB
 const MAX_CHUNK_SIZE = 4 * 1024 * 1024 // 4MB for very fast connections
 const MIN_CHUNK_SIZE = 256 * 1024 // 256KB minimum
+
+export interface ChunkData {
+  data: Uint8Array
+  index: number
+  isCompressed: boolean
+  originalSize: number
+  compressionRatio?: number
+}
 
 export class ChunkProcessor {
   private transferRates: number[] = []
@@ -11,6 +20,7 @@ export class ChunkProcessor {
   private consecutiveFastChunks = 0
   private currentChunkSize = DEFAULT_CHUNK_SIZE
   private connectionQuality: ConnectionQuality['type'] = 'medium'
+  private compressionEnabled = true
 
   /**
    * Get optimal chunk size based on file size and connection quality
@@ -101,6 +111,82 @@ export class ChunkProcessor {
     }
     // Smaller files
     return connectionQuality === 'slow' ? 25 : 0
+  }
+
+  /**
+   * Process chunk for sending with optional compression
+   */
+  public processChunkForSending(
+    chunkData: Uint8Array,
+    chunkIndex: number,
+    filename: string,
+    mimeType: string
+  ): ChunkData {
+    const shouldCompr = shouldCompress(filename, mimeType, chunkData.length)
+    console.log(`[COMPRESSION] Processing chunk ${chunkIndex} for ${filename} (${mimeType}): compression=${this.compressionEnabled}, shouldCompress=${shouldCompr}`)
+    
+    if (!this.compressionEnabled || !shouldCompr) {
+      console.log(`[COMPRESSION] Skipping compression for chunk ${chunkIndex}: enabled=${this.compressionEnabled}, should=${shouldCompr}`)
+      return {
+        data: chunkData,
+        index: chunkIndex,
+        isCompressed: false,
+        originalSize: chunkData.length
+      }
+    }
+
+    const compressionLevel = getOptimalCompressionLevel(this.connectionQuality)
+    const compressionResult = compressDataSync(chunkData, { 
+      level: compressionLevel,
+      enableCompression: true 
+    })
+
+    return {
+      data: compressionResult.compressedData,
+      index: chunkIndex,
+      isCompressed: compressionResult.isCompressed,
+      originalSize: compressionResult.originalSize,
+      compressionRatio: compressionResult.compressionRatio
+    }
+  }
+
+  /**
+   * Process received chunk with decompression
+   */
+  public processReceivedChunk(chunkData: ChunkData): Uint8Array {
+    if (!chunkData.isCompressed) {
+      return chunkData.data
+    }
+
+    try {
+      return decompressDataSync(chunkData.data, true)
+    } catch (error) {
+      console.error('Failed to decompress chunk:', error)
+      throw new Error(`Chunk decompression failed: ${error}`)
+    }
+  }
+
+  /**
+   * Enable or disable compression
+   */
+  public setCompressionEnabled(enabled: boolean): void {
+    console.log(`[COMPRESSION] ChunkProcessor compression ${enabled ? 'ENABLED' : 'DISABLED'}`)
+    this.compressionEnabled = enabled
+  }
+
+  /**
+   * Get current compression settings
+   */
+  public getCompressionInfo(): {
+    enabled: boolean
+    level: number
+    connectionQuality: ConnectionQuality['type']
+  } {
+    return {
+      enabled: this.compressionEnabled,
+      level: getOptimalCompressionLevel(this.connectionQuality),
+      connectionQuality: this.connectionQuality
+    }
   }
 
   /**

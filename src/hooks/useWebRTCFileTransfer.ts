@@ -111,7 +111,7 @@ export function useWebRTCFileTransfer({
       })
 
       service.setOnFileChunk(
-        (_peerId, chunk, metadata, progress, chunkSize, transferSpeed, chunkIndex) => {
+        (_peerId, chunk, metadata, progress, chunkSize, transferSpeed, chunkIndex, isCompressed, originalChunkSize, compressionRatio) => {
           if (chunkIndex === undefined) {
             console.error('Received a chunk without an index. Ignoring.')
             return
@@ -126,7 +126,30 @@ export function useWebRTCFileTransfer({
             return // Ignore duplicates
           }
 
-          chunksMap.set(chunkIndex, chunk)
+          // If chunk is compressed, decompress it before storing
+          let processedChunk = chunk
+          if (isCompressed) {
+            try {
+              const compressedData = new Uint8Array(chunk)
+              const decompressedData = webRTCService().processReceivedChunk({
+                data: compressedData,
+                index: chunkIndex,
+                isCompressed: true,
+                originalSize: originalChunkSize || 0,
+                compressionRatio
+              })
+              const newBuffer = new ArrayBuffer(decompressedData.length)
+              const newView = new Uint8Array(newBuffer)
+              newView.set(decompressedData)
+              processedChunk = newBuffer
+              console.log(`[COMPRESSION] Decompressed chunk ${chunkIndex}: ${chunk.byteLength} bytes → ${processedChunk.byteLength} bytes`)
+            } catch (error) {
+              console.error(`Failed to decompress chunk ${chunkIndex}:`, error)
+              return
+            }
+          }
+
+          chunksMap.set(chunkIndex, processedChunk)
 
           updateTransferProgress(metadata.id, progress, 'transferring', transferSpeed, chunkSize)
         }
@@ -322,5 +345,12 @@ export function useWebRTCFileTransfer({
     acceptRequest,
     rejectRequest,
     myPeerId: peerId,
+    setWebRTCCompressionEnabled: (enabled: boolean) => {
+      webRTCService().setCompressionEnabled(enabled)
+      console.log('Compression enabled:', enabled)
+    },
+    getCompressionStats: (transferId: string) => {
+      return webRTCService().getCompressionStats(transferId)
+    },
   }
 }
