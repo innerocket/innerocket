@@ -351,7 +351,12 @@ export function App() {
                           will be automatically compressed during transfer.
                         </p>
                         <div class='mt-3 rounded border border-green-300 bg-green-100 p-2 text-xs text-green-800 dark:border-green-600 dark:bg-green-800/20 dark:text-green-200'>
-                          <strong>Debug:</strong> Check browser console for compression logs when sending files
+                          <div class='mb-1'>
+                            <strong>Status:</strong> Compression active and saved to browser storage
+                          </div>
+                          <div>
+                            <strong>Debug:</strong> Check browser console for compression logs when sending files
+                          </div>
                         </div>
                       </div>
                     </Show>
@@ -365,6 +370,9 @@ export function App() {
                           File compression is currently <strong>disabled</strong>. Files will be
                           transferred without compression.
                         </p>
+                        <div class='mt-3 rounded border border-gray-300 bg-gray-100 p-2 text-xs text-gray-700 dark:border-gray-500 dark:bg-gray-700/20 dark:text-gray-300'>
+                          <strong>Status:</strong> Setting saved to browser storage
+                        </div>
                       </div>
                     </Show>
                   </div>
