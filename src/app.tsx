@@ -35,6 +35,8 @@ export function App() {
     isTransferring,
     compressionEnabled,
     setCompressionEnabled,
+    autoAcceptFiles,
+    setAutoAcceptFiles,
   } = useFileTransfer()
 
   const [notifications, setNotifications] = createSignal<NotificationItem[]>([])
@@ -380,6 +382,66 @@ export function App() {
                         </div>
                       </div>
                     </Show>
+
+                    {/* Auto-Accept Settings */}
+                    <div class='space-y-4'>
+                      <h3 class='text-lg font-medium text-gray-900 dark:text-white'>
+                        File Reception
+                      </h3>
+
+                      <div class='rounded-lg border border-gray-200 p-4 dark:border-gray-700'>
+                        <Toggle
+                          id='auto-accept-toggle'
+                          checked={autoAcceptFiles?.()}
+                          onChange={setAutoAcceptFiles}
+                          label='Auto-accept incoming files'
+                          description='Automatically accept all incoming file transfers without manual approval'
+                          variant='default'
+                          size='md'
+                        />
+
+                        <div class='mt-4 text-sm text-gray-600 dark:text-gray-400'>
+                          <p class='mb-2'>
+                            <strong>Manual approval (recommended):</strong> You will be prompted to
+                            accept or reject each incoming file transfer.
+                          </p>
+                          <p>
+                            <strong>Auto-accept:</strong> All incoming files will be automatically
+                            accepted and downloaded.
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Auto-Accept Status */}
+                      <Show when={autoAcceptFiles?.()}>
+                        <div class='rounded-lg border border-orange-200 bg-orange-50 p-4 dark:border-orange-700 dark:bg-orange-900/20'>
+                          <h4 class='text-sm font-medium text-orange-800 dark:text-orange-300'>
+                            Auto-Accept Status
+                          </h4>
+                          <p class='text-sm text-orange-700 dark:text-orange-400'>
+                            <strong>Warning:</strong> Auto-accept is currently{' '}
+                            <strong>enabled</strong>. All incoming files will be automatically
+                            accepted without your approval.
+                          </p>
+                          <div class='mt-3 rounded border border-orange-300 bg-orange-100 p-2 text-xs text-orange-700 dark:border-orange-600 dark:bg-orange-800/20 dark:text-orange-200'>
+                            <strong>Security:</strong> Only enable this when receiving files from
+                            trusted sources
+                          </div>
+                        </div>
+                      </Show>
+
+                      <Show when={!autoAcceptFiles?.()}>
+                        <div class='rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-700 dark:bg-blue-900/20'>
+                          <h4 class='text-sm font-medium text-blue-800 dark:text-blue-300'>
+                            Manual Approval Mode
+                          </h4>
+                          <p class='text-sm text-blue-700 dark:text-blue-400'>
+                            You will be asked to approve each incoming file transfer. This is the{' '}
+                            <strong>recommended</strong> setting for security.
+                          </p>
+                        </div>
+                      </Show>
+                    </div>
                   </div>
                 </div>
               </TabContent>

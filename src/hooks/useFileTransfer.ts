@@ -6,6 +6,7 @@ import { FileStorageService } from '../services/fileStorageService'
 import { debugLog, debugWarn } from '../utils/debug'
 
 const COMPRESSION_STORAGE_KEY = 'innerocket-compression-enabled'
+const AUTO_ACCEPT_STORAGE_KEY = 'innerocket-auto-accept-files'
 
 // Load compression setting from localStorage
 function loadCompressionSetting(): boolean {
@@ -19,7 +20,7 @@ function loadCompressionSetting(): boolean {
   } catch (error) {
     debugWarn('[STORAGE] Failed to load compression setting:', error)
   }
-  
+
   // Default to enabled if no setting found
   debugLog('[STORAGE] Using default compression setting: true')
   return true
@@ -35,10 +36,39 @@ function saveCompressionSetting(enabled: boolean): void {
   }
 }
 
+// Load auto-accept setting from localStorage
+function loadAutoAcceptSetting(): boolean {
+  try {
+    const saved = localStorage.getItem(AUTO_ACCEPT_STORAGE_KEY)
+    if (saved !== null) {
+      const enabled = JSON.parse(saved)
+      debugLog(`[STORAGE] Loaded auto-accept setting: ${enabled}`)
+      return enabled
+    }
+  } catch (error) {
+    debugWarn('[STORAGE] Failed to load auto-accept setting:', error)
+  }
+
+  // Default to manual approval for security
+  debugLog('[STORAGE] Using default auto-accept setting: false')
+  return false
+}
+
+// Save auto-accept setting to localStorage
+function saveAutoAcceptSetting(enabled: boolean): void {
+  try {
+    localStorage.setItem(AUTO_ACCEPT_STORAGE_KEY, JSON.stringify(enabled))
+    debugLog(`[STORAGE] Saved auto-accept setting: ${enabled}`)
+  } catch (error) {
+    debugWarn('[STORAGE] Failed to save auto-accept setting:', error)
+  }
+}
+
 export function useFileTransfer() {
   const [isTransferring, setIsTransferring] = createSignal(false)
   const [connectedPeers, setConnectedPeers] = createSignal<string[]>([])
   const [compressionEnabled, setCompressionEnabled] = createSignal(loadCompressionSetting())
+  const [autoAcceptFiles, setAutoAcceptFiles] = createSignal(loadAutoAcceptSetting())
 
   const {
     fileTransfers,
@@ -71,6 +101,7 @@ export function useFileTransfer() {
     removeTransfer,
     setConnectedPeers,
     setIsTransferring,
+    autoAcceptFiles,
   })
 
   const { downloadFile, previewFile, getFileType } = useFileOperations({
@@ -98,10 +129,21 @@ export function useFileTransfer() {
     saveCompressionSetting(enabled)
   })
 
+  // Save to localStorage whenever auto-accept setting changes
+  createEffect(() => {
+    const enabled = autoAcceptFiles()
+    saveAutoAcceptSetting(enabled)
+  })
+
   const handleCompressionToggle = (enabled: boolean) => {
     debugLog(`[UI] Compression toggle changed to: ${enabled}`)
     setCompressionEnabled(enabled)
     // The createEffect above will handle saving to localStorage and WebRTC setting
+  }
+
+  const handleAutoAcceptToggle = (enabled: boolean) => {
+    debugLog(`[UI] Auto-accept toggle changed to: ${enabled}`)
+    setAutoAcceptFiles(enabled)
   }
 
   return {
@@ -124,5 +166,7 @@ export function useFileTransfer() {
     compressionEnabled,
     setCompressionEnabled: handleCompressionToggle,
     getCompressionStats,
+    autoAcceptFiles,
+    setAutoAcceptFiles: handleAutoAcceptToggle,
   }
 }

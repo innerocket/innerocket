@@ -24,6 +24,7 @@ interface UseWebRTCFileTransferProps {
   removeTransfer: (transferId: string) => void
   setConnectedPeers: (peers: string[]) => void
   setIsTransferring: (isTransferring: boolean) => void
+  autoAcceptFiles?: () => boolean
 }
 
 export function useWebRTCFileTransfer({
@@ -34,6 +35,7 @@ export function useWebRTCFileTransfer({
   removeTransfer,
   setConnectedPeers,
   setIsTransferring,
+  autoAcceptFiles,
 }: UseWebRTCFileTransferProps) {
   const { peerId, addPrefixToId, removePrefixFromId } = usePeer()
   const [connectedPeersLocal, setConnectedPeersLocal] = createSignal<string[]>([])
@@ -108,11 +110,33 @@ export function useWebRTCFileTransfer({
           checksum: metadata.checksum,
         })
 
-        setIncomingRequests(prev => [...prev, request])
+        // Check if auto-accept is enabled
+        if (autoAcceptFiles?.()) {
+          debugLog(`[AUTO-ACCEPT] Automatically accepting file: ${metadata.name}`)
+          // Auto-accept the file transfer
+          setTimeout(() => {
+            service.acceptFileTransfer(from.id, metadata)
+            updateTransfer(metadata.id, { status: 'transferring', progress: 0 })
+          }, 100) // Small delay to ensure UI updates
+        } else {
+          // Add to incoming requests for manual approval
+          setIncomingRequests(prev => [...prev, request])
+        }
       })
 
       service.setOnFileChunk(
-        (_peerId, chunk, metadata, progress, chunkSize, transferSpeed, chunkIndex, isCompressed, originalChunkSize, compressionRatio) => {
+        (
+          _peerId,
+          chunk,
+          metadata,
+          progress,
+          chunkSize,
+          transferSpeed,
+          chunkIndex,
+          isCompressed,
+          originalChunkSize,
+          compressionRatio
+        ) => {
           if (chunkIndex === undefined) {
             console.error('Received a chunk without an index. Ignoring.')
             return
@@ -137,13 +161,15 @@ export function useWebRTCFileTransfer({
                 index: chunkIndex,
                 isCompressed: true,
                 originalSize: originalChunkSize || 0,
-                compressionRatio
+                compressionRatio,
               })
               const newBuffer = new ArrayBuffer(decompressedData.length)
               const newView = new Uint8Array(newBuffer)
               newView.set(decompressedData)
               processedChunk = newBuffer
-              debugLog(`[COMPRESSION] Decompressed chunk ${chunkIndex}: ${chunk.byteLength} bytes → ${processedChunk.byteLength} bytes`)
+              debugLog(
+                `[COMPRESSION] Decompressed chunk ${chunkIndex}: ${chunk.byteLength} bytes → ${processedChunk.byteLength} bytes`
+              )
             } catch (error) {
               debugError(`Failed to decompress chunk ${chunkIndex}:`, error)
               return
