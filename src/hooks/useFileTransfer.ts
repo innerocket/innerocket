@@ -10,6 +10,22 @@ const AUTO_ACCEPT_STORAGE_KEY = 'innerocket_auto_accept_files'
 const TRUSTED_PEERS_STORAGE_KEY = 'innerocket_trusted_peers'
 const MAX_FILE_SIZE_STORAGE_KEY = 'innerocket_max_file_size'
 const COMPRESSION_LEVEL_STORAGE_KEY = 'innerocket_compression_level'
+const CONNECTION_HISTORY_STORAGE_KEY = 'innerocket_connection_history'
+
+// Connection history entry interface
+export interface ConnectionHistoryEntry {
+  peerId: string
+  connectedAt: number
+  disconnectedAt?: number
+  duration?: number // in milliseconds
+  filesTransferred: number
+  totalBytesTransferred: number
+  lastSeen: number
+  connectionCount: number
+}
+
+// Max number of connection history entries to keep
+const MAX_HISTORY_ENTRIES = 100
 
 // Default max file size: 100MB
 const DEFAULT_MAX_FILE_SIZE = 100 * 1024 * 1024
@@ -186,6 +202,35 @@ function saveCompressionLevel(level: CompressionLevelPreset): void {
   }
 }
 
+// Load connection history from localStorage
+function loadConnectionHistory(): ConnectionHistoryEntry[] {
+  try {
+    const saved = localStorage.getItem(CONNECTION_HISTORY_STORAGE_KEY)
+    if (saved !== null) {
+      const history = JSON.parse(saved)
+      debugLog(`[STORAGE] Loaded connection history: ${history.length} entries`)
+      return Array.isArray(history) ? history : []
+    }
+  } catch (error) {
+    debugWarn('[STORAGE] Failed to load connection history:', error)
+  }
+
+  debugLog('[STORAGE] No connection history found, starting with empty list')
+  return []
+}
+
+// Save connection history to localStorage
+function saveConnectionHistory(history: ConnectionHistoryEntry[]): void {
+  try {
+    // Keep only the most recent entries
+    const trimmedHistory = history.slice(-MAX_HISTORY_ENTRIES)
+    localStorage.setItem(CONNECTION_HISTORY_STORAGE_KEY, JSON.stringify(trimmedHistory))
+    debugLog(`[STORAGE] Saved connection history: ${trimmedHistory.length} entries`)
+  } catch (error) {
+    debugWarn('[STORAGE] Failed to save connection history:', error)
+  }
+}
+
 export function useFileTransfer() {
   const [isTransferring, setIsTransferring] = createSignal(false)
   const [connectedPeers, setConnectedPeers] = createSignal<string[]>([])
@@ -194,6 +239,10 @@ export function useFileTransfer() {
   const [trustedPeers, setTrustedPeers] = createSignal<string[]>(loadTrustedPeers())
   const [maxFileSize, setMaxFileSize] = createSignal<number>(loadMaxFileSize())
   const [compressionLevel, setCompressionLevel] = createSignal<CompressionLevelPreset>(loadCompressionLevel())
+  const [connectionHistory, setConnectionHistory] = createSignal<ConnectionHistoryEntry[]>(loadConnectionHistory())
+
+  // Track active connections with their start times
+  const activeConnections = new Map<string, number>()
 
   const {
     fileTransfers,
@@ -289,6 +338,37 @@ export function useFileTransfer() {
     saveCompressionLevel(level)
   })
 
+  // Save to localStorage whenever connection history changes
+  createEffect(() => {
+    const history = connectionHistory()
+    saveConnectionHistory(history)
+  })
+
+  // Monitor connected peers for history tracking
+  createEffect(() => {
+    const currentPeers = connectedPeers()
+    const now = Date.now()
+
+    // Check for new connections
+    currentPeers.forEach(peerId => {
+      if (!activeConnections.has(peerId)) {
+        activeConnections.set(peerId, now)
+        addConnectionHistoryEntry(peerId, now)
+        debugLog(`[CONNECTION_HISTORY] New connection: ${peerId}`)
+      }
+    })
+
+    // Check for disconnections
+    activeConnections.forEach((startTime, peerId) => {
+      if (!currentPeers.includes(peerId)) {
+        const duration = now - startTime
+        updateConnectionHistoryEntry(peerId, now, duration)
+        activeConnections.delete(peerId)
+        debugLog(`[CONNECTION_HISTORY] Disconnection: ${peerId}, duration: ${duration}ms`)
+      }
+    })
+  })
+
   const handleCompressionToggle = (enabled: boolean) => {
     debugLog(`[UI] Compression toggle changed to: ${enabled}`)
     setCompressionEnabled(enabled)
@@ -361,6 +441,84 @@ export function useFileTransfer() {
     debugLog(`[COMPRESSION] Level changed to: ${preset} (level ${numericLevel})`)
   }
 
+  const addConnectionHistoryEntry = (peerId: string, connectedAt: number) => {
+    setConnectionHistory(prev => {
+      const existingIndex = prev.findIndex(entry => entry.peerId === peerId)
+      const now = Date.now()
+      
+      if (existingIndex !== -1) {
+        // Update existing entry
+        const updated = [...prev]
+        updated[existingIndex] = {
+          ...updated[existingIndex],
+          connectedAt,
+          lastSeen: now,
+          connectionCount: updated[existingIndex].connectionCount + 1,
+          disconnectedAt: undefined,
+          duration: undefined
+        }
+        return updated
+      } else {
+        // Add new entry
+        const newEntry: ConnectionHistoryEntry = {
+          peerId,
+          connectedAt,
+          lastSeen: now,
+          filesTransferred: 0,
+          totalBytesTransferred: 0,
+          connectionCount: 1
+        }
+        return [...prev, newEntry].slice(-MAX_HISTORY_ENTRIES)
+      }
+    })
+  }
+
+  const updateConnectionHistoryEntry = (peerId: string, disconnectedAt: number, duration: number) => {
+    setConnectionHistory(prev => {
+      const existingIndex = prev.findIndex(entry => entry.peerId === peerId)
+      if (existingIndex !== -1) {
+        const updated = [...prev]
+        updated[existingIndex] = {
+          ...updated[existingIndex],
+          disconnectedAt,
+          duration,
+          lastSeen: disconnectedAt
+        }
+        return updated
+      }
+      return prev
+    })
+  }
+
+  const updateFileTransferStats = (peerId: string, fileSize: number) => {
+    setConnectionHistory(prev => {
+      const existingIndex = prev.findIndex(entry => entry.peerId === peerId)
+      if (existingIndex !== -1) {
+        const updated = [...prev]
+        updated[existingIndex] = {
+          ...updated[existingIndex],
+          filesTransferred: updated[existingIndex].filesTransferred + 1,
+          totalBytesTransferred: updated[existingIndex].totalBytesTransferred + fileSize,
+          lastSeen: Date.now()
+        }
+        return updated
+      }
+      return prev
+    })
+  }
+
+  const clearConnectionHistory = () => {
+    setConnectionHistory([])
+    debugLog('[CONNECTION_HISTORY] History cleared')
+  }
+
+  const formatDuration = (ms: number): string => {
+    if (ms < 1000) return `${ms}ms`
+    if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`
+    if (ms < 3600000) return `${(ms / 60000).toFixed(1)}m`
+    return `${(ms / 3600000).toFixed(1)}h`
+  }
+
   return {
     myPeerId,
     connectedPeers,
@@ -394,5 +552,9 @@ export function useFileTransfer() {
     formatFileSize,
     compressionLevel,
     setCompressionLevel: handleCompressionLevelChange,
+    connectionHistory,
+    clearConnectionHistory,
+    updateFileTransferStats,
+    formatDuration,
   }
 }

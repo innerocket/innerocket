@@ -12,6 +12,7 @@ import { Toggle } from './components/ui/Toggle'
 import { TrustedPeersList } from './components/TrustedPeersList'
 import { FileSizeSettings } from './components/FileSizeSettings'
 import { CompressionLevelSettings } from './components/CompressionLevelSettings'
+import { ConnectionHistory } from './components/ConnectionHistory'
 import type { NotificationItem, NotificationType } from './components/Notification'
 import Sqlds from 'sqids'
 import { Info, HelpCircle, Trash2 } from 'lucide-solid'
@@ -49,6 +50,9 @@ export function App() {
     formatFileSize,
     compressionLevel,
     setCompressionLevel,
+    connectionHistory,
+    clearConnectionHistory,
+    formatDuration,
   } = useFileTransfer()
 
   const [notifications, setNotifications] = createSignal<NotificationItem[]>([])
@@ -500,6 +504,24 @@ export function App() {
                           connectedPeers={connectedPeers}
                           onAddTrustedPeer={addTrustedPeer}
                           onRemoveTrustedPeer={removeTrustedPeer}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Connection History */}
+                    <div class="space-y-4">
+                      <h3 class="text-lg font-medium text-gray-900 dark:text-white">
+                        Connection History
+                      </h3>
+
+                      <div class="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+                        <ConnectionHistory
+                          connectionHistory={connectionHistory}
+                          connectedPeers={connectedPeers}
+                          formatFileSize={formatFileSize}
+                          formatDuration={formatDuration}
+                          onClearHistory={clearConnectionHistory}
+                          onAddTrustedPeer={addTrustedPeer}
                         />
                       </div>
                     </div>

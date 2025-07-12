@@ -1,5 +1,5 @@
 import { Show, For } from 'solid-js'
-import { Zap, BarChart3, Trophy, Check, Settings } from 'lucide-solid'
+import { Zap, TrendingUp, Trophy, Check, Settings } from 'lucide-solid'
 import { COMPRESSION_LEVELS, type CompressionLevelPreset } from '../hooks/useFileTransfer'
 
 interface CompressionLevelSettingsProps {
@@ -10,7 +10,7 @@ interface CompressionLevelSettingsProps {
 
 const LEVEL_ICONS = {
   fast: Zap,
-  balanced: BarChart3,
+  balanced: TrendingUp,
   best: Trophy,
 } as const
 
@@ -213,7 +213,7 @@ export function CompressionLevelSettings(props: CompressionLevelSettingsProps) {
               </div>
             </div>
             <div class="flex items-start space-x-2">
-              <BarChart3 class="mt-0.5 h-3 w-3 text-blue-500" />
+              <TrendingUp class="mt-0.5 h-3 w-3 text-blue-500" />
               <div>
                 <strong>Balanced:</strong> Good all-around choice for most file transfers with
                 reasonable speed and compression
