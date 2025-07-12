@@ -25,6 +25,7 @@ interface UseWebRTCFileTransferProps {
   setConnectedPeers: (peers: string[]) => void
   setIsTransferring: (isTransferring: boolean) => void
   autoAcceptFiles?: () => boolean
+  isTrustedPeer?: () => (peerId: string) => boolean
 }
 
 export function useWebRTCFileTransfer({
@@ -36,6 +37,7 @@ export function useWebRTCFileTransfer({
   setConnectedPeers,
   setIsTransferring,
   autoAcceptFiles,
+  isTrustedPeer,
 }: UseWebRTCFileTransferProps) {
   const { peerId, addPrefixToId, removePrefixFromId } = usePeer()
   const [connectedPeersLocal, setConnectedPeersLocal] = createSignal<string[]>([])
@@ -110,9 +112,15 @@ export function useWebRTCFileTransfer({
           checksum: metadata.checksum,
         })
 
-        // Check if auto-accept is enabled
-        if (autoAcceptFiles?.()) {
-          debugLog(`[AUTO-ACCEPT] Automatically accepting file: ${metadata.name}`)
+        // Check if auto-accept is enabled and if peer is trusted (if whitelist is used)
+        const shouldAutoAccept = autoAcceptFiles?.() && (
+          !isTrustedPeer || // No trusted peer check enabled
+          isTrustedPeer()!(from.id) // Peer is in trusted list
+        )
+        
+        if (shouldAutoAccept) {
+          const trustStatus = isTrustedPeer ? (isTrustedPeer()!(from.id) ? 'trusted' : 'untrusted') : 'no-whitelist'
+          debugLog(`[AUTO-ACCEPT] Automatically accepting file: ${metadata.name} from ${from.id} (${trustStatus})`)
           // Auto-accept the file transfer
           setTimeout(() => {
             service.acceptFileTransfer(from.id, metadata)
@@ -120,6 +128,8 @@ export function useWebRTCFileTransfer({
           }, 100) // Small delay to ensure UI updates
         } else {
           // Add to incoming requests for manual approval
+          const reason = !autoAcceptFiles?.() ? 'auto-accept disabled' : 'peer not trusted'
+          debugLog(`[AUTO-ACCEPT] Manual approval required for ${metadata.name} from ${from.id}: ${reason}`)
           setIncomingRequests(prev => [...prev, request])
         }
       })

@@ -9,6 +9,7 @@ import { IncomingRequests } from './components/IncomingRequests'
 import { HistoryTab } from './components/HistoryTab'
 import { TabsProvider, TabList, TabButton, TabContent } from './components/ui'
 import { Toggle } from './components/ui/Toggle'
+import { TrustedPeersList } from './components/TrustedPeersList'
 import type { NotificationItem, NotificationType } from './components/Notification'
 import Sqlds from 'sqids'
 import { Info, HelpCircle, Trash2 } from 'lucide-solid'
@@ -37,6 +38,9 @@ export function App() {
     setCompressionEnabled,
     autoAcceptFiles,
     setAutoAcceptFiles,
+    trustedPeers,
+    addTrustedPeer,
+    removeTrustedPeer,
   } = useFileTransfer()
 
   const [notifications, setNotifications] = createSignal<NotificationItem[]>([])
@@ -441,6 +445,22 @@ export function App() {
                           </p>
                         </div>
                       </Show>
+                    </div>
+
+                    {/* Trusted Peers Settings */}
+                    <div class="space-y-4">
+                      <h3 class="text-lg font-medium text-gray-900 dark:text-white">
+                        Trusted Peers
+                      </h3>
+
+                      <div class="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+                        <TrustedPeersList
+                          trustedPeers={trustedPeers}
+                          connectedPeers={connectedPeers}
+                          onAddTrustedPeer={addTrustedPeer}
+                          onRemoveTrustedPeer={removeTrustedPeer}
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>

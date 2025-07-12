@@ -7,6 +7,7 @@ import { debugLog, debugWarn } from '../utils/debug'
 
 const COMPRESSION_STORAGE_KEY = 'innerocket_compression_enabled'
 const AUTO_ACCEPT_STORAGE_KEY = 'innerocket_auto_accept_files'
+const TRUSTED_PEERS_STORAGE_KEY = 'innerocket_trusted_peers'
 
 // Load compression setting from localStorage
 function loadCompressionSetting(): boolean {
@@ -64,11 +65,39 @@ function saveAutoAcceptSetting(enabled: boolean): void {
   }
 }
 
+// Load trusted peers from localStorage
+function loadTrustedPeers(): string[] {
+  try {
+    const saved = localStorage.getItem(TRUSTED_PEERS_STORAGE_KEY)
+    if (saved !== null) {
+      const peers = JSON.parse(saved)
+      debugLog(`[STORAGE] Loaded trusted peers: ${peers.length} peers`)
+      return Array.isArray(peers) ? peers : []
+    }
+  } catch (error) {
+    debugWarn('[STORAGE] Failed to load trusted peers:', error)
+  }
+
+  debugLog('[STORAGE] No trusted peers found, starting with empty list')
+  return []
+}
+
+// Save trusted peers to localStorage
+function saveTrustedPeers(peers: string[]): void {
+  try {
+    localStorage.setItem(TRUSTED_PEERS_STORAGE_KEY, JSON.stringify(peers))
+    debugLog(`[STORAGE] Saved trusted peers: ${peers.length} peers`)
+  } catch (error) {
+    debugWarn('[STORAGE] Failed to save trusted peers:', error)
+  }
+}
+
 export function useFileTransfer() {
   const [isTransferring, setIsTransferring] = createSignal(false)
   const [connectedPeers, setConnectedPeers] = createSignal<string[]>([])
   const [compressionEnabled, setCompressionEnabled] = createSignal(loadCompressionSetting())
   const [autoAcceptFiles, setAutoAcceptFiles] = createSignal(loadAutoAcceptSetting())
+  const [trustedPeers, setTrustedPeers] = createSignal<string[]>(loadTrustedPeers())
 
   const {
     fileTransfers,
@@ -102,6 +131,7 @@ export function useFileTransfer() {
     setConnectedPeers,
     setIsTransferring,
     autoAcceptFiles,
+    isTrustedPeer: () => isTrustedPeer,
   })
 
   const { downloadFile, previewFile, getFileType } = useFileOperations({
@@ -135,6 +165,12 @@ export function useFileTransfer() {
     saveAutoAcceptSetting(enabled)
   })
 
+  // Save to localStorage whenever trusted peers changes
+  createEffect(() => {
+    const peers = trustedPeers()
+    saveTrustedPeers(peers)
+  })
+
   const handleCompressionToggle = (enabled: boolean) => {
     debugLog(`[UI] Compression toggle changed to: ${enabled}`)
     setCompressionEnabled(enabled)
@@ -144,6 +180,39 @@ export function useFileTransfer() {
   const handleAutoAcceptToggle = (enabled: boolean) => {
     debugLog(`[UI] Auto-accept toggle changed to: ${enabled}`)
     setAutoAcceptFiles(enabled)
+  }
+
+  const addTrustedPeer = (peerId: string) => {
+    if (!peerId.trim()) return false
+    
+    const normalizedPeerId = peerId.trim()
+    const current = trustedPeers()
+    
+    if (current.includes(normalizedPeerId)) {
+      debugLog(`[TRUSTED_PEERS] Peer ${normalizedPeerId} already in trusted list`)
+      return false
+    }
+    
+    setTrustedPeers([...current, normalizedPeerId])
+    debugLog(`[TRUSTED_PEERS] Added peer ${normalizedPeerId} to trusted list`)
+    return true
+  }
+
+  const removeTrustedPeer = (peerId: string) => {
+    const current = trustedPeers()
+    const filtered = current.filter(id => id !== peerId)
+    
+    if (filtered.length !== current.length) {
+      setTrustedPeers(filtered)
+      debugLog(`[TRUSTED_PEERS] Removed peer ${peerId} from trusted list`)
+      return true
+    }
+    
+    return false
+  }
+
+  const isTrustedPeer = (peerId: string): boolean => {
+    return trustedPeers().includes(peerId)
   }
 
   return {
@@ -168,5 +237,9 @@ export function useFileTransfer() {
     getCompressionStats,
     autoAcceptFiles,
     setAutoAcceptFiles: handleAutoAcceptToggle,
+    trustedPeers,
+    addTrustedPeer,
+    removeTrustedPeer,
+    isTrustedPeer,
   }
 }
