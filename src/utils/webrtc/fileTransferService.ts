@@ -30,6 +30,11 @@ export class FileTransferService {
     this.chunkProcessor.setCompressionEnabled(enabled)
   }
 
+  public setCompressionLevel(level: number): void {
+    debugLog(`[COMPRESSION] Setting compression level: ${level}`)
+    this.chunkProcessor.setCompressionLevel(level)
+  }
+
   public getCompressionInfo() {
     return this.chunkProcessor.getCompressionInfo()
   }

@@ -1,5 +1,5 @@
 import type { ConnectionQuality } from './types'
-import { compressDataSync, decompressDataSync, shouldCompress, getOptimalCompressionLevel } from '../compressionUtils'
+import { compressDataSync, decompressDataSync, shouldCompress } from '../compressionUtils'
 import { debugLog } from '../debug'
 
 // Configuration constants
@@ -22,6 +22,7 @@ export class ChunkProcessor {
   private currentChunkSize = DEFAULT_CHUNK_SIZE
   private connectionQuality: ConnectionQuality['type'] = 'medium'
   private compressionEnabled = true
+  private userCompressionLevel: number = 6 // Default to balanced level
 
   /**
    * Get optimal chunk size based on file size and connection quality
@@ -136,9 +137,9 @@ export class ChunkProcessor {
       }
     }
 
-    const compressionLevel = getOptimalCompressionLevel(this.connectionQuality)
+    // Use user-configured compression level instead of automatic level
     const compressionResult = compressDataSync(chunkData, { 
-      level: compressionLevel,
+      level: this.userCompressionLevel,
       enableCompression: true 
     })
 
@@ -176,6 +177,14 @@ export class ChunkProcessor {
   }
 
   /**
+   * Set user-configured compression level
+   */
+  public setCompressionLevel(level: number): void {
+    this.userCompressionLevel = Math.max(0, Math.min(9, level))
+    debugLog(`[COMPRESSION] ChunkProcessor compression level set to: ${this.userCompressionLevel}`)
+  }
+
+  /**
    * Get current compression settings
    */
   public getCompressionInfo(): {
@@ -185,7 +194,7 @@ export class ChunkProcessor {
   } {
     return {
       enabled: this.compressionEnabled,
-      level: getOptimalCompressionLevel(this.connectionQuality),
+      level: this.userCompressionLevel,
       connectionQuality: this.connectionQuality
     }
   }

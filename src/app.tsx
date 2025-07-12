@@ -11,6 +11,7 @@ import { TabsProvider, TabList, TabButton, TabContent } from './components/ui'
 import { Toggle } from './components/ui/Toggle'
 import { TrustedPeersList } from './components/TrustedPeersList'
 import { FileSizeSettings } from './components/FileSizeSettings'
+import { CompressionLevelSettings } from './components/CompressionLevelSettings'
 import type { NotificationItem, NotificationType } from './components/Notification'
 import Sqlds from 'sqids'
 import { Info, HelpCircle, Trash2 } from 'lucide-solid'
@@ -46,6 +47,8 @@ export function App() {
     setMaxFileSize,
     setMaxFileSizeFromPreset,
     formatFileSize,
+    compressionLevel,
+    setCompressionLevel,
   } = useFileTransfer()
 
   const [notifications, setNotifications] = createSignal<NotificationItem[]>([])
@@ -388,6 +391,23 @@ export function App() {
                         </p>
                         <div class='mt-3 rounded border border-gray-300 bg-gray-100 p-2 text-xs text-gray-700 dark:border-gray-500 dark:bg-gray-700/20 dark:text-gray-300'>
                           <strong>Status:</strong> Setting saved to browser storage
+                        </div>
+                      </div>
+                    </Show>
+
+                    {/* Compression Level Settings */}
+                    <Show when={compressionEnabled?.()}>
+                      <div class='space-y-4'>
+                        <h4 class='text-md font-medium text-gray-800 dark:text-gray-200'>
+                          Advanced Compression
+                        </h4>
+
+                        <div class='rounded-lg border border-gray-200 p-4 dark:border-gray-700'>
+                          <CompressionLevelSettings
+                            compressionEnabled={compressionEnabled}
+                            compressionLevel={compressionLevel}
+                            onSetCompressionLevel={setCompressionLevel}
+                          />
                         </div>
                       </div>
                     </Show>

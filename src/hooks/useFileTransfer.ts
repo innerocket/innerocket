@@ -9,6 +9,7 @@ const COMPRESSION_STORAGE_KEY = 'innerocket_compression_enabled'
 const AUTO_ACCEPT_STORAGE_KEY = 'innerocket_auto_accept_files'
 const TRUSTED_PEERS_STORAGE_KEY = 'innerocket_trusted_peers'
 const MAX_FILE_SIZE_STORAGE_KEY = 'innerocket_max_file_size'
+const COMPRESSION_LEVEL_STORAGE_KEY = 'innerocket_compression_level'
 
 // Default max file size: 100MB
 const DEFAULT_MAX_FILE_SIZE = 100 * 1024 * 1024
@@ -25,6 +26,28 @@ export const FILE_SIZE_PRESETS = {
 } as const
 
 export type FileSizePreset = keyof typeof FILE_SIZE_PRESETS
+
+// Compression level presets
+export const COMPRESSION_LEVELS = {
+  'fast': {
+    level: 1,
+    label: 'Fast',
+    description: 'Fastest compression, larger file size'
+  },
+  'balanced': {
+    level: 6,
+    label: 'Balanced',
+    description: 'Good balance of speed and compression'
+  },
+  'best': {
+    level: 9,
+    label: 'Best',
+    description: 'Best compression, slower processing'
+  }
+} as const
+
+export type CompressionLevelPreset = keyof typeof COMPRESSION_LEVELS
+const DEFAULT_COMPRESSION_LEVEL: CompressionLevelPreset = 'balanced'
 
 // Load compression setting from localStorage
 function loadCompressionSetting(): boolean {
@@ -136,6 +159,33 @@ function saveMaxFileSize(size: number): void {
   }
 }
 
+// Load compression level from localStorage
+function loadCompressionLevel(): CompressionLevelPreset {
+  try {
+    const saved = localStorage.getItem(COMPRESSION_LEVEL_STORAGE_KEY)
+    if (saved !== null) {
+      const level = JSON.parse(saved)
+      debugLog(`[STORAGE] Loaded compression level: ${level}`)
+      return level && level in COMPRESSION_LEVELS ? level : DEFAULT_COMPRESSION_LEVEL
+    }
+  } catch (error) {
+    debugWarn('[STORAGE] Failed to load compression level:', error)
+  }
+
+  debugLog(`[STORAGE] Using default compression level: ${DEFAULT_COMPRESSION_LEVEL}`)
+  return DEFAULT_COMPRESSION_LEVEL
+}
+
+// Save compression level to localStorage
+function saveCompressionLevel(level: CompressionLevelPreset): void {
+  try {
+    localStorage.setItem(COMPRESSION_LEVEL_STORAGE_KEY, JSON.stringify(level))
+    debugLog(`[STORAGE] Saved compression level: ${level}`)
+  } catch (error) {
+    debugWarn('[STORAGE] Failed to save compression level:', error)
+  }
+}
+
 export function useFileTransfer() {
   const [isTransferring, setIsTransferring] = createSignal(false)
   const [connectedPeers, setConnectedPeers] = createSignal<string[]>([])
@@ -143,6 +193,7 @@ export function useFileTransfer() {
   const [autoAcceptFiles, setAutoAcceptFiles] = createSignal(loadAutoAcceptSetting())
   const [trustedPeers, setTrustedPeers] = createSignal<string[]>(loadTrustedPeers())
   const [maxFileSize, setMaxFileSize] = createSignal<number>(loadMaxFileSize())
+  const [compressionLevel, setCompressionLevel] = createSignal<CompressionLevelPreset>(loadCompressionLevel())
 
   const {
     fileTransfers,
@@ -166,6 +217,7 @@ export function useFileTransfer() {
     rejectRequest,
     myPeerId,
     setWebRTCCompressionEnabled,
+    setWebRTCCompressionLevel,
     getCompressionStats,
   } = useWebRTCFileTransfer({
     addTransfer,
@@ -199,6 +251,14 @@ export function useFileTransfer() {
     setWebRTCCompressionEnabled(enabled)
   })
 
+  // Initialize WebRTC compression level with loaded value
+  createEffect(() => {
+    const level = compressionLevel()
+    const numericLevel = COMPRESSION_LEVELS[level].level
+    debugLog(`[INIT] Setting initial compression level: ${level} (${numericLevel})`)
+    setWebRTCCompressionLevel(numericLevel)
+  })
+
   // Save to localStorage whenever compression setting changes
   createEffect(() => {
     const enabled = compressionEnabled()
@@ -221,6 +281,12 @@ export function useFileTransfer() {
   createEffect(() => {
     const size = maxFileSize()
     saveMaxFileSize(size)
+  })
+
+  // Save to localStorage whenever compression level changes
+  createEffect(() => {
+    const level = compressionLevel()
+    saveCompressionLevel(level)
   })
 
   const handleCompressionToggle = (enabled: boolean) => {
@@ -288,6 +354,13 @@ export function useFileTransfer() {
     return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`
   }
 
+  const handleCompressionLevelChange = (preset: CompressionLevelPreset) => {
+    setCompressionLevel(preset)
+    const numericLevel = COMPRESSION_LEVELS[preset].level
+    setWebRTCCompressionLevel(numericLevel)
+    debugLog(`[COMPRESSION] Level changed to: ${preset} (level ${numericLevel})`)
+  }
+
   return {
     myPeerId,
     connectedPeers,
@@ -319,5 +392,7 @@ export function useFileTransfer() {
     setMaxFileSizeFromPreset,
     isFileSizeAllowed,
     formatFileSize,
+    compressionLevel,
+    setCompressionLevel: handleCompressionLevelChange,
   }
 }

@@ -232,6 +232,10 @@ export class WebRTCService {
     this.fileTransferService.setCompressionEnabled(enabled)
   }
 
+  public setCompressionLevel(level: number): void {
+    this.fileTransferService.setCompressionLevel(level)
+  }
+
   public getCompressionInfo() {
     return this.fileTransferService.getCompressionInfo()
   }

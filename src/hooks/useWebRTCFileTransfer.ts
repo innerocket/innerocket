@@ -394,6 +394,10 @@ export function useWebRTCFileTransfer({
       webRTCService().setCompressionEnabled(enabled)
       debugLog('Compression enabled:', enabled)
     },
+    setWebRTCCompressionLevel: (level: number) => {
+      webRTCService().setCompressionLevel(level)
+      debugLog('Compression level:', level)
+    },
     getCompressionStats: (transferId: string) => {
       return webRTCService().getCompressionStats(transferId)
     },
