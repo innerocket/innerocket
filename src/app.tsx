@@ -10,6 +10,7 @@ import { HistoryTab } from './components/HistoryTab'
 import { TabsProvider, TabList, TabButton, TabContent } from './components/ui'
 import { Toggle } from './components/ui/Toggle'
 import { TrustedPeersList } from './components/TrustedPeersList'
+import { FileSizeSettings } from './components/FileSizeSettings'
 import type { NotificationItem, NotificationType } from './components/Notification'
 import Sqlds from 'sqids'
 import { Info, HelpCircle, Trash2 } from 'lucide-solid'
@@ -41,6 +42,10 @@ export function App() {
     trustedPeers,
     addTrustedPeer,
     removeTrustedPeer,
+    maxFileSize,
+    setMaxFileSize,
+    setMaxFileSizeFromPreset,
+    formatFileSize,
   } = useFileTransfer()
 
   const [notifications, setNotifications] = createSignal<NotificationItem[]>([])
@@ -447,13 +452,29 @@ export function App() {
                       </Show>
                     </div>
 
+                    {/* File Size Settings */}
+                    <div class='space-y-4'>
+                      <h3 class='text-lg font-medium text-gray-900 dark:text-white'>
+                        File Size Limits
+                      </h3>
+
+                      <div class='rounded-lg border border-gray-200 p-4 dark:border-gray-700'>
+                        <FileSizeSettings
+                          maxFileSize={maxFileSize}
+                          formatFileSize={formatFileSize}
+                          onSetFromPreset={setMaxFileSizeFromPreset}
+                          onSetCustomSize={setMaxFileSize}
+                        />
+                      </div>
+                    </div>
+
                     {/* Trusted Peers Settings */}
-                    <div class="space-y-4">
-                      <h3 class="text-lg font-medium text-gray-900 dark:text-white">
+                    <div class='space-y-4'>
+                      <h3 class='text-lg font-medium text-gray-900 dark:text-white'>
                         Trusted Peers
                       </h3>
 
-                      <div class="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+                      <div class='rounded-lg border border-gray-200 p-4 dark:border-gray-700'>
                         <TrustedPeersList
                           trustedPeers={trustedPeers}
                           connectedPeers={connectedPeers}

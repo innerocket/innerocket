@@ -26,6 +26,7 @@ interface UseWebRTCFileTransferProps {
   setIsTransferring: (isTransferring: boolean) => void
   autoAcceptFiles?: () => boolean
   isTrustedPeer?: () => (peerId: string) => boolean
+  isFileSizeAllowed?: () => (fileSize: number) => boolean
 }
 
 export function useWebRTCFileTransfer({
@@ -38,6 +39,7 @@ export function useWebRTCFileTransfer({
   setIsTransferring,
   autoAcceptFiles,
   isTrustedPeer,
+  isFileSizeAllowed,
 }: UseWebRTCFileTransferProps) {
   const { peerId, addPrefixToId, removePrefixFromId } = usePeer()
   const [connectedPeersLocal, setConnectedPeersLocal] = createSignal<string[]>([])
@@ -112,15 +114,17 @@ export function useWebRTCFileTransfer({
           checksum: metadata.checksum,
         })
 
-        // Check if auto-accept is enabled and if peer is trusted (if whitelist is used)
-        const shouldAutoAccept = autoAcceptFiles?.() && (
-          !isTrustedPeer || // No trusted peer check enabled
-          isTrustedPeer()!(from.id) // Peer is in trusted list
-        )
+        // Check all auto-accept conditions
+        const isAutoAcceptEnabled = autoAcceptFiles?.()
+        const isPeerTrusted = !isTrustedPeer || isTrustedPeer()!(from.id)
+        const isFileSizeOk = !isFileSizeAllowed || isFileSizeAllowed()!(metadata.size)
+        
+        const shouldAutoAccept = isAutoAcceptEnabled && isPeerTrusted && isFileSizeOk
         
         if (shouldAutoAccept) {
           const trustStatus = isTrustedPeer ? (isTrustedPeer()!(from.id) ? 'trusted' : 'untrusted') : 'no-whitelist'
-          debugLog(`[AUTO-ACCEPT] Automatically accepting file: ${metadata.name} from ${from.id} (${trustStatus})`)
+          const sizeStatus = isFileSizeAllowed ? (isFileSizeAllowed()!(metadata.size) ? 'allowed' : 'too-large') : 'no-limit'
+          debugLog(`[AUTO-ACCEPT] Automatically accepting file: ${metadata.name} from ${from.id} (peer: ${trustStatus}, size: ${sizeStatus})`)
           // Auto-accept the file transfer
           setTimeout(() => {
             service.acceptFileTransfer(from.id, metadata)
@@ -128,7 +132,11 @@ export function useWebRTCFileTransfer({
           }, 100) // Small delay to ensure UI updates
         } else {
           // Add to incoming requests for manual approval
-          const reason = !autoAcceptFiles?.() ? 'auto-accept disabled' : 'peer not trusted'
+          let reason = 'unknown'
+          if (!isAutoAcceptEnabled) reason = 'auto-accept disabled'
+          else if (!isPeerTrusted) reason = 'peer not trusted'
+          else if (!isFileSizeOk) reason = 'file too large'
+          
           debugLog(`[AUTO-ACCEPT] Manual approval required for ${metadata.name} from ${from.id}: ${reason}`)
           setIncomingRequests(prev => [...prev, request])
         }

@@ -8,6 +8,23 @@ import { debugLog, debugWarn } from '../utils/debug'
 const COMPRESSION_STORAGE_KEY = 'innerocket_compression_enabled'
 const AUTO_ACCEPT_STORAGE_KEY = 'innerocket_auto_accept_files'
 const TRUSTED_PEERS_STORAGE_KEY = 'innerocket_trusted_peers'
+const MAX_FILE_SIZE_STORAGE_KEY = 'innerocket_max_file_size'
+
+// Default max file size: 100MB
+const DEFAULT_MAX_FILE_SIZE = 100 * 1024 * 1024
+
+// Preset file size options (in bytes)
+export const FILE_SIZE_PRESETS = {
+  '10MB': 10 * 1024 * 1024,
+  '50MB': 50 * 1024 * 1024,
+  '100MB': 100 * 1024 * 1024,
+  '500MB': 500 * 1024 * 1024,
+  '1GB': 1 * 1024 * 1024 * 1024,
+  '5GB': 5 * 1024 * 1024 * 1024,
+  'unlimited': 0 // 0 means no limit
+} as const
+
+export type FileSizePreset = keyof typeof FILE_SIZE_PRESETS
 
 // Load compression setting from localStorage
 function loadCompressionSetting(): boolean {
@@ -92,12 +109,40 @@ function saveTrustedPeers(peers: string[]): void {
   }
 }
 
+// Load max file size from localStorage
+function loadMaxFileSize(): number {
+  try {
+    const saved = localStorage.getItem(MAX_FILE_SIZE_STORAGE_KEY)
+    if (saved !== null) {
+      const size = JSON.parse(saved)
+      debugLog(`[STORAGE] Loaded max file size: ${size} bytes`)
+      return typeof size === 'number' ? size : DEFAULT_MAX_FILE_SIZE
+    }
+  } catch (error) {
+    debugWarn('[STORAGE] Failed to load max file size:', error)
+  }
+
+  debugLog(`[STORAGE] Using default max file size: ${DEFAULT_MAX_FILE_SIZE} bytes`)
+  return DEFAULT_MAX_FILE_SIZE
+}
+
+// Save max file size to localStorage
+function saveMaxFileSize(size: number): void {
+  try {
+    localStorage.setItem(MAX_FILE_SIZE_STORAGE_KEY, JSON.stringify(size))
+    debugLog(`[STORAGE] Saved max file size: ${size} bytes`)
+  } catch (error) {
+    debugWarn('[STORAGE] Failed to save max file size:', error)
+  }
+}
+
 export function useFileTransfer() {
   const [isTransferring, setIsTransferring] = createSignal(false)
   const [connectedPeers, setConnectedPeers] = createSignal<string[]>([])
   const [compressionEnabled, setCompressionEnabled] = createSignal(loadCompressionSetting())
   const [autoAcceptFiles, setAutoAcceptFiles] = createSignal(loadAutoAcceptSetting())
   const [trustedPeers, setTrustedPeers] = createSignal<string[]>(loadTrustedPeers())
+  const [maxFileSize, setMaxFileSize] = createSignal<number>(loadMaxFileSize())
 
   const {
     fileTransfers,
@@ -132,6 +177,7 @@ export function useFileTransfer() {
     setIsTransferring,
     autoAcceptFiles,
     isTrustedPeer: () => isTrustedPeer,
+    isFileSizeAllowed: () => isFileSizeAllowed,
   })
 
   const { downloadFile, previewFile, getFileType } = useFileOperations({
@@ -169,6 +215,12 @@ export function useFileTransfer() {
   createEffect(() => {
     const peers = trustedPeers()
     saveTrustedPeers(peers)
+  })
+
+  // Save to localStorage whenever max file size changes
+  createEffect(() => {
+    const size = maxFileSize()
+    saveMaxFileSize(size)
   })
 
   const handleCompressionToggle = (enabled: boolean) => {
@@ -215,6 +267,27 @@ export function useFileTransfer() {
     return trustedPeers().includes(peerId)
   }
 
+  const isFileSizeAllowed = (fileSize: number): boolean => {
+    const maxSize = maxFileSize()
+    // 0 means unlimited
+    if (maxSize === 0) return true
+    return fileSize <= maxSize
+  }
+
+  const setMaxFileSizeFromPreset = (preset: FileSizePreset) => {
+    const size = FILE_SIZE_PRESETS[preset]
+    setMaxFileSize(size)
+    debugLog(`[FILE_SIZE] Set max file size to ${preset}: ${size} bytes`)
+  }
+
+  const formatFileSize = (bytes: number): string => {
+    if (bytes === 0) return 'Unlimited'
+    if (bytes < 1024) return `${bytes} B`
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+    if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+    return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`
+  }
+
   return {
     myPeerId,
     connectedPeers,
@@ -241,5 +314,10 @@ export function useFileTransfer() {
     addTrustedPeer,
     removeTrustedPeer,
     isTrustedPeer,
+    maxFileSize,
+    setMaxFileSize,
+    setMaxFileSizeFromPreset,
+    isFileSizeAllowed,
+    formatFileSize,
   }
 }
