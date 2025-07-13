@@ -28,10 +28,10 @@ const METHOD_ICONS = {
 
 const METHOD_COLORS = {
   auto: 'blue',
-  direct: 'green',
-  relay: 'orange',
-  turn: 'purple',
-  fallback: 'indigo',
+  direct: 'blue',
+  relay: 'blue',
+  turn: 'blue',
+  fallback: 'blue',
 } as const
 
 export function ConnectionMethodSettings(props: ConnectionMethodSettingsProps) {
@@ -39,11 +39,11 @@ export function ConnectionMethodSettings(props: ConnectionMethodSettingsProps) {
     <div class="space-y-4">
       <div class="flex items-center justify-between">
         <div class="flex items-center space-x-2">
-          <Globe class="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+          <Globe class="h-5 w-5 text-blue-600 dark:text-blue-400" />
           <h4 class="text-lg font-medium text-gray-900 dark:text-white">
             Connection Method
           </h4>
-          <span class="rounded-full bg-indigo-100 px-2 py-1 text-xs font-medium text-indigo-800 dark:bg-indigo-900/20 dark:text-indigo-300">
+          <span class="rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800 dark:bg-blue-900/20 dark:text-blue-300">
             {CONNECTION_METHODS[props.connectionMethod()].label}
           </span>
         </div>
@@ -61,18 +61,18 @@ export function ConnectionMethodSettings(props: ConnectionMethodSettingsProps) {
       </div>
 
       {/* Current status */}
-      <div class="rounded-lg border border-indigo-200 bg-indigo-50 p-4 dark:border-indigo-700 dark:bg-indigo-900/20">
+      <div class="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-700 dark:bg-blue-900/20">
         <div class="flex items-center space-x-2">
-          <Wifi class="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
-          <h5 class="text-sm font-medium text-indigo-800 dark:text-indigo-300">
+          <Wifi class="h-5 w-5 text-blue-600 dark:text-blue-400" />
+          <h5 class="text-sm font-medium text-blue-800 dark:text-blue-300">
             Current Method: {CONNECTION_METHODS[props.connectionMethod()].label}
           </h5>
         </div>
-        <p class="mt-2 text-sm text-indigo-700 dark:text-indigo-400">
+        <p class="mt-2 text-sm text-blue-700 dark:text-blue-400">
           {CONNECTION_METHODS[props.connectionMethod()].description}
         </p>
         <Show when={props.connectedPeers().length > 0}>
-          <div class="mt-3 text-xs text-indigo-600 dark:text-indigo-300">
+          <div class="mt-3 text-xs text-blue-600 dark:text-blue-300">
             <strong>Active connections:</strong> {props.connectedPeers().length} peer(s) using this method
           </div>
         </Show>
@@ -168,10 +168,10 @@ export function ConnectionMethodSettings(props: ConnectionMethodSettingsProps) {
                               <span
                                 class={`rounded px-1 py-0.5 text-xs font-medium ${
                                   priority === 'direct'
-                                    ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300'
+                                    ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300'
                                     : priority === 'relay'
-                                    ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-300'
-                                    : 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-300'
+                                    ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300'
+                                    : 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300'
                                 }`}
                               >
                                 {priority.toUpperCase()}
@@ -197,21 +197,21 @@ export function ConnectionMethodSettings(props: ConnectionMethodSettingsProps) {
         </h5>
         <div class="space-y-3 text-xs text-gray-600 dark:text-gray-400">
           <div class="flex items-start space-x-2">
-            <Zap class="mt-0.5 h-3 w-3 text-green-500" />
+            <Zap class="mt-0.5 h-3 w-3 text-blue-500" />
             <div>
               <strong>Direct P2P:</strong> Fastest connection method. Works best on open networks
               without firewalls or NAT restrictions.
             </div>
           </div>
           <div class="flex items-start space-x-2">
-            <Server class="mt-0.5 h-3 w-3 text-orange-500" />
+            <Server class="mt-0.5 h-3 w-3 text-blue-500" />
             <div>
               <strong>Relay Server:</strong> Uses intermediate servers to route data. Slower than
               direct but works through most firewalls.
             </div>
           </div>
           <div class="flex items-start space-x-2">
-            <Shield class="mt-0.5 h-3 w-3 text-purple-500" />
+            <Shield class="mt-0.5 h-3 w-3 text-blue-500" />
             <div>
               <strong>TURN Server:</strong> Most reliable method for restrictive networks. May have
               higher latency but ensures connectivity.
@@ -225,7 +225,7 @@ export function ConnectionMethodSettings(props: ConnectionMethodSettingsProps) {
             </div>
           </div>
           <div class="flex items-start space-x-2">
-            <ArrowRight class="mt-0.5 h-3 w-3 text-indigo-500" />
+            <ArrowRight class="mt-0.5 h-3 w-3 text-blue-500" />
             <div>
               <strong>Adaptive Fallback:</strong> Tries direct connection first, then falls back to
               relay/TURN if needed. Best for varied network conditions.

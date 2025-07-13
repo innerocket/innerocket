@@ -184,7 +184,7 @@ export const FileTransferList: Component<FileTransferListProps> = props => {
                             <Show
                               when={transfer.sender === peerId()}
                               fallback={
-                                <span class='flex items-center text-green-600 dark:text-green-500'>
+                                <span class='flex items-center text-blue-600 dark:text-blue-500'>
                                   <ChevronLeft class='mr-1 h-4 w-4' />
                                   Received
                                 </span>
@@ -210,12 +210,12 @@ export const FileTransferList: Component<FileTransferListProps> = props => {
                           <div
                             class={`h-3 rounded-lg transition-all duration-300 ${
                               transfer.status === 'completed'
-                                ? 'bg-green-500'
+                                ? 'bg-blue-500'
                                 : transfer.status === 'failed' ||
                                     transfer.status === 'integrity_error'
-                                  ? 'bg-red-500'
+                                  ? 'bg-blue-400'
                                   : transfer.status === 'verifying'
-                                    ? 'bg-amber-500'
+                                    ? 'bg-blue-300'
                                     : 'bg-blue-500'
                             }`}
                             style={{ width: `${transfer.progress}%` }}

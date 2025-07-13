@@ -13,11 +13,11 @@ export function PrivacySettings(props: PrivacySettingsProps) {
     <div class="space-y-4">
       <div class="flex items-center justify-between">
         <div class="flex items-center space-x-2">
-          <Shield class="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+          <Shield class="h-5 w-5 text-blue-600 dark:text-blue-400" />
           <h4 class="text-lg font-medium text-gray-900 dark:text-white">
             Privacy Settings
           </h4>
-          <span class="rounded-full bg-indigo-100 px-2 py-1 text-xs font-medium text-indigo-800 dark:bg-indigo-900/20 dark:text-indigo-300">
+          <span class="rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800 dark:bg-blue-900/20 dark:text-blue-300">
             {props.privacyMode() ? 'Private' : 'Normal'}
           </span>
         </div>
@@ -60,18 +60,18 @@ export function PrivacySettings(props: PrivacySettingsProps) {
 
       {/* Privacy Mode Status */}
       <Show when={props.privacyMode()}>
-        <div class="rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-700 dark:bg-green-900/20">
+        <div class="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-700 dark:bg-blue-900/20">
           <div class="flex items-center space-x-2">
-            <EyeOff class="h-5 w-5 text-green-600 dark:text-green-400" />
-            <h5 class="text-sm font-medium text-green-800 dark:text-green-300">
+            <EyeOff class="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            <h5 class="text-sm font-medium text-blue-800 dark:text-blue-300">
               Privacy Mode Active
             </h5>
           </div>
-          <p class="mt-2 text-sm text-green-700 dark:text-green-400">
+          <p class="mt-2 text-sm text-blue-700 dark:text-blue-400">
             Connection history tracking is <strong>disabled</strong>. No connection data,
             statistics, or transfer records are being saved.
           </p>
-          <div class="mt-3 rounded border border-green-300 bg-green-100 p-2 text-xs text-green-800 dark:border-green-600 dark:bg-green-800/20 dark:text-green-200">
+          <div class="mt-3 rounded border border-blue-300 bg-blue-100 p-2 text-xs text-blue-800 dark:border-blue-600 dark:bg-blue-800/20 dark:text-blue-200">
             <div class="flex items-center space-x-1">
               <Lock class="h-3 w-3" />
               <span><strong>Enhanced Privacy:</strong> All existing history has been cleared</span>
@@ -108,14 +108,14 @@ export function PrivacySettings(props: PrivacySettingsProps) {
 
       {/* Privacy Mode Warning */}
       <Show when={!props.privacyMode() && props.connectionHistoryCount() > 0}>
-        <div class="rounded-lg border border-orange-200 bg-orange-50 p-4 dark:border-orange-700 dark:bg-orange-900/20">
+        <div class="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-700 dark:bg-blue-900/20">
           <div class="flex items-start space-x-3">
-            <AlertTriangle class="mt-0.5 h-5 w-5 text-orange-600 dark:text-orange-400" />
+            <AlertTriangle class="mt-0.5 h-5 w-5 text-blue-600 dark:text-blue-400" />
             <div>
-              <h5 class="text-sm font-medium text-orange-800 dark:text-orange-300">
+              <h5 class="text-sm font-medium text-blue-800 dark:text-blue-300">
                 Privacy Mode Warning
               </h5>
-              <p class="mt-1 text-sm text-orange-700 dark:text-orange-400">
+              <p class="mt-1 text-sm text-blue-700 dark:text-blue-400">
                 Enabling privacy mode will <strong>permanently delete</strong> all existing
                 connection history ({props.connectionHistoryCount()} connections). This action
                 cannot be undone.

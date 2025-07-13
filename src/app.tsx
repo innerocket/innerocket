@@ -367,15 +367,15 @@ export function App() {
 
                     {/* Compression Statistics */}
                     <Show when={compressionEnabled?.()}>
-                      <div class='rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-700 dark:bg-green-900/20'>
-                        <h4 class='text-sm font-medium text-green-800 dark:text-green-300'>
+                      <div class='rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-700 dark:bg-blue-900/20'>
+                        <h4 class='text-sm font-medium text-blue-800 dark:text-blue-300'>
                           Compression Status
                         </h4>
-                        <p class='text-sm text-green-700 dark:text-green-400'>
+                        <p class='text-sm text-blue-700 dark:text-blue-400'>
                           File compression is currently <strong>enabled</strong>. Compatible files
                           will be automatically compressed during transfer.
                         </p>
-                        <div class='mt-3 rounded border border-green-300 bg-green-100 p-2 text-xs text-green-800 dark:border-green-600 dark:bg-green-800/20 dark:text-green-200'>
+                        <div class='mt-3 rounded border border-blue-300 bg-blue-100 p-2 text-xs text-blue-800 dark:border-blue-600 dark:bg-blue-800/20 dark:text-blue-200'>
                           <Show when={isDevelopment}>
                             <div class='mb-1'>
                               <strong>Status:</strong> Compression active and saved to browser
@@ -453,16 +453,16 @@ export function App() {
 
                       {/* Auto-Accept Status */}
                       <Show when={autoAcceptFiles?.()}>
-                        <div class='rounded-lg border border-orange-200 bg-orange-50 p-4 dark:border-orange-700 dark:bg-orange-900/20'>
-                          <h4 class='text-sm font-medium text-orange-800 dark:text-orange-300'>
+                        <div class='rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-700 dark:bg-blue-900/20'>
+                          <h4 class='text-sm font-medium text-blue-800 dark:text-blue-300'>
                             Auto-Accept Status
                           </h4>
-                          <p class='text-sm text-orange-700 dark:text-orange-400'>
+                          <p class='text-sm text-blue-700 dark:text-blue-400'>
                             <strong>Warning:</strong> Auto-accept is currently{' '}
                             <strong>enabled</strong>. All incoming files will be automatically
                             accepted without your approval.
                           </p>
-                          <div class='mt-3 rounded border border-orange-300 bg-orange-100 p-2 text-xs text-orange-700 dark:border-orange-600 dark:bg-orange-800/20 dark:text-orange-200'>
+                          <div class='mt-3 rounded border border-blue-300 bg-blue-100 p-2 text-xs text-blue-700 dark:border-blue-600 dark:bg-blue-800/20 dark:text-blue-200'>
                             <strong>Security:</strong> Only enable this when receiving files from
                             trusted sources
                           </div>
