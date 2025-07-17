@@ -15,7 +15,11 @@ export const HistoryTab: Component<HistoryTabProps> = props => {
   const [showAll, setShowAll] = createSignal(false)
 
   const sortedTransfers = createMemo(() =>
-    [...props.transfers].sort((a, b) => b.createdAt - a.createdAt)
+    [...props.transfers].sort((a, b) => {
+      if (a.status === 'completed' && b.status !== 'completed') return -1
+      if (a.status !== 'completed' && b.status === 'completed') return 1
+      return b.createdAt - a.createdAt
+    })
   )
 
   const displayedTransfers = createMemo(() =>
