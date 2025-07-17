@@ -4,6 +4,7 @@ import { useFileOperations } from './useFileOperations'
 import { useWebRTCFileTransfer } from './useWebRTCFileTransfer'
 import { FileStorageService } from '../services/fileStorageService'
 import { debugLog, debugWarn } from '../utils/debug'
+import { SecureStorage } from '../utils/secureStorage'
 
 const COMPRESSION_STORAGE_KEY = 'innerocket_compression_enabled'
 const AUTO_ACCEPT_STORAGE_KEY = 'innerocket_auto_accept_files'
@@ -155,14 +156,13 @@ function saveAutoAcceptSetting(enabled: boolean): void {
   }
 }
 
-// Load trusted peers from localStorage
+// Load trusted peers from localStorage (encrypted)
 function loadTrustedPeers(): string[] {
   try {
-    const saved = localStorage.getItem(TRUSTED_PEERS_STORAGE_KEY)
-    if (saved !== null) {
-      const peers = JSON.parse(saved)
+    const peers = SecureStorage.getItem<string[]>(TRUSTED_PEERS_STORAGE_KEY)
+    if (peers !== null && Array.isArray(peers)) {
       debugLog(`[STORAGE] Loaded trusted peers: ${peers.length} peers`)
-      return Array.isArray(peers) ? peers : []
+      return peers
     }
   } catch (error) {
     debugWarn('[STORAGE] Failed to load trusted peers:', error)
@@ -172,10 +172,10 @@ function loadTrustedPeers(): string[] {
   return []
 }
 
-// Save trusted peers to localStorage
+// Save trusted peers to localStorage (encrypted)
 function saveTrustedPeers(peers: string[]): void {
   try {
-    localStorage.setItem(TRUSTED_PEERS_STORAGE_KEY, JSON.stringify(peers))
+    SecureStorage.setItem(TRUSTED_PEERS_STORAGE_KEY, peers)
     debugLog(`[STORAGE] Saved trusted peers: ${peers.length} peers`)
   } catch (error) {
     debugWarn('[STORAGE] Failed to save trusted peers:', error)
@@ -236,14 +236,13 @@ function saveCompressionLevel(level: CompressionLevelPreset): void {
   }
 }
 
-// Load connection history from localStorage
+// Load connection history from localStorage (encrypted)
 function loadConnectionHistory(): ConnectionHistoryEntry[] {
   try {
-    const saved = localStorage.getItem(CONNECTION_HISTORY_STORAGE_KEY)
-    if (saved !== null) {
-      const history = JSON.parse(saved)
+    const history = SecureStorage.getItem<ConnectionHistoryEntry[]>(CONNECTION_HISTORY_STORAGE_KEY)
+    if (history !== null && Array.isArray(history)) {
       debugLog(`[STORAGE] Loaded connection history: ${history.length} entries`)
-      return Array.isArray(history) ? history : []
+      return history
     }
   } catch (error) {
     debugWarn('[STORAGE] Failed to load connection history:', error)
@@ -253,12 +252,12 @@ function loadConnectionHistory(): ConnectionHistoryEntry[] {
   return []
 }
 
-// Save connection history to localStorage
+// Save connection history to localStorage (encrypted)
 function saveConnectionHistory(history: ConnectionHistoryEntry[]): void {
   try {
     // Keep only the most recent entries
     const trimmedHistory = history.slice(-MAX_HISTORY_ENTRIES)
-    localStorage.setItem(CONNECTION_HISTORY_STORAGE_KEY, JSON.stringify(trimmedHistory))
+    SecureStorage.setItem(CONNECTION_HISTORY_STORAGE_KEY, trimmedHistory)
     debugLog(`[STORAGE] Saved connection history: ${trimmedHistory.length} entries`)
   } catch (error) {
     debugWarn('[STORAGE] Failed to save connection history:', error)
