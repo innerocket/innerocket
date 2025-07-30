@@ -1,5 +1,5 @@
 import { createSignal, onMount, type Component, For, Show, Switch, Match } from 'solid-js'
-import JSZip from 'jszip'
+import { unzipSync } from 'fflate'
 import { File, Folder, ChevronRight, ChevronDown, Eye } from 'lucide-solid'
 import { TextPreview } from './TextPreview'
 
@@ -21,12 +21,12 @@ interface TreeNode {
   children: TreeNode[]
   depth: number
   isOpen?: boolean
-  zipObject?: JSZip.JSZipObject
+  data?: Uint8Array
 }
 
 const MAX_ZIP_SIZE = 100 * 1024 * 1024 // 100MB
 
-const processZipFiles = (zipFiles: { [key: string]: JSZip.JSZipObject }): TreeNode[] => {
+const processZipFiles = (zipFiles: { [path: string]: Uint8Array }): TreeNode[] => {
   const root: TreeNode = {
     name: 'root',
     type: 'folder',
@@ -36,10 +36,10 @@ const processZipFiles = (zipFiles: { [key: string]: JSZip.JSZipObject }): TreeNo
   }
   const nodeMap: { [key: string]: TreeNode } = { '': root }
 
-  const sortedFiles = Object.values(zipFiles).sort((a, b) => a.name.localeCompare(b.name))
+  const sortedPaths = Object.keys(zipFiles).sort((a, b) => a.localeCompare(b))
 
-  for (const file of sortedFiles) {
-    const pathParts = file.name.replace(/\/$/, '').split('/')
+  for (const filePath of sortedPaths) {
+    const pathParts = filePath.replace(/\/$/, '').split('/')
     let parent = root
 
     for (let i = 0; i < pathParts.length; i++) {
@@ -49,7 +49,7 @@ const processZipFiles = (zipFiles: { [key: string]: JSZip.JSZipObject }): TreeNo
       let node = nodeMap[currentPath]
 
       if (!node) {
-        const isFolder = i < pathParts.length - 1 || file.dir
+        const isFolder = filePath.endsWith('/') || i < pathParts.length - 1
         node = {
           name: part,
           type: isFolder ? 'folder' : 'file',
@@ -57,7 +57,7 @@ const processZipFiles = (zipFiles: { [key: string]: JSZip.JSZipObject }): TreeNo
           children: [],
           depth: i,
           isOpen: false,
-          zipObject: !isFolder ? file : undefined,
+          data: !isFolder ? zipFiles[filePath] : undefined,
         }
         nodeMap[currentPath] = node
         parent.children.push(node)
@@ -175,13 +175,13 @@ export const ZipPreview: Component<ZipPreviewProps> = props => {
   }
 
   const handlePreview = async (node: TreeNode) => {
-    if (!node.zipObject) return
+    if (!node.data) return
     
     setIsPreviewLoading(true)
     setPreviewError(null)
     
     try {
-      const blob = await node.zipObject.async('blob')
+      const blob = new Blob([node.data])
       const fileType = getFileType(node.name)
       
       setPreviewFile({
@@ -191,8 +191,8 @@ export const ZipPreview: Component<ZipPreviewProps> = props => {
         type: fileType
       })
     } catch (err) {
-      console.error('Error extracting file from zip:', err)
-      setPreviewError('Failed to extract file from zip archive')
+      console.error('Error creating blob from zip data:', err)
+      setPreviewError('Failed to preview file from zip archive')
     } finally {
       setIsPreviewLoading(false)
     }
@@ -211,8 +211,10 @@ export const ZipPreview: Component<ZipPreviewProps> = props => {
     }
 
     try {
-      const zip = await JSZip.loadAsync(props.file)
-      const fileTree = processZipFiles(zip.files)
+      const arrayBuffer = await props.file.arrayBuffer()
+      const uint8Array = new Uint8Array(arrayBuffer)
+      const unzipped = unzipSync(uint8Array)
+      const fileTree = processZipFiles(unzipped)
       setTree(fileTree)
     } catch (e) {
       console.error('Error reading zip file:', e)
