@@ -4,6 +4,7 @@ import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import { ViteMinifyPlugin } from 'vite-plugin-minify'
 import lucidePreprocess from 'vite-plugin-lucide-preprocess'
+import Sitemap from 'vite-plugin-sitemap'
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -42,6 +43,9 @@ export default defineConfig({
       removeRedundantAttributes: true,
       useShortDoctype: true,
       removeEmptyAttributes: false,
+    }),
+    Sitemap({
+      hostname: process.env.VITE_SITE_URL || 'https://innerocket.com',
     }),
   ],
   build: {

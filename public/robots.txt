@@ -1,8 +1,0 @@
-User-agent: *
-Allow: /
-
-# Host
-Host: https://innerocket.com
-
-# Sitemaps
-Sitemap: https://innerocket.com/sitemap.xml
