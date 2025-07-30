@@ -41,9 +41,9 @@ export class SecureStorage {
       const jsonData = JSON.stringify(value)
       const encryptedData = encryptData(jsonData, this.encryptionKey)
       localStorage.setItem(key, encryptedData)
-    } catch {
-      // Fallback to regular storage if encryption fails
-      localStorage.setItem(key, JSON.stringify(value))
+    } catch (error) {
+      console.error('SecureStorage: Failed to encrypt and store data for key:', key, error)
+      throw new Error('Failed to securely store sensitive data')
     }
   }
 
