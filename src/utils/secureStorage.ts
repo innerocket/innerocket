@@ -36,7 +36,7 @@ function generateEncryptionKey(): string {
 export class SecureStorage {
   private static encryptionKey = generateEncryptionKey()
 
-  static setItem(key: string, value: any): void {
+  static setItem(key: string, value: unknown): void {
     try {
       const jsonData = JSON.stringify(value)
       const encryptedData = encryptData(jsonData, this.encryptionKey)

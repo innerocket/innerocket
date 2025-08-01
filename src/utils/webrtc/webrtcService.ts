@@ -4,6 +4,7 @@ import type { Peer } from './types'
 import { ConnectionManager, type PeerData } from './connectionManager'
 import { FileTransferService } from './fileTransferService'
 import type { WebRTCCallbacks } from './types'
+import type { ChunkData } from './chunkProcessor'
 
 const sqlds = new Sqlds()
 
@@ -244,7 +245,7 @@ export class WebRTCService {
     return this.fileTransferService.getTotalCompressionSavings(transferId)
   }
 
-  public processReceivedChunk(chunkData: any) {
+  public processReceivedChunk(chunkData: ChunkData) {
     return this.fileTransferService.processReceivedChunk(chunkData)
   }
 }
