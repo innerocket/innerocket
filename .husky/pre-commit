@@ -1,2 +1,1 @@
 oxlint
-pnpm tsc --noEmit
