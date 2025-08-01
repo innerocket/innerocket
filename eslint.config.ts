@@ -50,13 +50,6 @@ export default [
     },
   },
   prettier, // Oxlint configuration to disable conflicting rules
-  {
-    plugins: {
-      oxlint: oxlint,
-    },
-    rules: {
-      ...oxlint.configs['flat/recommended'],
-    },
-  },
+  ...oxlint.configs['flat/recommended'],
   ...storybook.configs['flat/recommended'],
 ]
