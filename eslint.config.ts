@@ -55,7 +55,7 @@ export default [
       oxlint: oxlint,
     },
     rules: {
-      ...oxlint.configs['flat/recommended'].rules,
+      ...oxlint.configs['flat/recommended'],
     },
   },
   ...storybook.configs['flat/recommended'],
