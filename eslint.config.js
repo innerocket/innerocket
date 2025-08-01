@@ -4,6 +4,7 @@ import solid from 'eslint-plugin-solid'
 import tseslint from 'typescript-eslint'
 import prettier from 'eslint-config-prettier'
 import oxlint from 'eslint-plugin-oxlint'
+import storybook from 'eslint-plugin-storybook'
 
 export default [
   {
@@ -48,8 +49,7 @@ export default [
       'solid/prefer-for': 'warn',
     },
   },
-  prettier,
-  // Oxlint configuration to disable conflicting rules
+  prettier, // Oxlint configuration to disable conflicting rules
   {
     plugins: {
       oxlint: oxlint,
@@ -58,4 +58,5 @@ export default [
       ...oxlint.configs['flat/recommended'].rules,
     },
   },
+  ...storybook.configs['flat/recommended'],
 ]
