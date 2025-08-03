@@ -68,10 +68,10 @@ const processZipFiles = (zipFiles: { [path: string]: Uint8Array }): TreeNode[] =
   return root.children
 }
 
-const Node: Component<{ 
-  node: TreeNode; 
-  onToggle: (path: string) => void;
-  onPreview: (node: TreeNode) => void;
+const Node: Component<{
+  node: TreeNode
+  onToggle: (path: string) => void
+  onPreview: (node: TreeNode) => void
 }> = props => {
   const getPadding = () => ({ 'padding-left': `${props.node.depth * 1.5}rem` })
 
@@ -122,32 +122,128 @@ const Node: Component<{
 
 const getFileType = (fileName: string): string => {
   const ext = fileName.split('.').pop()?.toLowerCase()
-  
+
   // Text files
-  if (['txt', 'md', 'json', 'xml', 'html', 'css', 'js', 'ts', 'jsx', 'tsx', 'py', 'java', 'c', 'cpp', 'h', 'hpp', 'cs', 'php', 'rb', 'go', 'rs', 'swift', 'kt', 'scala', 'sh', 'bat', 'ps1', 'yaml', 'yml', 'toml', 'ini', 'cfg', 'conf', 'log', 'sql', 'r', 'matlab', 'm', 'pl', 'pm', 'lua', 'dart', 'vim', 'gitignore', 'gitconfig', 'dockerfile', 'makefile', 'cmake', 'gradle', 'properties', 'env', 'editorconfig', 'eslintrc', 'prettierrc', 'babelrc', 'tsconfig', 'jsconfig', 'webpack', 'vite', 'rollup', 'package', 'composer', 'cargo', 'gemfile', 'podfile', 'requirements', 'poetry', 'pipfile', 'pyproject', 'setup', 'build', 'ant', 'pom', 'sbt', 'mix', 'rebar', 'deps', 'stack', 'cabal', 'elm', 'purescript', 'clj', 'cljs', 'cljc', 'edn', 'boot', 'lein', 'project', 'shadow', 'bb', 'deps'].includes(ext || '')) {
+  if (
+    [
+      'txt',
+      'md',
+      'json',
+      'xml',
+      'html',
+      'css',
+      'js',
+      'ts',
+      'jsx',
+      'tsx',
+      'py',
+      'java',
+      'c',
+      'cpp',
+      'h',
+      'hpp',
+      'cs',
+      'php',
+      'rb',
+      'go',
+      'rs',
+      'swift',
+      'kt',
+      'scala',
+      'sh',
+      'bat',
+      'ps1',
+      'yaml',
+      'yml',
+      'toml',
+      'ini',
+      'cfg',
+      'conf',
+      'log',
+      'sql',
+      'r',
+      'matlab',
+      'm',
+      'pl',
+      'pm',
+      'lua',
+      'dart',
+      'vim',
+      'gitignore',
+      'gitconfig',
+      'dockerfile',
+      'makefile',
+      'cmake',
+      'gradle',
+      'properties',
+      'env',
+      'editorconfig',
+      'eslintrc',
+      'prettierrc',
+      'babelrc',
+      'tsconfig',
+      'jsconfig',
+      'webpack',
+      'vite',
+      'rollup',
+      'package',
+      'composer',
+      'cargo',
+      'gemfile',
+      'podfile',
+      'requirements',
+      'poetry',
+      'pipfile',
+      'pyproject',
+      'setup',
+      'build',
+      'ant',
+      'pom',
+      'sbt',
+      'mix',
+      'rebar',
+      'deps',
+      'stack',
+      'cabal',
+      'elm',
+      'purescript',
+      'clj',
+      'cljs',
+      'cljc',
+      'edn',
+      'boot',
+      'lein',
+      'project',
+      'shadow',
+      'bb',
+      'deps',
+    ].includes(ext || '')
+  ) {
     return 'text/plain'
   }
-  
+
   // Images
-  if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg', 'ico', 'tiff', 'tif'].includes(ext || '')) {
+  if (
+    ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg', 'ico', 'tiff', 'tif'].includes(ext || '')
+  ) {
     return `image/${ext === 'jpg' ? 'jpeg' : ext}`
   }
-  
+
   // Videos
   if (['mp4', 'webm', 'ogg', 'mov', 'avi', 'mkv', 'wmv', 'flv', 'm4v', '3gp'].includes(ext || '')) {
     return `video/${ext === 'mov' ? 'quicktime' : ext === 'avi' ? 'x-msvideo' : ext}`
   }
-  
+
   // Audio
   if (['mp3', 'wav', 'ogg', 'aac', 'flac', 'm4a', 'wma'].includes(ext || '')) {
     return `audio/${ext === 'm4a' ? 'mp4' : ext}`
   }
-  
+
   // PDF
   if (ext === 'pdf') {
     return 'application/pdf'
   }
-  
+
   return 'application/octet-stream'
 }
 
@@ -176,19 +272,19 @@ export const ZipPreview: Component<ZipPreviewProps> = props => {
 
   const handlePreview = async (node: TreeNode) => {
     if (!node.data) return
-    
+
     setIsPreviewLoading(true)
     setPreviewError(null)
-    
+
     try {
       const blob = new Blob([node.data])
       const fileType = getFileType(node.name)
-      
+
       setPreviewFile({
         name: node.name,
         path: node.path,
         blob,
-        type: fileType
+        type: fileType,
       })
     } catch (err) {
       console.error('Error creating blob from zip data:', err)
@@ -236,7 +332,9 @@ export const ZipPreview: Component<ZipPreviewProps> = props => {
         <Show when={error()}>
           <div class='p-8 text-center'>
             <p class='mb-2 text-red-500'>{error()}</p>
-            <p class='text-sm text-gray-500 dark:text-gray-400'>Try downloading the file instead.</p>
+            <p class='text-sm text-gray-500 dark:text-gray-400'>
+              Try downloading the file instead.
+            </p>
           </div>
         </Show>
 
@@ -245,7 +343,9 @@ export const ZipPreview: Component<ZipPreviewProps> = props => {
             Click on files to preview their contents
           </div>
           <ul class='space-y-1'>
-            <For each={tree()}>{node => <Node node={node} onToggle={toggleNode} onPreview={handlePreview} />}</For>
+            <For each={tree()}>
+              {node => <Node node={node} onToggle={toggleNode} onPreview={handlePreview} />}
+            </For>
           </ul>
         </Show>
       </div>
@@ -264,7 +364,12 @@ export const ZipPreview: Component<ZipPreviewProps> = props => {
                 class='ml-auto inline-flex items-center rounded-md bg-transparent p-1.5 text-sm text-gray-400 hover:bg-gray-200 hover:text-gray-900 dark:hover:bg-gray-600 dark:hover:text-white'
               >
                 <svg class='h-4 w-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                  <path stroke-linecap='round' stroke-linejoin='round' stroke-width={2} d='M6 18L18 6M6 6l12 12' />
+                  <path
+                    stroke-linecap='round'
+                    stroke-linejoin='round'
+                    stroke-width={2}
+                    d='M6 18L18 6M6 6l12 12'
+                  />
                 </svg>
                 <span class='sr-only'>Close</span>
               </button>

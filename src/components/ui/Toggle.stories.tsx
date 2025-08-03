@@ -118,7 +118,7 @@ export const SettingsPanel: Story = {
       autoSave: boolean
       analytics: boolean
     }
-    
+
     const [settings, setSettings] = createSignal<SettingsType>({
       notifications: true,
       darkMode: false,
@@ -227,7 +227,7 @@ export const Interactive: Story = {
       feature2: boolean
       feature3: boolean
     }
-    
+
     const [features, setFeatures] = createSignal<FeaturesType>({
       feature1: false,
       feature2: true,

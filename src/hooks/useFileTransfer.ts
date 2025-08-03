@@ -17,31 +17,31 @@ const PRIVACY_MODE_STORAGE_KEY = 'innerocket_privacy_mode'
 
 // Connection method options
 export const CONNECTION_METHODS = {
-  'auto': {
+  auto: {
     label: 'Automatic',
     description: 'Automatically choose the best connection method',
-    priority: ['direct', 'relay', 'turn']
+    priority: ['direct', 'relay', 'turn'],
   },
-  'direct': {
+  direct: {
     label: 'Direct P2P',
     description: 'Direct peer-to-peer connection (fastest, may not work behind NAT)',
-    priority: ['direct']
+    priority: ['direct'],
   },
-  'relay': {
+  relay: {
     label: 'Relay Server',
     description: 'Use relay servers when direct connection fails',
-    priority: ['direct', 'relay']
+    priority: ['direct', 'relay'],
   },
-  'turn': {
+  turn: {
     label: 'TURN Server',
     description: 'Use TURN servers for connections behind strict firewalls',
-    priority: ['direct', 'turn']
+    priority: ['direct', 'turn'],
   },
-  'fallback': {
+  fallback: {
     label: 'Adaptive Fallback',
     description: 'Try direct first, then fallback to relay/TURN as needed',
-    priority: ['direct', 'relay', 'turn']
-  }
+    priority: ['direct', 'relay', 'turn'],
+  },
 } as const
 
 export type ConnectionMethod = keyof typeof CONNECTION_METHODS
@@ -73,28 +73,28 @@ export const FILE_SIZE_PRESETS = {
   '500MB': 500 * 1024 * 1024,
   '1GB': 1 * 1024 * 1024 * 1024,
   '5GB': 5 * 1024 * 1024 * 1024,
-  'unlimited': 0 // 0 means no limit
+  unlimited: 0, // 0 means no limit
 } as const
 
 export type FileSizePreset = keyof typeof FILE_SIZE_PRESETS
 
 // Compression level presets
 export const COMPRESSION_LEVELS = {
-  'fast': {
+  fast: {
     level: 1,
     label: 'Fast',
-    description: 'Fastest compression, larger file size'
+    description: 'Fastest compression, larger file size',
   },
-  'balanced': {
+  balanced: {
     level: 6,
     label: 'Balanced',
-    description: 'Good balance of speed and compression'
+    description: 'Good balance of speed and compression',
   },
-  'best': {
+  best: {
     level: 9,
     label: 'Best',
-    description: 'Best compression, slower processing'
-  }
+    description: 'Best compression, slower processing',
+  },
 } as const
 
 export type CompressionLevelPreset = keyof typeof COMPRESSION_LEVELS
@@ -325,9 +325,12 @@ export function useFileTransfer() {
   const [autoAcceptFiles, setAutoAcceptFiles] = createSignal(loadAutoAcceptSetting())
   const [trustedPeers, setTrustedPeers] = createSignal<string[]>(loadTrustedPeers())
   const [maxFileSize, setMaxFileSize] = createSignal<number>(loadMaxFileSize())
-  const [compressionLevel, setCompressionLevel] = createSignal<CompressionLevelPreset>(loadCompressionLevel())
-  const [connectionHistory, setConnectionHistory] = createSignal<ConnectionHistoryEntry[]>(loadConnectionHistory())
-  const [connectionMethod, setConnectionMethod] = createSignal<ConnectionMethod>(loadConnectionMethod())
+  const [compressionLevel, setCompressionLevel] =
+    createSignal<CompressionLevelPreset>(loadCompressionLevel())
+  const [connectionHistory, setConnectionHistory] =
+    createSignal<ConnectionHistoryEntry[]>(loadConnectionHistory())
+  const [connectionMethod, setConnectionMethod] =
+    createSignal<ConnectionMethod>(loadConnectionMethod())
   const [privacyMode, setPrivacyMode] = createSignal<boolean>(loadPrivacyMode())
 
   // Track active connections with their start times
@@ -443,7 +446,7 @@ export function useFileTransfer() {
   createEffect(() => {
     const enabled = privacyMode()
     savePrivacyMode(enabled)
-    
+
     // If privacy mode is enabled, clear existing history
     if (enabled) {
       setConnectionHistory([])
@@ -492,15 +495,15 @@ export function useFileTransfer() {
 
   const addTrustedPeer = (peerId: string) => {
     if (!peerId.trim()) return false
-    
+
     const normalizedPeerId = peerId.trim()
     const current = trustedPeers()
-    
+
     if (current.includes(normalizedPeerId)) {
       debugLog(`[TRUSTED_PEERS] Peer ${normalizedPeerId} already in trusted list`)
       return false
     }
-    
+
     setTrustedPeers([...current, normalizedPeerId])
     debugLog(`[TRUSTED_PEERS] Added peer ${normalizedPeerId} to trusted list`)
     return true
@@ -509,13 +512,13 @@ export function useFileTransfer() {
   const removeTrustedPeer = (peerId: string) => {
     const current = trustedPeers()
     const filtered = current.filter(id => id !== peerId)
-    
+
     if (filtered.length !== current.length) {
       setTrustedPeers(filtered)
       debugLog(`[TRUSTED_PEERS] Removed peer ${peerId} from trusted list`)
       return true
     }
-    
+
     return false
   }
 
@@ -555,7 +558,7 @@ export function useFileTransfer() {
     setConnectionHistory(prev => {
       const existingIndex = prev.findIndex(entry => entry.peerId === peerId)
       const now = Date.now()
-      
+
       if (existingIndex !== -1) {
         // Update existing entry
         const updated = [...prev]
@@ -565,7 +568,7 @@ export function useFileTransfer() {
           lastSeen: now,
           connectionCount: updated[existingIndex].connectionCount + 1,
           disconnectedAt: undefined,
-          duration: undefined
+          duration: undefined,
         }
         return updated
       } else {
@@ -576,14 +579,18 @@ export function useFileTransfer() {
           lastSeen: now,
           filesTransferred: 0,
           totalBytesTransferred: 0,
-          connectionCount: 1
+          connectionCount: 1,
         }
         return [...prev, newEntry].slice(-MAX_HISTORY_ENTRIES)
       }
     })
   }
 
-  const updateConnectionHistoryEntry = (peerId: string, disconnectedAt: number, duration: number) => {
+  const updateConnectionHistoryEntry = (
+    peerId: string,
+    disconnectedAt: number,
+    duration: number
+  ) => {
     setConnectionHistory(prev => {
       const existingIndex = prev.findIndex(entry => entry.peerId === peerId)
       if (existingIndex !== -1) {
@@ -592,7 +599,7 @@ export function useFileTransfer() {
           ...updated[existingIndex],
           disconnectedAt,
           duration,
-          lastSeen: disconnectedAt
+          lastSeen: disconnectedAt,
         }
         return updated
       }
@@ -612,7 +619,7 @@ export function useFileTransfer() {
           ...updated[existingIndex],
           filesTransferred: updated[existingIndex].filesTransferred + 1,
           totalBytesTransferred: updated[existingIndex].totalBytesTransferred + fileSize,
-          lastSeen: Date.now()
+          lastSeen: Date.now(),
         }
         return updated
       }

@@ -118,13 +118,23 @@ export function useWebRTCFileTransfer({
         const isAutoAcceptEnabled = autoAcceptFiles?.()
         const isPeerTrusted = !isTrustedPeer || isTrustedPeer()!(from.id)
         const isFileSizeOk = !isFileSizeAllowed || isFileSizeAllowed()!(metadata.size)
-        
+
         const shouldAutoAccept = isAutoAcceptEnabled && isPeerTrusted && isFileSizeOk
-        
+
         if (shouldAutoAccept) {
-          const trustStatus = isTrustedPeer ? (isTrustedPeer()!(from.id) ? 'trusted' : 'untrusted') : 'no-whitelist'
-          const sizeStatus = isFileSizeAllowed ? (isFileSizeAllowed()!(metadata.size) ? 'allowed' : 'too-large') : 'no-limit'
-          debugLog(`[AUTO-ACCEPT] Automatically accepting file: ${metadata.name} from ${from.id} (peer: ${trustStatus}, size: ${sizeStatus})`)
+          const trustStatus = isTrustedPeer
+            ? isTrustedPeer()!(from.id)
+              ? 'trusted'
+              : 'untrusted'
+            : 'no-whitelist'
+          const sizeStatus = isFileSizeAllowed
+            ? isFileSizeAllowed()!(metadata.size)
+              ? 'allowed'
+              : 'too-large'
+            : 'no-limit'
+          debugLog(
+            `[AUTO-ACCEPT] Automatically accepting file: ${metadata.name} from ${from.id} (peer: ${trustStatus}, size: ${sizeStatus})`
+          )
           // Auto-accept the file transfer
           setTimeout(() => {
             service.acceptFileTransfer(from.id, metadata)
@@ -136,8 +146,10 @@ export function useWebRTCFileTransfer({
           if (!isAutoAcceptEnabled) reason = 'auto-accept disabled'
           else if (!isPeerTrusted) reason = 'peer not trusted'
           else if (!isFileSizeOk) reason = 'file too large'
-          
-          debugLog(`[AUTO-ACCEPT] Manual approval required for ${metadata.name} from ${from.id}: ${reason}`)
+
+          debugLog(
+            `[AUTO-ACCEPT] Manual approval required for ${metadata.name} from ${from.id}: ${reason}`
+          )
           setIncomingRequests(prev => [...prev, request])
         }
       })

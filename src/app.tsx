@@ -515,12 +515,12 @@ export function App() {
                     </div>
 
                     {/* Connection History */}
-                    <div class="space-y-4">
-                      <h3 class="text-lg font-medium text-gray-900 dark:text-white">
+                    <div class='space-y-4'>
+                      <h3 class='text-lg font-medium text-gray-900 dark:text-white'>
                         Connection History
                       </h3>
 
-                      <div class="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+                      <div class='rounded-lg border border-gray-200 p-4 dark:border-gray-700'>
                         <ConnectionHistory
                           connectionHistory={connectionHistory}
                           connectedPeers={connectedPeers}
@@ -534,12 +534,12 @@ export function App() {
                     </div>
 
                     {/* Connection Method Settings */}
-                    <div class="space-y-4">
-                      <h3 class="text-lg font-medium text-gray-900 dark:text-white">
+                    <div class='space-y-4'>
+                      <h3 class='text-lg font-medium text-gray-900 dark:text-white'>
                         Connection Method
                       </h3>
 
-                      <div class="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+                      <div class='rounded-lg border border-gray-200 p-4 dark:border-gray-700'>
                         <ConnectionMethodSettings
                           connectionMethod={connectionMethod}
                           onSetConnectionMethod={setConnectionMethod}
@@ -549,12 +549,10 @@ export function App() {
                     </div>
 
                     {/* Privacy Settings */}
-                    <div class="space-y-4">
-                      <h3 class="text-lg font-medium text-gray-900 dark:text-white">
-                        Privacy
-                      </h3>
+                    <div class='space-y-4'>
+                      <h3 class='text-lg font-medium text-gray-900 dark:text-white'>Privacy</h3>
 
-                      <div class="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+                      <div class='rounded-lg border border-gray-200 p-4 dark:border-gray-700'>
                         <PrivacySettings
                           privacyMode={privacyMode}
                           onSetPrivacyMode={setPrivacyMode}

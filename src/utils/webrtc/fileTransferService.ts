@@ -43,11 +43,14 @@ export class FileTransferService {
     return this.compressionStats.get(transferId) || []
   }
 
-  public getTotalCompressionSavings(transferId: string): { savedBytes: number; savedPercentage: number } {
+  public getTotalCompressionSavings(transferId: string): {
+    savedBytes: number
+    savedPercentage: number
+  } {
     const stats = this.compressionStats.get(transferId) || []
     const totalOriginal = stats.reduce((sum, stat) => sum + stat.originalSize, 0)
     const totalCompressed = stats.reduce((sum, stat) => sum + stat.compressedSize, 0)
-    
+
     if (totalOriginal === 0) {
       return { savedBytes: 0, savedPercentage: 0 }
     }
@@ -57,7 +60,7 @@ export class FileTransferService {
 
     return {
       savedBytes,
-      savedPercentage: Math.round(savedPercentage * 100) / 100
+      savedPercentage: Math.round(savedPercentage * 100) / 100,
     }
   }
 
@@ -146,24 +149,32 @@ export class FileTransferService {
 
       // Log compression result
       if (processedChunk.isCompressed) {
-        const savings = ((processedChunk.originalSize - processedChunk.data.length) / processedChunk.originalSize * 100).toFixed(1)
-        debugLog(`[COMPRESSION] Chunk ${chunkIndex}: ${processedChunk.originalSize} bytes → ${processedChunk.data.length} bytes (${savings}% saved)`)
+        const savings = (
+          ((processedChunk.originalSize - processedChunk.data.length) /
+            processedChunk.originalSize) *
+          100
+        ).toFixed(1)
+        debugLog(
+          `[COMPRESSION] Chunk ${chunkIndex}: ${processedChunk.originalSize} bytes → ${processedChunk.data.length} bytes (${savings}% saved)`
+        )
       } else {
-        debugLog(`[COMPRESSION] Chunk ${chunkIndex}: No compression applied (${processedChunk.originalSize} bytes)`)
+        debugLog(
+          `[COMPRESSION] Chunk ${chunkIndex}: No compression applied (${processedChunk.originalSize} bytes)`
+        )
       }
 
       // Track compression stats
       if (!this.compressionStats.has(metadata.id)) {
         this.compressionStats.set(metadata.id, [])
       }
-      
+
       if (processedChunk.isCompressed && processedChunk.compressionRatio) {
         this.compressionStats.get(metadata.id)!.push({
           compressedData: processedChunk.data,
           originalSize: processedChunk.originalSize,
           compressedSize: processedChunk.data.length,
           compressionRatio: processedChunk.compressionRatio,
-          isCompressed: true
+          isCompressed: true,
         })
       }
 
@@ -202,7 +213,10 @@ export class FileTransferService {
       // Measure transfer rate if not the first chunk
       if (lastSendTime > 0 && processedChunk.data) {
         const timeTaken = now - lastSendTime // ms
-        const transferData = this.chunkProcessor.updateTransferRate(processedChunk.data.length, timeTaken)
+        const transferData = this.chunkProcessor.updateTransferRate(
+          processedChunk.data.length,
+          timeTaken
+        )
 
         chunkSize = transferData.newChunkSize
         currentTransferSpeed = transferData.transferSpeed

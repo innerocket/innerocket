@@ -125,22 +125,26 @@ export class ChunkProcessor {
     mimeType: string
   ): ChunkData {
     const shouldCompr = shouldCompress(filename, mimeType, chunkData.length)
-    debugLog(`[COMPRESSION] Processing chunk ${chunkIndex} for ${filename} (${mimeType}): compression=${this.compressionEnabled}, shouldCompress=${shouldCompr}`)
-    
+    debugLog(
+      `[COMPRESSION] Processing chunk ${chunkIndex} for ${filename} (${mimeType}): compression=${this.compressionEnabled}, shouldCompress=${shouldCompr}`
+    )
+
     if (!this.compressionEnabled || !shouldCompr) {
-      debugLog(`[COMPRESSION] Skipping compression for chunk ${chunkIndex}: enabled=${this.compressionEnabled}, should=${shouldCompr}`)
+      debugLog(
+        `[COMPRESSION] Skipping compression for chunk ${chunkIndex}: enabled=${this.compressionEnabled}, should=${shouldCompr}`
+      )
       return {
         data: chunkData,
         index: chunkIndex,
         isCompressed: false,
-        originalSize: chunkData.length
+        originalSize: chunkData.length,
       }
     }
 
     // Use user-configured compression level instead of automatic level
-    const compressionResult = compressDataSync(chunkData, { 
+    const compressionResult = compressDataSync(chunkData, {
       level: this.userCompressionLevel,
-      enableCompression: true 
+      enableCompression: true,
     })
 
     return {
@@ -148,7 +152,7 @@ export class ChunkProcessor {
       index: chunkIndex,
       isCompressed: compressionResult.isCompressed,
       originalSize: compressionResult.originalSize,
-      compressionRatio: compressionResult.compressionRatio
+      compressionRatio: compressionResult.compressionRatio,
     }
   }
 
@@ -195,7 +199,7 @@ export class ChunkProcessor {
     return {
       enabled: this.compressionEnabled,
       level: this.userCompressionLevel,
-      connectionQuality: this.connectionQuality
+      connectionQuality: this.connectionQuality,
     }
   }
 
