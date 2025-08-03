@@ -36,7 +36,7 @@ jobs:
         run: pnpm format:check
 
       - name: Type check
-        run: pnpm build
+        run: pnpm typecheck
 
   commitlint:
     name: Commit Message Check
