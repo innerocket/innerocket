@@ -69,6 +69,10 @@ Examples:
 5. Ensure all lint and format checks pass
 6. Keep pull requests focused and atomic
 
+### Merge Strategy
+
+This project primarily uses **Squash and merge** for pull requests to maintain a clean commit history. Regular merge may be used when preserving individual commits is important.
+
 ### Pull Request Template
 
 Your PR should include:
