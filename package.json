@@ -13,7 +13,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "storybook": "storybook dev -p 6006",
-    "storybook:build": "storybook build"
+    "storybook:build": "storybook build",
+    "typecheck": "tsc --noEmit"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
