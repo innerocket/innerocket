@@ -102,6 +102,20 @@ pnpm build
 - [PeerJS](https://peerjs.com/) - Simplifies WebRTC peer-to-peer data connections
 - [Tailwind CSS](https://tailwindcss.com/) - A utility-first CSS framework
 
+## Contributing
+
+We welcome contributions to Innerocket! Whether you're fixing bugs, adding new features, or improving documentation, your help is appreciated.
+
+For detailed contribution guidelines, please see:
+- [Contributing Guide](docs/CONTRIBUTING.md) - Complete setup instructions, development workflow, and pull request process
+- [Code of Conduct](docs/CODE_OF_CONDUCT.md) - Community standards and expected behavior
+
+Quick start for contributors:
+1. Fork the repository
+2. Create a feature branch
+3. Follow our coding standards and commit conventions
+4. Submit a pull request
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
