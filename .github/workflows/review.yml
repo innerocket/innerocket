@@ -151,6 +151,11 @@ jobs:
 
             report += '*This is an automated PR template compliance check.*';
 
+            // Fail the workflow if requirements are not met
+            if (uncheckedItems.length > 0 || missingItems.length > 0 || missingSections.length > 0) {
+              core.setFailed('PR template requirements are not satisfied. Please complete all required sections and checklist items.');
+            }
+
             // Find existing bot comments
             const comments = await github.rest.issues.listComments({
               owner: context.repo.owner,
