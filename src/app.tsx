@@ -7,7 +7,14 @@ import { FilePreview } from './components/FilePreview'
 import { NotificationContainer } from './components/Notification'
 import { IncomingRequests } from './components/IncomingRequests'
 import { HistoryTab } from './components/HistoryTab'
-import { TabsProvider, TabList, TabButton, TabContent } from './components/ui'
+import {
+  TabsProvider,
+  TabList,
+  TabButton,
+  TabContent,
+  Accordion,
+  AccordionItem,
+} from './components/ui'
 import { Toggle } from './components/ui/Toggle'
 import { TrustedPeersList } from './components/TrustedPeersList'
 import { FileSizeSettings } from './components/FileSizeSettings'
@@ -335,159 +342,163 @@ export function App() {
                     </p>
                   </div>
 
-                  {/* Compression Settings */}
-                  <div class='space-y-4'>
-                    <h3 class='text-lg font-medium text-gray-900 dark:text-white'>
-                      File Compression
-                    </h3>
-
-                    <div class='rounded-lg border border-gray-200 p-4 dark:border-gray-700'>
-                      <Toggle
-                        id='compression-toggle'
-                        checked={compressionEnabled?.()}
-                        onChange={setCompressionEnabled}
-                        label='Enable file compression'
-                        description='Automatically compress compatible files to reduce transfer time and bandwidth usage'
-                        variant='success'
-                        size='md'
-                      />
-
-                      <div class='mt-4 text-sm text-gray-600 dark:text-gray-400'>
-                        <p class='mb-2'>
-                          <strong>How it works:</strong> Text files, JSON, HTML, CSS, and other
-                          compatible formats are automatically compressed before transfer,
-                          potentially reducing file sizes by 70-90%.
-                        </p>
-                        <p>
-                          <strong>Note:</strong> Already compressed files (ZIP, images, videos) are
-                          not processed to avoid unnecessary overhead.
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Compression Statistics */}
-                    <Show when={compressionEnabled?.()}>
-                      <div class='rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-700 dark:bg-blue-900/20'>
-                        <h4 class='text-sm font-medium text-blue-800 dark:text-blue-300'>
-                          Compression Status
-                        </h4>
-                        <p class='text-sm text-blue-700 dark:text-blue-400'>
-                          File compression is currently <strong>enabled</strong>. Compatible files
-                          will be automatically compressed during transfer.
-                        </p>
-                        <div class='mt-3 rounded border border-blue-300 bg-blue-100 p-2 text-xs text-blue-800 dark:border-blue-600 dark:bg-blue-800/20 dark:text-blue-200'>
-                          <Show when={isDevelopment}>
-                            <div class='mb-1'>
-                              <strong>Status:</strong> Compression active and saved to browser
-                              storage
-                            </div>
-                            <div>
-                              <strong>Debug:</strong> Check browser console for compression logs
-                              when sending files
-                            </div>
-                          </Show>
-                        </div>
-                      </div>
-                    </Show>
-
-                    <Show when={!compressionEnabled?.()}>
-                      <div class='rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-600 dark:bg-gray-800'>
-                        <h4 class='text-sm font-medium text-gray-700 dark:text-gray-300'>
-                          Compression Status
-                        </h4>
-                        <p class='text-sm text-gray-600 dark:text-gray-400'>
-                          File compression is currently <strong>disabled</strong>. Files will be
-                          transferred without compression.
-                        </p>
-                        <div class='mt-3 rounded border border-gray-300 bg-gray-100 p-2 text-xs text-gray-700 dark:border-gray-500 dark:bg-gray-700/20 dark:text-gray-300'>
-                          <strong>Status:</strong> Setting saved to browser storage
-                        </div>
-                      </div>
-                    </Show>
-
-                    {/* Compression Level Settings */}
-                    <Show when={compressionEnabled?.()}>
+                  <Accordion class='space-y-4'>
+                    {/* File Compression Accordion Item */}
+                    <AccordionItem
+                      title='File Compression'
+                      subtitle='Configure compression settings for file transfers'
+                      defaultOpen={true}
+                    >
                       <div class='space-y-4'>
-                        <h4 class='text-md font-medium text-gray-800 dark:text-gray-200'>
-                          Advanced Compression
-                        </h4>
-
                         <div class='rounded-lg border border-gray-200 p-4 dark:border-gray-700'>
-                          <CompressionLevelSettings
-                            compressionEnabled={compressionEnabled}
-                            compressionLevel={compressionLevel}
-                            onSetCompressionLevel={setCompressionLevel}
+                          <Toggle
+                            id='compression-toggle'
+                            checked={compressionEnabled?.()}
+                            onChange={setCompressionEnabled}
+                            label='Enable file compression'
+                            description='Automatically compress compatible files to reduce transfer time and bandwidth usage'
+                            variant='success'
+                            size='md'
                           />
-                        </div>
-                      </div>
-                    </Show>
 
-                    {/* Auto-Accept Settings */}
-                    <div class='space-y-4'>
-                      <h3 class='text-lg font-medium text-gray-900 dark:text-white'>
-                        File Reception
-                      </h3>
-
-                      <div class='rounded-lg border border-gray-200 p-4 dark:border-gray-700'>
-                        <Toggle
-                          id='auto-accept-toggle'
-                          checked={autoAcceptFiles?.()}
-                          onChange={setAutoAcceptFiles}
-                          label='Auto-accept incoming files'
-                          description='Automatically accept all incoming file transfers without manual approval'
-                          variant='default'
-                          size='md'
-                        />
-
-                        <div class='mt-4 text-sm text-gray-600 dark:text-gray-400'>
-                          <p class='mb-2'>
-                            <strong>Manual approval (recommended):</strong> You will be prompted to
-                            accept or reject each incoming file transfer.
-                          </p>
-                          <p>
-                            <strong>Auto-accept:</strong> All incoming files will be automatically
-                            accepted and downloaded.
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Auto-Accept Status */}
-                      <Show when={autoAcceptFiles?.()}>
-                        <div class='rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-700 dark:bg-blue-900/20'>
-                          <h4 class='text-sm font-medium text-blue-800 dark:text-blue-300'>
-                            Auto-Accept Status
-                          </h4>
-                          <p class='text-sm text-blue-700 dark:text-blue-400'>
-                            <strong>Warning:</strong> Auto-accept is currently{' '}
-                            <strong>enabled</strong>. All incoming files will be automatically
-                            accepted without your approval.
-                          </p>
-                          <div class='mt-3 rounded border border-blue-300 bg-blue-100 p-2 text-xs text-blue-700 dark:border-blue-600 dark:bg-blue-800/20 dark:text-blue-200'>
-                            <strong>Security:</strong> Only enable this when receiving files from
-                            trusted sources
+                          <div class='mt-4 text-sm text-gray-600 dark:text-gray-400'>
+                            <p class='mb-2'>
+                              <strong>How it works:</strong> Text files, JSON, HTML, CSS, and other
+                              compatible formats are automatically compressed before transfer,
+                              potentially reducing file sizes by 70-90%.
+                            </p>
+                            <p>
+                              <strong>Note:</strong> Already compressed files (ZIP, images, videos)
+                              are not processed to avoid unnecessary overhead.
+                            </p>
                           </div>
                         </div>
-                      </Show>
 
-                      <Show when={!autoAcceptFiles?.()}>
-                        <div class='rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-700 dark:bg-blue-900/20'>
-                          <h4 class='text-sm font-medium text-blue-800 dark:text-blue-300'>
-                            Manual Approval Mode
-                          </h4>
-                          <p class='text-sm text-blue-700 dark:text-blue-400'>
-                            You will be asked to approve each incoming file transfer. This is the{' '}
-                            <strong>recommended</strong> setting for security.
-                          </p>
+                        {/* Compression Statistics */}
+                        <Show when={compressionEnabled?.()}>
+                          <div class='rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-700 dark:bg-blue-900/20'>
+                            <h4 class='text-sm font-medium text-blue-800 dark:text-blue-300'>
+                              Compression Status
+                            </h4>
+                            <p class='text-sm text-blue-700 dark:text-blue-400'>
+                              File compression is currently <strong>enabled</strong>. Compatible
+                              files will be automatically compressed during transfer.
+                            </p>
+                            <div class='mt-3 rounded border border-blue-300 bg-blue-100 p-2 text-xs text-blue-800 dark:border-blue-600 dark:bg-blue-800/20 dark:text-blue-200'>
+                              <Show when={isDevelopment}>
+                                <div class='mb-1'>
+                                  <strong>Status:</strong> Compression active and saved to browser
+                                  storage
+                                </div>
+                                <div>
+                                  <strong>Debug:</strong> Check browser console for compression logs
+                                  when sending files
+                                </div>
+                              </Show>
+                            </div>
+                          </div>
+                        </Show>
+
+                        <Show when={!compressionEnabled?.()}>
+                          <div class='rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-600 dark:bg-gray-800'>
+                            <h4 class='text-sm font-medium text-gray-700 dark:text-gray-300'>
+                              Compression Status
+                            </h4>
+                            <p class='text-sm text-gray-600 dark:text-gray-400'>
+                              File compression is currently <strong>disabled</strong>. Files will be
+                              transferred without compression.
+                            </p>
+                            <div class='mt-3 rounded border border-gray-300 bg-gray-100 p-2 text-xs text-gray-700 dark:border-gray-500 dark:bg-gray-700/20 dark:text-gray-300'>
+                              <strong>Status:</strong> Setting saved to browser storage
+                            </div>
+                          </div>
+                        </Show>
+
+                        {/* Compression Level Settings */}
+                        <Show when={compressionEnabled?.()}>
+                          <div class='space-y-4'>
+                            <h4 class='text-md font-medium text-gray-800 dark:text-gray-200'>
+                              Advanced Compression
+                            </h4>
+
+                            <div class='rounded-lg border border-gray-200 p-4 dark:border-gray-700'>
+                              <CompressionLevelSettings
+                                compressionEnabled={compressionEnabled}
+                                compressionLevel={compressionLevel}
+                                onSetCompressionLevel={setCompressionLevel}
+                              />
+                            </div>
+                          </div>
+                        </Show>
+                      </div>
+                    </AccordionItem>
+
+                    {/* File Reception Accordion Item */}
+                    <AccordionItem
+                      title='File Reception'
+                      subtitle='Configure how incoming files are handled'
+                    >
+                      <div class='space-y-4'>
+                        <div class='rounded-lg border border-gray-200 p-4 dark:border-gray-700'>
+                          <Toggle
+                            id='auto-accept-toggle'
+                            checked={autoAcceptFiles?.()}
+                            onChange={setAutoAcceptFiles}
+                            label='Auto-accept incoming files'
+                            description='Automatically accept all incoming file transfers without manual approval'
+                            variant='default'
+                            size='md'
+                          />
+
+                          <div class='mt-4 text-sm text-gray-600 dark:text-gray-400'>
+                            <p class='mb-2'>
+                              <strong>Manual approval (recommended):</strong> You will be prompted
+                              to accept or reject each incoming file transfer.
+                            </p>
+                            <p>
+                              <strong>Auto-accept:</strong> All incoming files will be automatically
+                              accepted and downloaded.
+                            </p>
+                          </div>
                         </div>
-                      </Show>
-                    </div>
 
-                    {/* File Size Settings */}
-                    <div class='space-y-4'>
-                      <h3 class='text-lg font-medium text-gray-900 dark:text-white'>
-                        File Size Limits
-                      </h3>
+                        {/* Auto-Accept Status */}
+                        <Show when={autoAcceptFiles?.()}>
+                          <div class='rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-700 dark:bg-blue-900/20'>
+                            <h4 class='text-sm font-medium text-blue-800 dark:text-blue-300'>
+                              Auto-Accept Status
+                            </h4>
+                            <p class='text-sm text-blue-700 dark:text-blue-400'>
+                              <strong>Warning:</strong> Auto-accept is currently{' '}
+                              <strong>enabled</strong>. All incoming files will be automatically
+                              accepted without your approval.
+                            </p>
+                            <div class='mt-3 rounded border border-blue-300 bg-blue-100 p-2 text-xs text-blue-700 dark:border-blue-600 dark:bg-blue-800/20 dark:text-blue-200'>
+                              <strong>Security:</strong> Only enable this when receiving files from
+                              trusted sources
+                            </div>
+                          </div>
+                        </Show>
 
+                        <Show when={!autoAcceptFiles?.()}>
+                          <div class='rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-700 dark:bg-blue-900/20'>
+                            <h4 class='text-sm font-medium text-blue-800 dark:text-blue-300'>
+                              Manual Approval Mode
+                            </h4>
+                            <p class='text-sm text-blue-700 dark:text-blue-400'>
+                              You will be asked to approve each incoming file transfer. This is the{' '}
+                              <strong>recommended</strong> setting for security.
+                            </p>
+                          </div>
+                        </Show>
+                      </div>
+                    </AccordionItem>
+
+                    {/* File Management Accordion Item */}
+                    <AccordionItem
+                      title='File Management'
+                      subtitle='Set file size limits and transfer preferences'
+                    >
                       <div class='rounded-lg border border-gray-200 p-4 dark:border-gray-700'>
                         <FileSizeSettings
                           maxFileSize={maxFileSize}
@@ -496,71 +507,81 @@ export function App() {
                           onSetCustomSize={setMaxFileSize}
                         />
                       </div>
-                    </div>
+                    </AccordionItem>
 
-                    {/* Trusted Peers Settings */}
-                    <div class='space-y-4'>
-                      <h3 class='text-lg font-medium text-gray-900 dark:text-white'>
-                        Trusted Peers
-                      </h3>
+                    {/* Peer Management Accordion Item */}
+                    <AccordionItem
+                      title='Peer Management'
+                      subtitle='Manage trusted peers and connection history'
+                    >
+                      <div class='space-y-6'>
+                        <div>
+                          <h4 class='text-md mb-3 font-medium text-gray-800 dark:text-gray-200'>
+                            Trusted Peers
+                          </h4>
+                          <div class='rounded-lg border border-gray-200 p-4 dark:border-gray-700'>
+                            <TrustedPeersList
+                              trustedPeers={trustedPeers}
+                              connectedPeers={connectedPeers}
+                              onAddTrustedPeer={addTrustedPeer}
+                              onRemoveTrustedPeer={removeTrustedPeer}
+                            />
+                          </div>
+                        </div>
 
-                      <div class='rounded-lg border border-gray-200 p-4 dark:border-gray-700'>
-                        <TrustedPeersList
-                          trustedPeers={trustedPeers}
-                          connectedPeers={connectedPeers}
-                          onAddTrustedPeer={addTrustedPeer}
-                          onRemoveTrustedPeer={removeTrustedPeer}
-                        />
+                        <div>
+                          <h4 class='text-md mb-3 font-medium text-gray-800 dark:text-gray-200'>
+                            Connection History
+                          </h4>
+                          <div class='rounded-lg border border-gray-200 p-4 dark:border-gray-700'>
+                            <ConnectionHistory
+                              connectionHistory={connectionHistory}
+                              connectedPeers={connectedPeers}
+                              formatFileSize={formatFileSize}
+                              formatDuration={formatDuration}
+                              onClearHistory={clearConnectionHistory}
+                              onAddTrustedPeer={addTrustedPeer}
+                              privacyMode={privacyMode}
+                            />
+                          </div>
+                        </div>
                       </div>
-                    </div>
+                    </AccordionItem>
 
-                    {/* Connection History */}
-                    <div class='space-y-4'>
-                      <h3 class='text-lg font-medium text-gray-900 dark:text-white'>
-                        Connection History
-                      </h3>
+                    {/* Connection & Privacy Accordion Item */}
+                    <AccordionItem
+                      title='Connection & Privacy'
+                      subtitle='Configure connection methods and privacy settings'
+                    >
+                      <div class='space-y-6'>
+                        <div>
+                          <h4 class='text-md mb-3 font-medium text-gray-800 dark:text-gray-200'>
+                            Connection Method
+                          </h4>
+                          <div class='rounded-lg border border-gray-200 p-4 dark:border-gray-700'>
+                            <ConnectionMethodSettings
+                              connectionMethod={connectionMethod}
+                              onSetConnectionMethod={setConnectionMethod}
+                              connectedPeers={connectedPeers}
+                            />
+                          </div>
+                        </div>
 
-                      <div class='rounded-lg border border-gray-200 p-4 dark:border-gray-700'>
-                        <ConnectionHistory
-                          connectionHistory={connectionHistory}
-                          connectedPeers={connectedPeers}
-                          formatFileSize={formatFileSize}
-                          formatDuration={formatDuration}
-                          onClearHistory={clearConnectionHistory}
-                          onAddTrustedPeer={addTrustedPeer}
-                          privacyMode={privacyMode}
-                        />
+                        <div>
+                          <h4 class='text-md mb-3 font-medium text-gray-800 dark:text-gray-200'>
+                            Privacy Settings
+                          </h4>
+                          <div class='rounded-lg border border-gray-200 p-4 dark:border-gray-700'>
+                            <PrivacySettings
+                              privacyMode={privacyMode}
+                              onSetPrivacyMode={setPrivacyMode}
+                              connectionHistoryCount={() => connectionHistory().length}
+                            />
+                          </div>
+                        </div>
                       </div>
-                    </div>
-
-                    {/* Connection Method Settings */}
-                    <div class='space-y-4'>
-                      <h3 class='text-lg font-medium text-gray-900 dark:text-white'>
-                        Connection Method
-                      </h3>
-
-                      <div class='rounded-lg border border-gray-200 p-4 dark:border-gray-700'>
-                        <ConnectionMethodSettings
-                          connectionMethod={connectionMethod}
-                          onSetConnectionMethod={setConnectionMethod}
-                          connectedPeers={connectedPeers}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Privacy Settings */}
-                    <div class='space-y-4'>
-                      <h3 class='text-lg font-medium text-gray-900 dark:text-white'>Privacy</h3>
-
-                      <div class='rounded-lg border border-gray-200 p-4 dark:border-gray-700'>
-                        <PrivacySettings
-                          privacyMode={privacyMode}
-                          onSetPrivacyMode={setPrivacyMode}
-                          connectionHistoryCount={() => connectionHistory().length}
-                        />
-                      </div>
-                    </div>
-                  </div>
+                    </AccordionItem>
+                  </Accordion>
                 </div>
               </TabContent>
             </div>
