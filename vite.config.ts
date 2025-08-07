@@ -14,6 +14,7 @@ export default defineConfig({
     lucidePreprocess(),
     VitePWA({
       registerType: 'autoUpdate',
+      includeAssets: ['favicon.ico', 'icon.svg', 'apple-touch-icon.png', 'images/*.png'],
       manifest: {
         name: 'Innerocket',
         short_name: 'Innerocket',
