@@ -31,7 +31,6 @@
     "peerjs": "^1.5.1",
     "qr-scanner": "^1.4.2",
     "qrcode": "^1.5.4",
-    "simple-peer": "^9.11.1",
     "solid-js": "^1.9.7",
     "sqids": "^0.3.0",
     "tailwind-variants": "^1.0.0",
@@ -58,6 +57,7 @@
     "eslint-plugin-oxlint": "^1.5.0",
     "eslint-plugin-prettier": "^5.5.1",
     "eslint-plugin-solid": "^0.14.5",
+    "eslint-plugin-storybook": "9.1.0",
     "globals": "^16.2.0",
     "husky": "^9.1.7",
     "oxlint": "^1.5.0",
@@ -74,7 +74,6 @@
     "vite-plugin-pwa": "^1.0.0",
     "vite-plugin-sitemap": "^0.8.2",
     "vite-plugin-solid": "^2.11.7",
-    "vitest": "^3.2.4",
-    "eslint-plugin-storybook": "9.1.0"
+    "vitest": "^3.2.4"
   }
 }
