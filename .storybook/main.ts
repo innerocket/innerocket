@@ -8,6 +8,7 @@ const config: StorybookConfig = {
     '@storybook/addon-docs',
     '@storybook/addon-a11y',
     '@storybook/addon-vitest',
+    'storybook-addon-tailwind-dark',
   ],
   framework: {
     name: 'storybook-solidjs-vite',

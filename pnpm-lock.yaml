@@ -69,6 +69,9 @@ importers:
       '@storybook/addon-onboarding':
         specifier: ^9.1.1
         version: 9.1.1(storybook@9.1.1(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@6.3.5(@types/node@24.0.14)(jiti@2.4.2)(lightningcss@1.30.1)(terser@5.43.1)))
+      '@storybook/addon-themes':
+        specifier: ^9.1.1
+        version: 9.1.1(storybook@9.1.1(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@6.3.5(@types/node@24.0.14)(jiti@2.4.2)(lightningcss@1.30.1)(terser@5.43.1)))
       '@storybook/addon-vitest':
         specifier: ^9.1.1
         version: 9.1.1(@vitest/browser@3.2.4)(@vitest/runner@3.2.4)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(storybook@9.1.1(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@6.3.5(@types/node@24.0.14)(jiti@2.4.2)(lightningcss@1.30.1)(terser@5.43.1)))(vitest@3.2.4)
@@ -129,6 +132,9 @@ importers:
       storybook:
         specifier: ^9.1.1
         version: 9.1.1(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@6.3.5(@types/node@24.0.14)(jiti@2.4.2)(lightningcss@1.30.1)(terser@5.43.1))
+      storybook-addon-tailwind-dark:
+        specifier: ^1.0.1
+        version: 1.0.1(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(storybook@9.1.1(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@6.3.5(@types/node@24.0.14)(jiti@2.4.2)(lightningcss@1.30.1)(terser@5.43.1)))
       storybook-solidjs-vite:
         specifier: ^9.0.2
         version: 9.0.2(@testing-library/jest-dom@6.6.4)(solid-js@1.9.7)(storybook@9.1.1(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@6.3.5(@types/node@24.0.14)(jiti@2.4.2)(lightningcss@1.30.1)(terser@5.43.1)))(typescript@5.8.3)(vite@6.3.5(@types/node@24.0.14)(jiti@2.4.2)(lightningcss@1.30.1)(terser@5.43.1))
@@ -1269,6 +1275,11 @@ packages:
 
   '@storybook/addon-onboarding@9.1.1':
     resolution: {integrity: sha512-QHkirYjgHqhJMmD2riVJ4qvkwNif79phEJuMd+Zna2niT5MMkmFSd+lfLgbEYr6ufbL2OWnsoUmxRY5s3RgKQw==}
+    peerDependencies:
+      storybook: ^9.1.1
+
+  '@storybook/addon-themes@9.1.1':
+    resolution: {integrity: sha512-NarM0HRIWvhQKsBq6O0y3ZUPMY2jjbNGVCEXrC3EmpcQ9uPavEwOYvx221N3uPZ32KM2G5V533lWGiZdAlgfmQ==}
     peerDependencies:
       storybook: ^9.1.1
 
@@ -3397,6 +3408,11 @@ packages:
     resolution: {integrity: sha512-eLoXW/DHyl62zxY4SCaIgnRhuMr6ri4juEYARS8E6sCEqzKpOiE521Ucofdx+KnDZl5xmvGYaaKCk5FEOxJCoQ==}
     engines: {node: '>= 0.4'}
 
+  storybook-addon-tailwind-dark@1.0.1:
+    resolution: {integrity: sha512-fJdUyN86vZHGFd0TCros7wFqBf8KEoQZJ+r2/G4vQ6NisbazpHYbUUxTFzk4zyqMYqkGAW05TgAUI6yg3Lwmqw==}
+    peerDependencies:
+      storybook: ^8.3.0 || 0.0.0-pr-26654-sha-49d01553
+
   storybook-solidjs-vite@9.0.2:
     resolution: {integrity: sha512-G98iBaupTd93GqXw8SKQJTZzKy2F7Eqb+uqLZKcF7ZEChqzDTO/rVyt5PU2cN/waNF8d2SS2ugkSfOPQ5AxZgg==}
     peerDependencies:
@@ -5130,6 +5146,11 @@ snapshots:
   '@storybook/addon-onboarding@9.1.1(storybook@9.1.1(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@6.3.5(@types/node@24.0.14)(jiti@2.4.2)(lightningcss@1.30.1)(terser@5.43.1)))':
     dependencies:
       storybook: 9.1.1(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@6.3.5(@types/node@24.0.14)(jiti@2.4.2)(lightningcss@1.30.1)(terser@5.43.1))
+
+  '@storybook/addon-themes@9.1.1(storybook@9.1.1(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@6.3.5(@types/node@24.0.14)(jiti@2.4.2)(lightningcss@1.30.1)(terser@5.43.1)))':
+    dependencies:
+      storybook: 9.1.1(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@6.3.5(@types/node@24.0.14)(jiti@2.4.2)(lightningcss@1.30.1)(terser@5.43.1))
+      ts-dedent: 2.2.0
 
   '@storybook/addon-vitest@9.1.1(@vitest/browser@3.2.4)(@vitest/runner@3.2.4)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(storybook@9.1.1(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@6.3.5(@types/node@24.0.14)(jiti@2.4.2)(lightningcss@1.30.1)(terser@5.43.1)))(vitest@3.2.4)':
     dependencies:
@@ -7286,6 +7307,14 @@ snapshots:
     dependencies:
       es-errors: 1.3.0
       internal-slot: 1.1.0
+
+  storybook-addon-tailwind-dark@1.0.1(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(storybook@9.1.1(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@6.3.5(@types/node@24.0.14)(jiti@2.4.2)(lightningcss@1.30.1)(terser@5.43.1))):
+    dependencies:
+      '@storybook/icons': 1.4.0(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
+      storybook: 9.1.1(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@6.3.5(@types/node@24.0.14)(jiti@2.4.2)(lightningcss@1.30.1)(terser@5.43.1))
+    transitivePeerDependencies:
+      - react
+      - react-dom
 
   storybook-solidjs-vite@9.0.2(@testing-library/jest-dom@6.6.4)(solid-js@1.9.7)(storybook@9.1.1(@testing-library/dom@10.4.1)(prettier@3.6.2)(vite@6.3.5(@types/node@24.0.14)(jiti@2.4.2)(lightningcss@1.30.1)(terser@5.43.1)))(typescript@5.8.3)(vite@6.3.5(@types/node@24.0.14)(jiti@2.4.2)(lightningcss@1.30.1)(terser@5.43.1)):
     dependencies:
