@@ -47,50 +47,50 @@ export default defineConfig(({ mode }) => {
   const cloudflareToken = env.VITE_CLOUDFLARE_ANALYTICS_TOKEN
 
   return {
-  plugins: [
-    solid(),
-    tailwindcss(),
-    lucidePreprocess(),
-    inlineCloudflareBeacon(cloudflareToken),
-    VitePWA({
-      registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'icon.svg', 'apple-touch-icon.png', 'images/*.png'],
-      manifest: {
-        name: 'Innerocket',
-        short_name: 'Innerocket',
-        description: 'File sharing with rocket speed and privacy.',
-        start_url: '/',
-        display: 'standalone',
-        background_color: '#ffffff',
-        theme_color: '#0969DA',
-        icons: [
-          {
-            src: '/images/icon-192x192.png',
-            sizes: '192x192',
-            type: 'image/png',
-          },
-          {
-            src: '/images/icon-512x512.png',
-            sizes: '512x512',
-            type: 'image/png',
-          },
-        ],
-      },
-    }),
-    ViteMinifyPlugin({
-      removeComments: true,
-      collapseWhitespace: true,
-      removeAttributeQuotes: true,
-      removeRedundantAttributes: true,
-      useShortDoctype: true,
-      removeEmptyAttributes: false,
-    }),
-    Sitemap({
-      hostname: env.VITE_SITE_URL || 'https://innerocket.com',
-    }),
-  ],
-  build: {
-    minify: 'terser',
-  },
+    plugins: [
+      solid(),
+      tailwindcss(),
+      lucidePreprocess(),
+      inlineCloudflareBeacon(cloudflareToken),
+      VitePWA({
+        registerType: 'autoUpdate',
+        includeAssets: ['favicon.ico', 'icon.svg', 'apple-touch-icon.png', 'images/*.png'],
+        manifest: {
+          name: 'Innerocket',
+          short_name: 'Innerocket',
+          description: 'File sharing with rocket speed and privacy.',
+          start_url: '/',
+          display: 'standalone',
+          background_color: '#ffffff',
+          theme_color: '#0969DA',
+          icons: [
+            {
+              src: '/images/icon-192x192.png',
+              sizes: '192x192',
+              type: 'image/png',
+            },
+            {
+              src: '/images/icon-512x512.png',
+              sizes: '512x512',
+              type: 'image/png',
+            },
+          ],
+        },
+      }),
+      ViteMinifyPlugin({
+        removeComments: true,
+        collapseWhitespace: true,
+        removeAttributeQuotes: true,
+        removeRedundantAttributes: true,
+        useShortDoctype: true,
+        removeEmptyAttributes: false,
+      }),
+      Sitemap({
+        hostname: env.VITE_SITE_URL || 'https://innerocket.com',
+      }),
+    ],
+    build: {
+      minify: 'terser',
+    },
   }
 })
