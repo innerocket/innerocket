@@ -33,7 +33,7 @@ function inlineCloudflareBeacon(token?: string): Plugin {
 
         // Inject Cloudflare analytics before </head>
         const cloudflareScript = `
-    <script defer data-cf-beacon='{"token": "${token}"}'>${beaconContent}</script>`
+    <script data-cf-beacon='{"token": "${token}"}'>${beaconContent}</script>`
 
         return html.replace('</head>', `${cloudflareScript}\n  </head>`)
       },
