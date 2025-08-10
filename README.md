@@ -95,6 +95,34 @@ pnpm dev
 pnpm build
 ```
 
+### Analytics Configuration
+
+Innerocket supports optional analytics integration with Google Analytics (GA4) and Cloudflare Web Analytics. Analytics are only enabled in production builds when environment variables are explicitly configured.
+
+#### Environment Variables
+
+Configure analytics by setting these environment variables:
+
+```bash
+# Google Analytics (GA4)
+VITE_GOOGLE_ANALYTICS_ID=G-XXXXXXXXXX
+
+# Cloudflare Web Analytics
+VITE_CLOUDFLARE_ANALYTICS_TOKEN=YOUR_BEACON_TOKEN
+```
+
+#### Analytics Features
+
+- **Production Only**: Analytics scripts are only loaded when `NODE_ENV=production`
+- **Privacy Respecting**: Honors Do Not Track browser settings
+- **Conditional Loading**: Scripts are only loaded when environment variables are set
+- **Non-blocking**: Uses `async`/`defer` for optimal performance
+- **Privacy Enhanced**: Google Analytics configured with anonymized IP and disabled personalization
+
+#### Disable Analytics
+
+To disable analytics, simply don't set the environment variables or set them to empty values. When no analytics environment variables are configured, no tracking scripts are loaded.
+
 ## Technologies Used
 
 - [SolidJS](https://solidjs.com/) - Reactive UI library for the web
