@@ -48,11 +48,11 @@ const iconButton = tv({
 const iconSize = tv({
   variants: {
     size: {
-      xs: 'h-3 w-3',
-      sm: 'h-4 w-4',
-      md: 'h-5 w-5',
-      lg: 'h-6 w-6',
-      xl: 'h-7 w-7',
+      xs: 'h-3 w-3 [&>svg]:h-3 [&>svg]:w-3',
+      sm: 'h-4 w-4 [&>svg]:h-4 [&>svg]:w-4',
+      md: 'h-5 w-5 [&>svg]:h-5 [&>svg]:w-5',
+      lg: 'h-6 w-6 [&>svg]:h-6 [&>svg]:w-6',
+      xl: 'h-7 w-7 [&>svg]:h-7 [&>svg]:w-7',
     },
   },
   defaultVariants: {
