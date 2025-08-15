@@ -11,8 +11,15 @@ const inputWrapper = tv({
 })
 
 const inputStyles = tv({
-  base: 'block p-2.5 px-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-0 transition-all duration-200 text-sm',
+  base: 'block rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-0 transition-all duration-200',
   variants: {
+    size: {
+      xs: 'p-1.5 px-2.5 text-xs',
+      sm: 'p-2 px-3 text-sm',
+      md: 'p-2.5 px-3 text-sm',
+      lg: 'p-3 px-4 text-base',
+      xl: 'p-3.5 px-4 text-base',
+    },
     error: {
       true: 'bg-red-50 border border-red-400 text-red-900 placeholder-red-600 focus:ring-red-500 dark:bg-red-900/20 dark:border-red-500 dark:text-red-200 dark:placeholder-red-400',
       false:
@@ -27,6 +34,9 @@ const inputStyles = tv({
     fullWidth: {
       true: 'w-full',
     },
+  },
+  defaultVariants: {
+    size: 'md',
   },
 })
 
@@ -52,6 +62,7 @@ export type InputProps = JSX.InputHTMLAttributes<HTMLInputElement> & {
   label?: string
   error?: string
   hint?: string
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl'
   fullWidth?: boolean
   icon?: JSX.Element
   rightIcon?: JSX.Element
@@ -63,6 +74,7 @@ export const Input: Component<InputProps> = props => {
     'label',
     'error',
     'hint',
+    'size',
     'fullWidth',
     'icon',
     'rightIcon',
@@ -72,6 +84,7 @@ export const Input: Component<InputProps> = props => {
 
   const inputWrapperClasses = inputWrapper({ fullWidth: local.fullWidth })
   const inputClasses = inputStyles({
+    size: local.size,
     error: !!local.error,
     icon: !!local.icon,
     rightIcon: !!local.rightIcon,

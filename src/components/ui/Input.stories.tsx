@@ -27,6 +27,10 @@ const meta = {
       control: { type: 'select' },
       options: ['text', 'email', 'password', 'number', 'tel', 'url'],
     },
+    size: {
+      control: { type: 'select' },
+      options: ['xs', 'sm', 'md', 'lg', 'xl'],
+    },
     fullWidth: {
       control: { type: 'boolean' },
     },
@@ -148,8 +152,11 @@ export const States: Story = {
 export const Sizes: Story = {
   render: () => (
     <div class='space-y-4'>
-      <Input placeholder='Default size input' />
-      <Input placeholder='Full width input' fullWidth />
+      <Input size='xs' placeholder='Extra Small' label='XS Input' />
+      <Input size='sm' placeholder='Small' label='SM Input' />
+      <Input size='md' placeholder='Medium (Default)' label='MD Input' />
+      <Input size='lg' placeholder='Large' label='LG Input' />
+      <Input size='xl' placeholder='Extra Large' label='XL Input' />
     </div>
   ),
 }
