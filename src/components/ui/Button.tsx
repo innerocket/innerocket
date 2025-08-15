@@ -49,6 +49,7 @@ const button = tv({
 export type ButtonProps = JSX.ButtonHTMLAttributes<HTMLButtonElement> &
   VariantProps<typeof button> & {
     icon?: JSX.Element
+    iconPosition?: 'left' | 'right'
     isLoading?: boolean
   }
 
@@ -57,6 +58,7 @@ export const Button: Component<ButtonProps> = props => {
     'variant',
     'size',
     'icon',
+    'iconPosition',
     'fullWidth',
     'isLoading',
     'disabled',
@@ -66,6 +68,7 @@ export const Button: Component<ButtonProps> = props => {
 
   // Explicitly compute the disabled state to ensure reactivity
   const isDisabled = () => local.disabled || local.isLoading
+  const iconPos = () => local.iconPosition || 'left'
 
   return (
     <button
@@ -83,10 +86,13 @@ export const Button: Component<ButtonProps> = props => {
       <Show when={local.isLoading}>
         <Loader class='mr-3 inline h-4 w-4 animate-spin text-current' />
       </Show>
-      <Show when={!local.isLoading && local.icon}>
+      <Show when={!local.isLoading && local.icon && iconPos() === 'left'}>
         <span class='mr-2'>{local.icon}</span>
       </Show>
       {local.children}
+      <Show when={!local.isLoading && local.icon && iconPos() === 'right'}>
+        <span class='ml-2'>{local.icon}</span>
+      </Show>
     </button>
   )
 }

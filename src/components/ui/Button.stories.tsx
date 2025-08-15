@@ -37,6 +37,10 @@ const meta = {
     isLoading: {
       control: { type: 'boolean' },
     },
+    iconPosition: {
+      control: { type: 'select' },
+      options: ['left', 'right'],
+    },
   },
 } satisfies Meta<typeof Button>
 
@@ -137,4 +141,17 @@ export const WithClickHandler: Story = {
     variant: 'primary',
     onClick: () => alert('Button clicked!'),
   },
+}
+
+export const IconPositions: Story = {
+  render: () => (
+    <div class='flex items-center gap-4'>
+      <Button icon={<Plus class='h-4 w-4' />} iconPosition='left' variant='primary'>
+        Left Icon
+      </Button>
+      <Button icon={<Plus class='h-4 w-4' />} iconPosition='right' variant='primary'>
+        Right Icon
+      </Button>
+    </div>
+  ),
 }
