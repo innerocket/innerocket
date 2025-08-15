@@ -3,7 +3,7 @@ import { Loader } from 'lucide-solid'
 import { tv, type VariantProps } from 'tailwind-variants'
 
 const button = tv({
-  base: 'inline-flex items-center justify-center font-medium rounded-md transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-95',
+  base: 'inline-flex items-center justify-center font-medium rounded-md transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
   variants: {
     variant: {
       primary:
