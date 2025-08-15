@@ -5,7 +5,7 @@ const toggleVariants = tv({
   slots: {
     base: 'relative inline-flex items-center cursor-pointer',
     switch:
-      'relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2',
+      'relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2',
     thumb: 'inline-block h-3 w-3 transform rounded-full bg-white transition-transform',
   },
   variants: {
