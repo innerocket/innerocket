@@ -26,10 +26,10 @@ const inputStyles = tv({
         'bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-500 focus:ring-blue-400 dark:bg-gray-800 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500',
     },
     icon: {
-      true: 'pl-11',
+      true: 'pl-10',
     },
     rightIcon: {
-      true: 'pr-11',
+      true: 'pr-10',
     },
     fullWidth: {
       true: 'w-full',
@@ -45,11 +45,11 @@ const iconWrapper = tv({
 })
 
 const leftIconWrapper = tv({
-  base: 'absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none',
+  base: 'absolute inset-y-0 left-0 flex items-center justify-center w-10 pointer-events-none',
 })
 
 const rightIconWrapper = tv({
-  base: 'absolute inset-y-0 right-0 flex items-center pr-3',
+  base: 'absolute inset-y-0 right-0 flex items-center justify-center w-10',
   variants: {
     clickable: {
       true: 'cursor-pointer',
