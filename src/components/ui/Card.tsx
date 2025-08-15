@@ -33,7 +33,7 @@ export const Card: Component<CardProps> = props => {
     >
       <Show when={hasHeader()}>
         <div
-          class={`rounded-t-lg border-b border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100 p-4 sm:p-6 dark:border-gray-700 dark:from-gray-800 dark:to-gray-700 ${
+          class={`rounded-t-lg border-b border-gray-200 bg-gray-50 p-4 sm:p-6 dark:border-gray-700 dark:bg-gray-800 ${
             local.headerClass || ''
           }`}
         >
