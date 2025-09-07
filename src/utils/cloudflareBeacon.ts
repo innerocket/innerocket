@@ -1,5 +1,4 @@
 import type { Plugin } from 'vite'
-import { logger } from './logger'
 
 export function inlineCloudflareBeacon(token?: string): Plugin {
   let beaconContent = ''
@@ -13,7 +12,7 @@ export function inlineCloudflareBeacon(token?: string): Plugin {
           beaconContent = await response.text()
         }
       } catch (error) {
-        logger.warn('Failed to fetch Cloudflare beacon:', error)
+        console.warn('Failed to fetch Cloudflare beacon:', error)
       }
     },
     transformIndexHtml: {
