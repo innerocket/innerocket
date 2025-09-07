@@ -1,6 +1,7 @@
 import { Peer as PeerJS } from 'peerjs'
 import type { FileMetadata } from '../../types'
 import type { WebRTCCallbacks, Peer } from './types'
+import { logger } from '../logger'
 
 type DataConnection = {
   peer: string
@@ -56,7 +57,7 @@ export class ConnectionManager {
 
   private setupEventListeners(): void {
     this.peer.on('open', id => {
-      console.log('My peer ID is:', id)
+      logger.info('My peer ID is:', id)
       this.myPeerId = id
     })
 
@@ -65,7 +66,7 @@ export class ConnectionManager {
     })
 
     this.peer.on('error', err => {
-      console.error('PeerJS error:', err)
+      logger.error('PeerJS error:', err)
     })
   }
 
@@ -73,7 +74,7 @@ export class ConnectionManager {
     const peerId = conn.peer
 
     conn.on('open', () => {
-      console.log('Connected to peer:', peerId)
+      logger.info('Connected to peer:', peerId)
       this.connections.set(peerId, conn)
       this.discoveredPeers.set(peerId, { id: peerId })
       this.callbacks.onPeerConnected?.({ id: peerId })
@@ -88,13 +89,13 @@ export class ConnectionManager {
     })
 
     conn.on('error', (err: unknown) => {
-      console.error('Connection error:', err)
+      logger.error('Connection error:', err)
       this.handleDisconnection(peerId)
     })
   }
 
   private handleDisconnection(peerId: string): void {
-    console.log('Disconnected from peer:', peerId)
+    logger.info('Disconnected from peer:', peerId)
     this.connections.delete(peerId)
     this.discoveredPeers.delete(peerId)
     this.callbacks.onPeerDisconnected?.(peerId)
@@ -138,14 +139,14 @@ export class ConnectionManager {
 
   public connectToPeer(peerId: string): void {
     if (this.connections.has(peerId)) {
-      console.log('Already connected to peer:', peerId)
+      logger.info('Already connected to peer:', peerId)
       return
     }
 
     const conn = this.peer.connect(peerId)
 
     conn.on('open', () => {
-      console.log('Connected to peer:', peerId)
+      logger.info('Connected to peer:', peerId)
       this.connections.set(peerId, conn)
       this.discoveredPeers.set(peerId, { id: peerId })
       this.callbacks.onPeerConnected?.({ id: peerId })
@@ -160,7 +161,7 @@ export class ConnectionManager {
     })
 
     conn.on('error', (err: unknown) => {
-      console.error('Connection error:', err)
+      logger.error('Connection error:', err)
       this.handleDisconnection(peerId)
     })
   }
@@ -194,7 +195,7 @@ export class ConnectionManager {
   public sendData(peerId: string, data: PeerData): boolean {
     const conn = this.connections.get(peerId)
     if (!conn) {
-      console.error('No connection to peer:', peerId)
+      logger.error('No connection to peer:', peerId)
       return false
     }
 

@@ -2,6 +2,7 @@ import { createSignal, onMount, type Component, For, Show, Switch, Match } from 
 import { unzipSync } from 'fflate'
 import { File, Folder, ChevronRight, ChevronDown, Eye } from 'lucide-solid'
 import { TextPreview } from './TextPreview'
+import { logger } from '../utils/logger'
 
 interface ZipPreviewProps {
   file: Blob
@@ -287,7 +288,7 @@ export const ZipPreview: Component<ZipPreviewProps> = props => {
         type: fileType,
       })
     } catch (err) {
-      console.error('Error creating blob from zip data:', err)
+      logger.error('Error creating blob from zip data:', err)
       setPreviewError('Failed to preview file from zip archive')
     } finally {
       setIsPreviewLoading(false)
@@ -313,7 +314,7 @@ export const ZipPreview: Component<ZipPreviewProps> = props => {
       const fileTree = processZipFiles(unzipped)
       setTree(fileTree)
     } catch (e) {
-      console.error('Error reading zip file:', e)
+      logger.error('Error reading zip file:', e)
       setError('Could not read the contents of the zip file.')
     } finally {
       setIsLoading(false)

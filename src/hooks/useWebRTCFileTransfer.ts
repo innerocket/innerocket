@@ -6,7 +6,7 @@ import { verifyChecksum } from '../utils/checksum'
 import { FileStorageService } from '../services/fileStorageService'
 import { createProgressAnimation, getFileTypeFromName } from '../utils/fileTransferUtils'
 import type { FileTransfer, FileTransferRequest, FileMetadata } from '../types'
-import { debugLog, debugError } from '../utils/debug'
+import { debugLog, debugError, logger } from '../utils/logger'
 
 const sqlds = new Sqlds()
 
@@ -74,7 +74,7 @@ export function useWebRTCFileTransfer({
         })
       })
     } catch (error) {
-      console.error('Error loading completed files:', error)
+      logger.error('Error loading completed files:', error)
     }
   }
 
@@ -168,7 +168,7 @@ export function useWebRTCFileTransfer({
           compressionRatio
         ) => {
           if (chunkIndex === undefined) {
-            console.error('Received a chunk without an index. Ignoring.')
+            logger.error('Received a chunk without an index. Ignoring.')
             return
           }
 
@@ -230,7 +230,7 @@ export function useWebRTCFileTransfer({
           fileChunks.delete(metadata.id)
 
           if (blob.size !== metadata.size) {
-            console.error(`File size mismatch for ${metadata.name}`)
+            logger.error(`File size mismatch for ${metadata.name}`)
             updateTransfer(metadata.id, { status: 'failed' })
             return
           }
@@ -262,7 +262,7 @@ export function useWebRTCFileTransfer({
             checksum: metadata.checksum,
           })
         } catch (error) {
-          console.error('Error processing completed file transfer:', error)
+          logger.error('Error processing completed file transfer:', error)
           updateTransfer(metadata.id, { status: 'failed' })
           fileChunks.delete(metadata.id)
         }
@@ -367,7 +367,7 @@ export function useWebRTCFileTransfer({
 
       return metadata.id
     } catch (error) {
-      console.error('Error sending file:', error)
+      logger.error('Error sending file:', error)
       return null
     } finally {
       setIsTransferring(false)
@@ -376,7 +376,7 @@ export function useWebRTCFileTransfer({
 
   const sendFileToAllPeers = async (file: File): Promise<string[]> => {
     if (connectedPeersLocal().length === 0) {
-      console.warn('No connected peers to send file to')
+      logger.warn('No connected peers to send file to')
       return []
     }
 

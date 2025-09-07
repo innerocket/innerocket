@@ -3,7 +3,7 @@ import { useFileTransferState } from './useFileTransferState'
 import { useFileOperations } from './useFileOperations'
 import { useWebRTCFileTransfer } from './useWebRTCFileTransfer'
 import { FileStorageService } from '../services/fileStorageService'
-import { debugLog, debugWarn } from '../utils/debug'
+import { debugLog, debugWarn } from '../utils/logger'
 import { SecureStorage } from '../utils/secureStorage'
 
 const COMPRESSION_STORAGE_KEY = 'innerocket_compression_enabled'

@@ -1,3 +1,5 @@
+import { logger } from './logger'
+
 export const createFileDownload = (blob: Blob, fileName: string): void => {
   // Special handling for .mov files and other video formats
   if (fileName.toLowerCase().endsWith('.mov') || blob.type.startsWith('video/')) {
@@ -36,7 +38,7 @@ const downloadVideoFile = (blob: Blob, fileName: string): void => {
       }, 200)
     }, 0)
   } catch (error) {
-    console.error('Error downloading video file:', error)
+    logger.error('Error downloading video file:', error)
     fallbackVideoDownload(blob, fileName)
   }
 }
@@ -77,7 +79,7 @@ const fallbackVideoDownload = (blob: Blob, fileName: string): void => {
 
     setTimeout(() => URL.revokeObjectURL(url), 60000)
   } catch (secondError) {
-    console.error('Fallback download also failed:', secondError)
+    logger.error('Fallback download also failed:', secondError)
     alert('Download failed. Please try again or use a different browser.')
   }
 }

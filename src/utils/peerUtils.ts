@@ -1,4 +1,5 @@
 import Sqlds from 'sqids'
+import { logger } from './logger'
 
 const sqlds = new Sqlds()
 
@@ -31,7 +32,7 @@ export const isValidSqldsId = (id: string): boolean => {
   const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
   if (uuidPattern.test(cleanId)) {
     if (import.meta.env.DEV) {
-      console.log('Detected UUID format ID, will regenerate')
+      logger.info('Detected UUID format ID, will regenerate')
     }
     return false
   }
@@ -40,7 +41,7 @@ export const isValidSqldsId = (id: string): boolean => {
   // NanoIDs contain A-Za-z0-9_- and are usually 21 characters
   if (cleanId.length === 21 && /^[A-Za-z0-9_-]+$/.test(cleanId)) {
     if (import.meta.env.DEV) {
-      console.log('Detected NanoID format ID, will regenerate')
+      logger.info('Detected NanoID format ID, will regenerate')
     }
     return false
   }
@@ -48,7 +49,7 @@ export const isValidSqldsId = (id: string): boolean => {
   // Check for other long IDs that might be from previous formats
   if (cleanId.length > 18) {
     if (import.meta.env.DEV) {
-      console.log('Detected long ID format, will regenerate')
+      logger.info('Detected long ID format, will regenerate')
     }
     return false
   }
@@ -64,7 +65,7 @@ export const isValidSqldsId = (id: string): boolean => {
   const isValid = isValidLength && hasValidCharacters
 
   if (!isValid && process.env.NODE_ENV === 'development') {
-    console.log('ID validation failed:', {
+    logger.info('ID validation failed:', {
       id: cleanId,
       length: cleanId.length,
       validLength: isValidLength,

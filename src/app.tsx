@@ -26,7 +26,7 @@ import type { NotificationItem, NotificationType } from './components/Notificati
 import Sqlds from 'sqids'
 import { Info, HelpCircle, Trash2 } from 'lucide-solid'
 import { usePeer } from './contexts/PeerContext'
-import { isDevelopment } from './utils/debug'
+import { isDevelopment, logger } from './utils/logger'
 
 const sqlds = new Sqlds()
 
@@ -208,7 +208,7 @@ export function App() {
         setPreviewFileId(null)
       }
     } catch (error) {
-      console.error('Error previewing file:', error)
+      logger.error('Error previewing file:', error)
       showNotification(`Error previewing "${transfer.fileName}"`, 'error')
       setPreviewFileId(null)
     }

@@ -5,6 +5,7 @@ import {
   createPreviewUrl,
   getFileTypeFromName,
 } from '../utils/fileTransferUtils'
+import { logger } from '../utils/logger'
 
 interface UseFileOperationsProps {
   fileTransfers: () => FileTransfer[]
@@ -17,12 +18,12 @@ export function useFileOperations({ fileTransfers, getReceivedFile }: UseFileOpe
   const downloadFile = async (fileId: string): Promise<void> => {
     const transfer = fileTransfers().find(t => t.id === fileId)
     if (!transfer) {
-      console.error('Transfer not found:', fileId)
+      logger.error('Transfer not found:', fileId)
       return
     }
 
     if (transfer.status === 'integrity_error') {
-      console.error('Cannot download file with integrity errors:', fileId)
+      logger.error('Cannot download file with integrity errors:', fileId)
       return
     }
 
@@ -39,10 +40,10 @@ export function useFileOperations({ fileTransfers, getReceivedFile }: UseFileOpe
       if (result) {
         createFileDownload(result.blob, result.fileName)
       } else {
-        console.error('File not found:', fileId)
+        logger.error('File not found:', fileId)
       }
     } catch (error) {
-      console.error('Error downloading file:', error)
+      logger.error('Error downloading file:', error)
     }
   }
 
@@ -62,7 +63,7 @@ export function useFileOperations({ fileTransfers, getReceivedFile }: UseFileOpe
 
       return null
     } catch (error) {
-      console.error(`Error previewing file ${fileId}:`, error)
+      logger.error(`Error previewing file ${fileId}:`, error)
       return null
     }
   }

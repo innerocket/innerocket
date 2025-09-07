@@ -1,6 +1,6 @@
 import type { ConnectionQuality } from './types'
 import { compressDataSync, decompressDataSync, shouldCompress } from '../compressionUtils'
-import { debugLog } from '../debug'
+import { debugLog, logger } from '../logger'
 
 // Configuration constants
 const DEFAULT_CHUNK_SIZE = 1024 * 1024 // 1MB
@@ -167,7 +167,7 @@ export class ChunkProcessor {
     try {
       return decompressDataSync(chunkData.data, true)
     } catch (error) {
-      console.error('Failed to decompress chunk:', error)
+      logger.error('Failed to decompress chunk:', error)
       throw new Error(`Chunk decompression failed: ${error}`)
     }
   }

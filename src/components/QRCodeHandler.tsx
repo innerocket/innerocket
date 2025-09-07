@@ -3,6 +3,7 @@ import QRCode from 'qrcode'
 import QrScanner from 'qr-scanner'
 import Sqlds from 'sqids'
 import { Button } from './ui'
+import { logger } from '../utils/logger'
 
 const sqlds = new Sqlds()
 
@@ -38,7 +39,7 @@ export const QRCodeHandler: Component<QRCodeHandlerProps> = props => {
             setQrCodeDataURL(url)
           })
           .catch(err => {
-            console.error('Error generating QR code:', err)
+            logger.error('Error generating QR code:', err)
           })
       }
     })
@@ -74,7 +75,7 @@ export const QRCodeHandler: Component<QRCodeHandlerProps> = props => {
           .start()
           .then(() => setIsScanning(true))
           .catch((err: unknown) => {
-            console.error('Failed to start QR scanner:', err)
+            logger.error('Failed to start QR scanner:', err)
             let errorMessage = 'Failed to start camera'
             if (err instanceof Error) {
               if (err.name === 'NotAllowedError') {

@@ -6,7 +6,7 @@ import { ChunkProcessor, type ChunkData } from './chunkProcessor'
 import type { PeerData } from './connectionManager'
 import type { ConnectionQuality, FileTransferState, WebRTCCallbacks } from './types'
 import { type CompressionResult } from '../compressionUtils'
-import { debugLog } from '../debug'
+import { debugLog, logger } from '../logger'
 
 const sqlds = new Sqlds()
 const LARGE_FILE_THRESHOLD = 100 * 1024 * 1024 // 100MB
@@ -78,7 +78,7 @@ export class FileTransferService {
 
       return metadata
     } catch (error) {
-      console.error('Error calculating checksum:', error)
+      logger.error('Error calculating checksum:', error)
       return null
     }
   }
@@ -235,7 +235,7 @@ export class FileTransferService {
     }
 
     reader.onerror = error => {
-      console.error('Error reading file:', error)
+      logger.error('Error reading file:', error)
       this.activeTransfers.delete(metadata.id)
     }
 
@@ -265,7 +265,7 @@ export class FileTransferService {
         isCancelled = true
         worker.terminate()
         this.activeTransfers.delete(metadata.id)
-        console.log(`Worker for transfer ${metadata.id} terminated.`)
+        logger.info(`Worker for transfer ${metadata.id} terminated.`)
       }
 
       // Track this transfer
@@ -336,7 +336,7 @@ export class FileTransferService {
 
             offset = nextOffset
           } catch (error) {
-            console.error('Error processing chunk in worker:', error)
+            logger.error('Error processing chunk in worker:', error)
             cleanup()
             break
           }
@@ -357,7 +357,7 @@ export class FileTransferService {
 
       processFile()
     } catch (error) {
-      console.error('Failed to create worker, falling back to standard method:', error)
+      logger.error('Failed to create worker, falling back to standard method:', error)
       this.sendFileStandard(sendDataFn, file, metadata, peerId)
     }
   }

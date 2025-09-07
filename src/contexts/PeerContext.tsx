@@ -13,6 +13,7 @@ import {
   generateSqldsId,
 } from '../utils/peerUtils'
 import type { PeerContextType } from './PeerContextType'
+import { logger } from '../utils/logger'
 
 // Storage key for the peer ID
 const PEER_ID_STORAGE_KEY = 'innerocket_peer_id'
@@ -27,21 +28,21 @@ export function PeerProvider(props: ParentProps) {
     const savedPeerId = localStorage.getItem(PEER_ID_STORAGE_KEY)
 
     if (savedPeerId && import.meta.env.DEV) {
-      console.log('Found saved peer ID:', savedPeerId)
-      console.log('ID length:', savedPeerId.length)
-      console.log('Is valid Sqlds ID:', isValidSqldsId(savedPeerId))
+      logger.info('Found saved peer ID:', savedPeerId)
+      logger.info('ID length:', savedPeerId.length)
+      logger.info('Is valid Sqlds ID:', isValidSqldsId(savedPeerId))
     }
 
     // If no saved ID or the saved ID is not in the expected format, generate a new one
     if (!savedPeerId || !isValidSqldsId(savedPeerId)) {
       const newId = generateSqldsId()
       if (import.meta.env.DEV) {
-        console.log('Generated new peer ID:', newId)
-        console.log('New ID length:', newId.length)
+        logger.info('Generated new peer ID:', newId)
+        logger.info('New ID length:', newId.length)
 
         // Log the reason for regeneration
         if (savedPeerId && !isValidSqldsId(savedPeerId)) {
-          console.log(
+          logger.info(
             'Old ID format detected and regenerated for compatibility:',
             `"${savedPeerId}" -> "${newId}"`
           )

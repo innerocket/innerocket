@@ -2,6 +2,7 @@ import { createSignal, createEffect, on, Show, Switch, Match, type Component } f
 import { X } from 'lucide-solid'
 import { ZipPreview } from './ZipPreview'
 import { TextPreview } from './TextPreview'
+import { logger } from '../utils/logger'
 
 interface FilePreviewProps {
   fileName: string
@@ -27,12 +28,12 @@ export const FilePreview: Component<FilePreviewProps> = props => {
         setFileBlob(null)
 
         if (previewUrl) {
-          console.log(`FilePreview: Loading preview for ${props.fileName} (${props.fileType})`)
+          logger.info(`FilePreview: Loading preview for ${props.fileName} (${props.fileType})`)
 
           fetch(previewUrl)
             .then(response => response.blob())
             .then(blob => {
-              console.log(`Preview blob type: ${blob.type}, size: ${blob.size} bytes`)
+              logger.info(`Preview blob type: ${blob.type}, size: ${blob.size} bytes`)
               setFileBlob(blob)
 
               let detectedType = blob.type
@@ -46,7 +47,7 @@ export const FilePreview: Component<FilePreviewProps> = props => {
                 else if (ext === 'ogg') detectedType = 'video/ogg'
                 else if (ext === 'mov') detectedType = 'video/quicktime'
                 else if (ext === 'avi') detectedType = 'video/x-msvideo'
-                console.log(`Detected video type from filename: ${detectedType}`)
+                logger.info(`Detected video type from filename: ${detectedType}`)
               }
 
               if (props.fileType.startsWith('text/') || props.fileName.endsWith('.txt')) {
@@ -63,7 +64,7 @@ export const FilePreview: Component<FilePreviewProps> = props => {
               setIsLoading(false)
             })
             .catch(err => {
-              console.error('Error fetching preview blob:', err)
+              logger.error('Error fetching preview blob:', err)
               setError('Failed to load preview data')
               setIsLoading(false)
             })
@@ -75,11 +76,11 @@ export const FilePreview: Component<FilePreviewProps> = props => {
   )
 
   const handleVideoError = (e: Event) => {
-    console.error('Video error:', e)
+    logger.error('Video error:', e)
     if (!videoPlaybackAttempted()) {
       setVideoPlaybackAttempted(true)
       if (actualFileType() !== 'video/mp4') {
-        console.log('Retrying video with video/mp4 type')
+        logger.info('Retrying video with video/mp4 type')
         setActualFileType('video/mp4')
       } else {
         setError('Unable to play this video. Try downloading it instead.')

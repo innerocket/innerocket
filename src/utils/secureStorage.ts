@@ -2,6 +2,8 @@
  * Secure storage utility for encrypting sensitive data before storing in localStorage
  */
 
+import { logger } from './logger'
+
 // Simple XOR-based encryption for basic obfuscation
 // Note: This is not cryptographically secure but provides basic protection against casual inspection
 function encryptData(data: string, key: string): string {
@@ -42,7 +44,7 @@ export class SecureStorage {
       const encryptedData = encryptData(jsonData, this.encryptionKey)
       localStorage.setItem(key, encryptedData)
     } catch (error) {
-      console.error('SecureStorage: Failed to encrypt and store data for key:', key, error)
+      logger.error('SecureStorage: Failed to encrypt and store data for key:', key, error)
       throw new Error('Failed to securely store sensitive data')
     }
   }

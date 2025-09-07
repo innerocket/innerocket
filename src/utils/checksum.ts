@@ -3,6 +3,7 @@
  */
 import { createChecksumWorker } from './workerLoader'
 import { createSHA256 } from 'hash-wasm'
+import { logger } from './logger'
 
 /**
  * Calculates a SHA-256 checksum for a file or blob.
@@ -17,7 +18,7 @@ export async function calculateChecksum(file: File | Blob): Promise<string> {
     try {
       return await calculateChecksumWithWorker(file)
     } catch (error) {
-      console.warn('Worker-based checksum failed, falling back to main thread:', error)
+      logger.warn('Worker-based checksum failed, falling back to main thread:', error)
       // Fallback to main thread if worker fails
       return calculateChecksumStreaming(file)
     }
@@ -114,18 +115,18 @@ export async function verifyChecksum(
   expectedChecksum: string
 ): Promise<boolean> {
   if (!expectedChecksum) {
-    console.warn('No expected checksum provided. Skipping verification.')
+    logger.warn('No expected checksum provided. Skipping verification.')
     return true // Or false, depending on your security policy
   }
 
   try {
     const actualChecksum = await calculateChecksum(file)
-    console.log(`Verification:
+    logger.info(`Verification:
       Actual:   ${actualChecksum}
       Expected: ${expectedChecksum}`)
     return actualChecksum === expectedChecksum
   } catch (error) {
-    console.error('Error during checksum verification:', error)
+    logger.error('Error during checksum verification:', error)
     return false // Treat verification errors as failure
   }
 }
