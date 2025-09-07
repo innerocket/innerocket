@@ -35,7 +35,10 @@ export class Logger {
   }
 
   private shouldLog(level: LogLevel): boolean {
-    if (!isDevelopment) return false
+    // In production, only allow warn and error logs
+    if (!isDevelopment) {
+      return level === 'warn' || level === 'error'
+    }
 
     const levels = ['debug', 'info', 'warn', 'error']
     return levels.indexOf(level) >= levels.indexOf(this.logLevel)
