@@ -71,7 +71,13 @@ export class Logger {
 
   error(message: string, ...args: unknown[]): void {
     if (this.shouldLog('error')) {
-      console.error(`${colors.bgRed}${colors.white} ERROR ${colors.reset} ${message}`, ...args)
+      const stack = new Error().stack
+      const caller = stack?.split('\n')[2]?.trim() || 'unknown'
+      console.error(
+        `${colors.bgRed}${colors.white} ERROR ${colors.reset} ${message}`,
+        caller,
+        ...args
+      )
     }
   }
 
