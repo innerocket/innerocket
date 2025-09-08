@@ -1,18 +1,20 @@
 // Unified logging utility for the application
 export const isDevelopment = import.meta.env.DEV
 
-// ANSI color codes for console output
+// CSS-style color codes for console output
 const colors = {
+  // Foreground colors (CSS hex values converted to ANSI)
   reset: '\x1b[0m',
-  white: '\x1b[37m',
-  black: '\x1b[30m',
-  // Background colors
-  bgCyan: '\x1b[46m',
-  bgYellow: '\x1b[43m',
-  bgRed: '\x1b[41m',
-  bgGreen: '\x1b[42m',
-  bgBlue: '\x1b[44m',
-  bgMagenta: '\x1b[45m',
+  text: '\x1b[38;2;194;201;211m', // #c2c9d3
+  white: '\x1b[38;2;255;255;255m', // #ffffff
+  black: '\x1b[38;2;0;0;0m', // #000000
+
+  // Background colors (CSS hex values converted to ANSI)
+  bgCyan: '\x1b[48;2;58;181;203m', // #3eb5cb
+  bgYellow: '\x1b[48;2;255;215;0m', // #ffd700
+  bgRed: '\x1b[48;2;237;78;77m', // #ed4e4d
+  bgBlue: '\x1b[48;2;58;115;240m', // #3a73f0
+  bgMagenta: '\x1b[48;2;194;105;201m', // #c269c9
 }
 
 type LogLevel = 'debug' | 'info' | 'warn' | 'error'
@@ -57,7 +59,7 @@ export class Logger {
 
   info(message: string, ...args: unknown[]): void {
     if (this.shouldLog('info')) {
-      console.log(`${colors.bgCyan}${colors.black} INFO ${colors.reset} ${message}`, ...args)
+      console.log(`${colors.bgCyan}${colors.white} INFO ${colors.reset} ${message}`, ...args)
     }
   }
 
