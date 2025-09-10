@@ -1,4 +1,4 @@
-import { defineConfig, loadEnv } from 'vite'
+import { defineConfig, loadEnv, type UserConfig } from 'vite'
 import solid from 'vite-plugin-solid'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
@@ -58,5 +58,5 @@ export default defineConfig(({ mode }) => {
     build: {
       minify: 'terser',
     },
-  }
+  } as UserConfig
 })
