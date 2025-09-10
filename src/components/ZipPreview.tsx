@@ -278,7 +278,7 @@ export const ZipPreview: Component<ZipPreviewProps> = props => {
     setPreviewError(null)
 
     try {
-      const blob = new Blob([node.data])
+      const blob = new Blob([new Uint8Array(node.data)])
       const fileType = getFileType(node.name)
 
       setPreviewFile({
