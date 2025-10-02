@@ -1,0 +1,32 @@
+name: Bug report
+description: Report a bug
+title: 'bug: '
+labels: ['bug']
+body:
+  - type: textarea
+    id: bug_description
+    attributes:
+      label: Bug Description
+      description: Briefly describe what happened.
+      placeholder: e.g. App crashes on launch
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      description: Provide clear steps.
+      value: |
+        1. Step 1
+        2. Step 2
+        3. Step 3
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: Describe what should happen when the bug is fixed.
+      placeholder: e.g. App should start without crashing
+    validations:
+      required: true
