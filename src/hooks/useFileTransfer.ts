@@ -1,4 +1,4 @@
-import { createSignal, createEffect } from 'solid-js'
+import { createSignal, createEffect, onMount } from 'solid-js'
 import { useFileTransferState } from './useFileTransferState'
 import { useFileOperations } from './useFileOperations'
 import { useWebRTCFileTransfer } from './useWebRTCFileTransfer'
@@ -157,9 +157,9 @@ function saveAutoAcceptSetting(enabled: boolean): void {
 }
 
 // Load trusted peers from localStorage (encrypted)
-function loadTrustedPeers(): string[] {
+async function loadTrustedPeers(): Promise<string[]> {
   try {
-    const peers = SecureStorage.getItem<string[]>(TRUSTED_PEERS_STORAGE_KEY)
+    const peers = await SecureStorage.getItem<string[]>(TRUSTED_PEERS_STORAGE_KEY)
     if (peers !== null && Array.isArray(peers)) {
       debugLog(`[STORAGE] Loaded trusted peers: ${peers.length} peers`)
       return peers
@@ -173,9 +173,9 @@ function loadTrustedPeers(): string[] {
 }
 
 // Save trusted peers to localStorage (encrypted)
-function saveTrustedPeers(peers: string[]): void {
+async function saveTrustedPeers(peers: string[]): Promise<void> {
   try {
-    SecureStorage.setItem(TRUSTED_PEERS_STORAGE_KEY, peers)
+    await SecureStorage.setItem(TRUSTED_PEERS_STORAGE_KEY, peers)
     debugLog(`[STORAGE] Saved trusted peers: ${peers.length} peers`)
   } catch (error) {
     debugWarn('[STORAGE] Failed to save trusted peers:', error)
@@ -237,9 +237,11 @@ function saveCompressionLevel(level: CompressionLevelPreset): void {
 }
 
 // Load connection history from localStorage (encrypted)
-function loadConnectionHistory(): ConnectionHistoryEntry[] {
+async function loadConnectionHistory(): Promise<ConnectionHistoryEntry[]> {
   try {
-    const history = SecureStorage.getItem<ConnectionHistoryEntry[]>(CONNECTION_HISTORY_STORAGE_KEY)
+    const history = await SecureStorage.getItem<ConnectionHistoryEntry[]>(
+      CONNECTION_HISTORY_STORAGE_KEY
+    )
     if (history !== null && Array.isArray(history)) {
       debugLog(`[STORAGE] Loaded connection history: ${history.length} entries`)
       return history
@@ -253,11 +255,11 @@ function loadConnectionHistory(): ConnectionHistoryEntry[] {
 }
 
 // Save connection history to localStorage (encrypted)
-function saveConnectionHistory(history: ConnectionHistoryEntry[]): void {
+async function saveConnectionHistory(history: ConnectionHistoryEntry[]): Promise<void> {
   try {
     // Keep only the most recent entries
     const trimmedHistory = history.slice(-MAX_HISTORY_ENTRIES)
-    SecureStorage.setItem(CONNECTION_HISTORY_STORAGE_KEY, trimmedHistory)
+    await SecureStorage.setItem(CONNECTION_HISTORY_STORAGE_KEY, trimmedHistory)
     debugLog(`[STORAGE] Saved connection history: ${trimmedHistory.length} entries`)
   } catch (error) {
     debugWarn('[STORAGE] Failed to save connection history:', error)
@@ -323,12 +325,13 @@ export function useFileTransfer() {
   const [connectedPeers, setConnectedPeers] = createSignal<string[]>([])
   const [compressionEnabled, setCompressionEnabled] = createSignal(loadCompressionSetting())
   const [autoAcceptFiles, setAutoAcceptFiles] = createSignal(loadAutoAcceptSetting())
-  const [trustedPeers, setTrustedPeers] = createSignal<string[]>(loadTrustedPeers())
+  const [trustedPeers, setTrustedPeers] = createSignal<string[]>([])
+  const [trustedPeersLoaded, setTrustedPeersLoaded] = createSignal(false)
   const [maxFileSize, setMaxFileSize] = createSignal<number>(loadMaxFileSize())
   const [compressionLevel, setCompressionLevel] =
     createSignal<CompressionLevelPreset>(loadCompressionLevel())
-  const [connectionHistory, setConnectionHistory] =
-    createSignal<ConnectionHistoryEntry[]>(loadConnectionHistory())
+  const [connectionHistory, setConnectionHistory] = createSignal<ConnectionHistoryEntry[]>([])
+  const [connectionHistoryLoaded, setConnectionHistoryLoaded] = createSignal(false)
   const [connectionMethod, setConnectionMethod] =
     createSignal<ConnectionMethod>(loadConnectionMethod())
   const [privacyMode, setPrivacyMode] = createSignal<boolean>(loadPrivacyMode())
@@ -380,6 +383,18 @@ export function useFileTransfer() {
 
   const fileStorageService = new FileStorageService()
 
+  onMount(() => {
+    void loadTrustedPeers().then(peers => {
+      setTrustedPeers(peers)
+      setTrustedPeersLoaded(true)
+    })
+
+    void loadConnectionHistory().then(history => {
+      setConnectionHistory(history)
+      setConnectionHistoryLoaded(true)
+    })
+  })
+
   const clearFileHistory = async () => {
     await fileStorageService.clearAllFiles()
     clearAllTransfers()
@@ -414,8 +429,9 @@ export function useFileTransfer() {
 
   // Save to localStorage whenever trusted peers changes
   createEffect(() => {
+    if (!trustedPeersLoaded()) return
     const peers = trustedPeers()
-    saveTrustedPeers(peers)
+    void saveTrustedPeers(peers)
   })
 
   // Save to localStorage whenever max file size changes
@@ -432,8 +448,9 @@ export function useFileTransfer() {
 
   // Save to localStorage whenever connection history changes
   createEffect(() => {
+    if (!connectionHistoryLoaded()) return
     const history = connectionHistory()
-    saveConnectionHistory(history)
+    void saveConnectionHistory(history)
   })
 
   // Save to localStorage whenever connection method changes
