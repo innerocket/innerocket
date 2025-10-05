@@ -5,13 +5,14 @@ import { useWebRTCFileTransfer } from './useWebRTCFileTransfer'
 import { FileStorageService } from '../services/fileStorageService'
 import { debugLog, debugWarn } from '../utils/logger'
 import { SecureStorage } from '../utils/secureStorage'
+import { SECURE_STORAGE_KEYS } from '../constants/secureStorageKeys'
 
 const COMPRESSION_STORAGE_KEY = 'innerocket_compression_enabled'
 const AUTO_ACCEPT_STORAGE_KEY = 'innerocket_auto_accept_files'
-const TRUSTED_PEERS_STORAGE_KEY = 'innerocket_trusted_peers'
+const TRUSTED_PEERS_STORAGE_KEY = SECURE_STORAGE_KEYS.TRUSTED_PEERS
 const MAX_FILE_SIZE_STORAGE_KEY = 'innerocket_max_file_size'
 const COMPRESSION_LEVEL_STORAGE_KEY = 'innerocket_compression_level'
-const CONNECTION_HISTORY_STORAGE_KEY = 'innerocket_connection_history'
+const CONNECTION_HISTORY_STORAGE_KEY = SECURE_STORAGE_KEYS.CONNECTION_HISTORY
 const CONNECTION_METHOD_STORAGE_KEY = 'innerocket_connection_method'
 const PRIVACY_MODE_STORAGE_KEY = 'innerocket_privacy_mode'
 

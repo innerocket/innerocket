@@ -9,6 +9,15 @@ import { inlineCloudflareBeacon } from './src/utils/cloudflareBeacon'
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
+  if (mode === 'test') {
+    return {
+      test: {
+        environment: 'node',
+        globals: true,
+      },
+    } as UserConfig
+  }
+
   const env = loadEnv(mode, process.cwd(), '')
   const cloudflareToken = env.VITE_CLOUDFLARE_ANALYTICS_TOKEN
 
