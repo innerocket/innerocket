@@ -6,6 +6,7 @@ import { logger } from './logger'
 
 const STORAGE_VERSION_PREFIX = 'v2:'
 const LEGACY_STORAGE_PREFIX = 'v1:'
+const MIGRATION_FAILURE_MARKER_PREFIX = 'secureStorage:migration-failed:'
 const AES_GCM_IV_LENGTH = 12
 
 // PBKDF2 configuration keeps parameters visible for audits and tuning.
@@ -97,6 +98,18 @@ export class SecureStorage {
   private static keyMetadataPromise: Promise<KeyDerivationMetadata | null> | null = null
   private static legacyKey: string | null = null
   private static legacyEncryptionKeyPromise: Promise<CryptoKey | null> | null = null
+
+  static isLatestVersion(value: string | null): boolean {
+    return typeof value === 'string' && value.startsWith(STORAGE_VERSION_PREFIX)
+  }
+
+  static hasMigrationFailure(key: string): boolean {
+    const storage = getLocalStorage()
+    if (!storage) {
+      return false
+    }
+    return storage.getItem(this.getMigrationFailureMarkerKey(key)) !== null
+  }
 
   private static async getKeyMetadata(): Promise<KeyDerivationMetadata | null> {
     if (!this.keyMetadataPromise) {
@@ -202,6 +215,57 @@ export class SecureStorage {
     return this.legacyEncryptionKeyPromise
   }
 
+  private static getMigrationFailureMarkerKey(key: string): string {
+    return `${MIGRATION_FAILURE_MARKER_PREFIX}${key}`
+  }
+
+  private static markMigrationFailure(key: string): void {
+    const storage = getLocalStorage()
+    if (!storage) {
+      return
+    }
+
+    try {
+      storage.setItem(this.getMigrationFailureMarkerKey(key), Date.now().toString())
+    } catch {
+      // If marker persistence fails we still return data to avoid breaking functionality.
+    }
+  }
+
+  private static clearMigrationFailureMarker(key: string): void {
+    const storage = getLocalStorage()
+    storage?.removeItem(this.getMigrationFailureMarkerKey(key))
+  }
+
+  private static applyPlaintextFallback(value: unknown, key: string): void {
+    const storage = getLocalStorage()
+    if (!storage) {
+      return
+    }
+
+    try {
+      const serialized = JSON.stringify(value)
+      storage.setItem(key, serialized ?? 'null')
+    } catch (error) {
+      logger.error('SecureStorage: Failed to apply plaintext fallback for key:', key, error)
+    }
+  }
+
+  private static async reencryptOrFallback<T>(
+    key: string,
+    value: T,
+    context: 'legacy' | 'v1'
+  ): Promise<void> {
+    try {
+      await this.setItem(key, value)
+    } catch (error) {
+      const label = context === 'v1' ? 'v1 data' : 'legacy data'
+      logger.warn(`SecureStorage: Failed to re-encrypt ${label} for key:`, key, error)
+      this.markMigrationFailure(key)
+      this.applyPlaintextFallback(value, key)
+    }
+  }
+
   private static async deriveEncryptionKey(): Promise<CryptoKey | null> {
     const cryptoObject = getCrypto()
     const subtle = cryptoObject?.subtle
@@ -279,12 +343,14 @@ export class SecureStorage {
 
       if (!subtle) {
         storage.setItem(key, jsonData)
+        this.clearMigrationFailureMarker(key)
         return
       }
 
       const encryptionKey = await this.getEncryptionKey()
       if (!encryptionKey) {
         storage.setItem(key, jsonData)
+        this.clearMigrationFailureMarker(key)
         return
       }
 
@@ -302,6 +368,7 @@ export class SecureStorage {
 
       const base64Payload = arrayBufferToBase64(payload.buffer)
       storage.setItem(key, `${STORAGE_VERSION_PREFIX}${base64Payload}`)
+      this.clearMigrationFailureMarker(key)
     } catch (error) {
       logger.error('SecureStorage: Failed to encrypt and store data for key:', key, error)
       throw new Error('Failed to securely store sensitive data')
@@ -361,9 +428,7 @@ export class SecureStorage {
               )
               const decryptedData = textDecoder.decode(decryptedBuffer)
               const parsedLegacy = JSON.parse(decryptedData) as T
-              void this.setItem(key, parsedLegacy).catch(error => {
-                logger.warn('SecureStorage: Failed to re-encrypt v1 data for key:', key, error)
-              })
+              await this.reencryptOrFallback(key, parsedLegacy, 'v1')
               return parsedLegacy
             }
           } catch (error) {
@@ -379,9 +444,7 @@ export class SecureStorage {
       try {
         const legacyDecrypted = legacyDecryptData(item, this.getLegacyKey())
         const parsedLegacy = JSON.parse(legacyDecrypted) as T
-        void this.setItem(key, parsedLegacy).catch(error => {
-          logger.warn('SecureStorage: Failed to re-encrypt legacy data for key:', key, error)
-        })
+        await this.reencryptOrFallback(key, parsedLegacy, 'legacy')
         return parsedLegacy
       } catch {
         // Ignore legacy decryption failures and fall back to plain JSON parse
