@@ -68,6 +68,8 @@ This diagram illustrates the complete technical flow of how Innerocket establish
 
 Innerocket uses WebRTC's data channels which are encrypted by default. No file data ever passes through our servers - the server is only used for the initial connection setup (signaling).
 
+- Sensitive metadata persisted in the browser uses AES-GCM keys derived from 32-byte CSPRNG secrets via PBKDF2 (SHA-256, 310,000 iterations, 16-byte salt) to keep parameters transparent for security reviews.
+
 ## Getting Started
 
 ### Prerequisites

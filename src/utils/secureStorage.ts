@@ -4,11 +4,25 @@
 
 import { logger } from './logger'
 
-const STORAGE_VERSION_PREFIX = 'v1:'
+const STORAGE_VERSION_PREFIX = 'v2:'
+const LEGACY_STORAGE_PREFIX = 'v1:'
 const AES_GCM_IV_LENGTH = 12
+
+// PBKDF2 configuration keeps parameters visible for audits and tuning.
+const PBKDF2_ITERATIONS = 310_000
+const PBKDF2_SALT_LENGTH_BYTES = 16
+const KEY_MATERIAL_LENGTH_BYTES = 32
+const KEY_METADATA_STORAGE_KEY = 'secureStorage:key-metadata:v1'
 
 const textEncoder = new TextEncoder()
 const textDecoder = new TextDecoder()
+
+type KeyDerivationMetadata = {
+  version: 1
+  iterations: number
+  keyMaterial: string
+  salt: string
+}
 
 function getCrypto(): Crypto | null {
   if (typeof globalThis === 'undefined' || !('crypto' in globalThis)) {
@@ -48,6 +62,12 @@ function base64ToUint8Array(base64: string): Uint8Array {
   return bytes
 }
 
+function uint8ArrayToArrayBuffer(bytes: Uint8Array): ArrayBuffer {
+  const buffer = new ArrayBuffer(bytes.byteLength)
+  new Uint8Array(buffer).set(bytes)
+  return buffer
+}
+
 function legacyDecryptData(encryptedData: string, key: string): string {
   const data = atob(encryptedData)
   let result = ''
@@ -74,7 +94,92 @@ function generateEncryptionKey(): string {
 
 export class SecureStorage {
   private static encryptionKeyPromise: Promise<CryptoKey | null> | null = null
+  private static keyMetadataPromise: Promise<KeyDerivationMetadata | null> | null = null
   private static legacyKey: string | null = null
+  private static legacyEncryptionKeyPromise: Promise<CryptoKey | null> | null = null
+
+  private static async getKeyMetadata(): Promise<KeyDerivationMetadata | null> {
+    if (!this.keyMetadataPromise) {
+      this.keyMetadataPromise = this.loadOrCreateKeyMetadata()
+    }
+    return this.keyMetadataPromise
+  }
+
+  private static async loadOrCreateKeyMetadata(): Promise<KeyDerivationMetadata | null> {
+    const cryptoObject = getCrypto()
+    const subtle = cryptoObject?.subtle
+
+    if (!cryptoObject || !subtle) {
+      logger.warn('SecureStorage: Web Crypto API is not available; using legacy key derivation')
+      return null
+    }
+
+    const storage = getLocalStorage()
+
+    if (storage) {
+      const stored = storage.getItem(KEY_METADATA_STORAGE_KEY)
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored) as Partial<KeyDerivationMetadata>
+          if (this.isValidMetadata(parsed)) {
+            return parsed
+          }
+          logger.warn('SecureStorage: Invalid stored key metadata shape, regenerating metadata')
+        } catch (error) {
+          logger.warn(
+            'SecureStorage: Failed to parse stored key metadata, regenerating metadata',
+            error
+          )
+        }
+      }
+    }
+
+    try {
+      const keyMaterial = cryptoObject.getRandomValues(new Uint8Array(KEY_MATERIAL_LENGTH_BYTES))
+      const salt = cryptoObject.getRandomValues(new Uint8Array(PBKDF2_SALT_LENGTH_BYTES))
+
+      const metadata: KeyDerivationMetadata = {
+        version: 1,
+        iterations: PBKDF2_ITERATIONS,
+        keyMaterial: arrayBufferToBase64(keyMaterial.buffer),
+        salt: arrayBufferToBase64(salt.buffer),
+      }
+
+      if (storage) {
+        try {
+          storage.setItem(KEY_METADATA_STORAGE_KEY, JSON.stringify(metadata))
+        } catch (error) {
+          logger.warn(
+            'SecureStorage: Failed to persist key metadata; continuing with in-memory copy',
+            error
+          )
+        }
+      }
+
+      return metadata
+    } catch (error) {
+      logger.error('SecureStorage: Failed to generate key metadata', error)
+      return null
+    }
+  }
+
+  private static isValidMetadata(
+    value: Partial<KeyDerivationMetadata> | undefined
+  ): value is KeyDerivationMetadata {
+    if (!value) {
+      return false
+    }
+
+    return (
+      value.version === 1 &&
+      typeof value.iterations === 'number' &&
+      value.iterations > 0 &&
+      typeof value.keyMaterial === 'string' &&
+      value.keyMaterial.length > 0 &&
+      typeof value.salt === 'string' &&
+      value.salt.length > 0
+    )
+  }
 
   private static getLegacyKey(): string {
     if (!this.legacyKey) {
@@ -90,11 +195,60 @@ export class SecureStorage {
     return this.encryptionKeyPromise
   }
 
+  private static async getLegacyEncryptionKey(): Promise<CryptoKey | null> {
+    if (!this.legacyEncryptionKeyPromise) {
+      this.legacyEncryptionKeyPromise = this.deriveLegacyEncryptionKey()
+    }
+    return this.legacyEncryptionKeyPromise
+  }
+
   private static async deriveEncryptionKey(): Promise<CryptoKey | null> {
     const cryptoObject = getCrypto()
     const subtle = cryptoObject?.subtle
     if (!subtle) {
       logger.warn('SecureStorage: Web Crypto API is not available; falling back to plain storage')
+      return null
+    }
+
+    try {
+      const metadata = await this.getKeyMetadata()
+      if (!metadata) {
+        return await this.deriveLegacyEncryptionKey()
+      }
+
+      const keyMaterialBytes = base64ToUint8Array(metadata.keyMaterial)
+      const saltBytes = base64ToUint8Array(metadata.salt)
+
+      const importedKey = await subtle.importKey(
+        'raw',
+        uint8ArrayToArrayBuffer(keyMaterialBytes),
+        'PBKDF2',
+        false,
+        ['deriveKey']
+      )
+
+      return await subtle.deriveKey(
+        {
+          name: 'PBKDF2',
+          salt: uint8ArrayToArrayBuffer(saltBytes),
+          iterations: metadata.iterations,
+          hash: 'SHA-256',
+        },
+        importedKey,
+        { name: 'AES-GCM', length: 256 },
+        false,
+        ['encrypt', 'decrypt']
+      )
+    } catch (error) {
+      logger.error('SecureStorage: Failed to derive encryption key', error)
+      return null
+    }
+  }
+
+  private static async deriveLegacyEncryptionKey(): Promise<CryptoKey | null> {
+    const cryptoObject = getCrypto()
+    const subtle = cryptoObject?.subtle
+    if (!subtle) {
       return null
     }
 
@@ -106,7 +260,7 @@ export class SecureStorage {
         'decrypt',
       ])
     } catch (error) {
-      logger.error('SecureStorage: Failed to derive encryption key', error)
+      logger.error('SecureStorage: Failed to derive legacy AES-GCM key', error)
       return null
     }
   }
@@ -185,6 +339,39 @@ export class SecureStorage {
             }
           } catch (error) {
             logger.warn('SecureStorage: Failed to decrypt AES-GCM payload for key:', key, error)
+          }
+        }
+      }
+
+      if (item.startsWith(LEGACY_STORAGE_PREFIX)) {
+        const cryptoObject = getCrypto()
+        const subtle = cryptoObject?.subtle
+
+        if (subtle) {
+          try {
+            const legacyEncryptionKey = await this.getLegacyEncryptionKey()
+            if (legacyEncryptionKey) {
+              const payload = base64ToUint8Array(item.slice(LEGACY_STORAGE_PREFIX.length))
+              const iv = payload.slice(0, AES_GCM_IV_LENGTH)
+              const ciphertext = payload.slice(AES_GCM_IV_LENGTH)
+              const decryptedBuffer = await subtle.decrypt(
+                { name: 'AES-GCM', iv },
+                legacyEncryptionKey,
+                ciphertext
+              )
+              const decryptedData = textDecoder.decode(decryptedBuffer)
+              const parsedLegacy = JSON.parse(decryptedData) as T
+              void this.setItem(key, parsedLegacy).catch(error => {
+                logger.warn('SecureStorage: Failed to re-encrypt v1 data for key:', key, error)
+              })
+              return parsedLegacy
+            }
+          } catch (error) {
+            logger.warn(
+              'SecureStorage: Failed to decrypt legacy AES-GCM payload for key:',
+              key,
+              error
+            )
           }
         }
       }
