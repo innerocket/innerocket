@@ -22,6 +22,49 @@ export interface FileChunk {
 }
 
 export class FileStorageService {
+  private async runTransaction(
+    db: IDBDatabase,
+    storeNames: string[],
+    mode: IDBTransactionMode,
+    executor: (transaction: IDBTransaction) => void
+  ): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(storeNames, mode)
+      let settled = false
+
+      const resolveOnce = () => {
+        if (!settled) {
+          settled = true
+          resolve()
+        }
+      }
+
+      const rejectOnce = (error: unknown) => {
+        if (!settled) {
+          settled = true
+          reject(error instanceof Error ? error : new Error(String(error)))
+        }
+      }
+
+      transaction.oncomplete = resolveOnce
+      transaction.onerror = () =>
+        rejectOnce(transaction.error ?? new Error('IndexedDB transaction error'))
+      transaction.onabort = () =>
+        rejectOnce(transaction.error ?? new Error('IndexedDB transaction aborted'))
+
+      try {
+        executor(transaction)
+      } catch (error) {
+        rejectOnce(error)
+        try {
+          transaction.abort()
+        } catch {
+          // Ignore abort errors since we're already rejecting
+        }
+      }
+    })
+  }
+
   private async openDatabase(): Promise<IDBDatabase> {
     return new Promise((resolve, reject) => {
       const request = indexedDB.open(DB_NAME, DB_VERSION)
@@ -71,8 +114,7 @@ export class FileStorageService {
     fileName: string,
     checksum?: string
   ): Promise<void> {
-    return new Promise((resolve, reject) => {
-      const transaction = db.transaction(['files'], 'readwrite')
+    await this.runTransaction(db, ['files'], 'readwrite', transaction => {
       const store = transaction.objectStore('files')
 
       store.put({
@@ -83,9 +125,6 @@ export class FileStorageService {
         checksum,
         fileType: blob.type,
       })
-
-      transaction.oncomplete = () => resolve()
-      transaction.onerror = () => reject(transaction.error)
     })
   }
 
@@ -96,10 +135,13 @@ export class FileStorageService {
     fileName: string,
     checksum?: string
   ): Promise<void> {
-    // Save metadata
-    await new Promise<void>((resolve, reject) => {
-      const metaTransaction = db.transaction(['files'], 'readwrite')
-      const fileStore = metaTransaction.objectStore('files')
+    // Save metadata and chunks in a single transaction to minimize overhead
+    const CHUNK_SIZE = 10 * 1024 * 1024 // 10MB chunks
+    const chunks = Math.ceil(blob.size / CHUNK_SIZE)
+
+    await this.runTransaction(db, ['files', 'file_chunks'], 'readwrite', transaction => {
+      const fileStore = transaction.objectStore('files')
+      const chunkStore = transaction.objectStore('file_chunks')
 
       fileStore.put({
         id: fileId,
@@ -111,24 +153,10 @@ export class FileStorageService {
         fileType: blob.type,
       })
 
-      metaTransaction.oncomplete = () => resolve()
-      metaTransaction.onerror = () => reject(metaTransaction.error)
-    })
-
-    // Save chunks
-    const CHUNK_SIZE = 10 * 1024 * 1024 // 10MB chunks
-    const chunks = Math.ceil(blob.size / CHUNK_SIZE)
-
-    const chunkPromises: Promise<void>[] = []
-
-    for (let i = 0; i < chunks; i++) {
-      const start = i * CHUNK_SIZE
-      const end = Math.min(start + CHUNK_SIZE, blob.size)
-      const chunkBlob = blob.slice(start, end)
-
-      const chunkPromise = new Promise<void>((resolve, reject) => {
-        const chunkTransaction = db.transaction(['file_chunks'], 'readwrite')
-        const chunkStore = chunkTransaction.objectStore('file_chunks')
+      for (let i = 0; i < chunks; i++) {
+        const start = i * CHUNK_SIZE
+        const end = Math.min(start + CHUNK_SIZE, blob.size)
+        const chunkBlob = blob.slice(start, end)
 
         chunkStore.put({
           fileId,
@@ -136,15 +164,8 @@ export class FileStorageService {
           data: chunkBlob,
           size: chunkBlob.size,
         })
-
-        chunkTransaction.oncomplete = () => resolve()
-        chunkTransaction.onerror = () => reject(chunkTransaction.error)
-      })
-
-      chunkPromises.push(chunkPromise)
-    }
-
-    await Promise.all(chunkPromises)
+      }
+    })
   }
 
   async getFile(fileId: string): Promise<{ blob: Blob; fileName: string } | null> {
@@ -190,10 +211,21 @@ export class FileStorageService {
       const transaction = db.transaction(['file_chunks'], 'readonly')
       const store = transaction.objectStore('file_chunks')
       const index = store.index('fileId')
-      const request = index.getAll(fileId)
+      const chunks: FileChunk[] = []
+      const request = index.openCursor(IDBKeyRange.only(fileId))
 
-      request.onsuccess = () => resolve(request.result || [])
+      request.onsuccess = event => {
+        const cursor = (event.target as IDBRequest<IDBCursorWithValue>).result
+
+        if (!cursor) return
+
+        chunks.push(cursor.value as FileChunk)
+        cursor.continue()
+      }
+
       request.onerror = () => reject(request.error)
+      transaction.oncomplete = () => resolve(chunks)
+      transaction.onerror = () => reject(transaction.error)
     })
   }
 
@@ -204,10 +236,20 @@ export class FileStorageService {
       return new Promise((resolve, reject) => {
         const transaction = db.transaction(['files'], 'readonly')
         const store = transaction.objectStore('files')
-        const request = store.getAll()
+        const files: StoredFile[] = []
+        const request = store.openCursor()
 
-        request.onsuccess = () => resolve(request.result || [])
+        request.onsuccess = event => {
+          const cursor = (event.target as IDBRequest<IDBCursorWithValue>).result
+          if (!cursor) return
+
+          files.push(cursor.value as StoredFile)
+          cursor.continue()
+        }
+
         request.onerror = () => reject(request.error)
+        transaction.oncomplete = () => resolve(files)
+        transaction.onerror = () => reject(transaction.error)
       })
     } finally {
       db.close()
@@ -218,24 +260,10 @@ export class FileStorageService {
     const db = await this.openDatabase()
 
     try {
-      // Clear main files store
-      await new Promise<void>((resolve, reject) => {
-        const transaction = db.transaction(['files'], 'readwrite')
-        const store = transaction.objectStore('files')
-        const request = store.clear()
-
-        request.onsuccess = () => resolve()
-        request.onerror = () => reject(request.error)
-      })
-
-      // Clear file chunks store
-      await new Promise<void>((resolve, reject) => {
-        const transaction = db.transaction(['file_chunks'], 'readwrite')
-        const store = transaction.objectStore('file_chunks')
-        const request = store.clear()
-
-        request.onsuccess = () => resolve()
-        request.onerror = () => reject(request.error)
+      // Clear both stores within a single transaction to avoid repeated commits
+      await this.runTransaction(db, ['files', 'file_chunks'], 'readwrite', transaction => {
+        transaction.objectStore('files').clear()
+        transaction.objectStore('file_chunks').clear()
       })
 
       // Clear legacy temp chunks database

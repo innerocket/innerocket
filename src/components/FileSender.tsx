@@ -10,6 +10,9 @@ interface FileSenderProps {
 
 export const FileSender: Component<FileSenderProps> = props => {
   let fileInputRef: HTMLInputElement | undefined
+  const setFileInputRef = (el: HTMLInputElement | undefined) => {
+    fileInputRef = el
+  }
   const [selectedFiles, setSelectedFiles] = createSignal<File[]>([])
   const [isDragging, setIsDragging] = createSignal(false)
 
@@ -62,7 +65,7 @@ export const FileSender: Component<FileSenderProps> = props => {
       <div class='relative flex flex-1 flex-col'>
         <div class='flex h-full flex-col gap-4'>
           <input
-            ref={fileInputRef}
+            ref={setFileInputRef}
             type='file'
             multiple
             onChange={handleFileChange}

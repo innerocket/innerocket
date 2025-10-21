@@ -24,6 +24,9 @@ export const FileTransferList: Component<FileTransferListProps> = props => {
   const { peerId } = usePeer()
   const [searchQuery, setSearchQuery] = createSignal('')
   let tableContainerRef: HTMLDivElement | undefined
+  const setTableContainerRef = (el: HTMLDivElement | undefined) => {
+    tableContainerRef = el
+  }
   const [isDragging, setIsDragging] = createSignal(false)
   const [dragStart, setDragStart] = createSignal({ x: 0, scrollLeft: 0 })
   let lastCallTime = 0
@@ -105,7 +108,7 @@ export const FileTransferList: Component<FileTransferListProps> = props => {
           fullWidth
         />
         <div
-          ref={tableContainerRef}
+          ref={setTableContainerRef}
           class={`relative overflow-x-auto overflow-y-visible rounded-lg border-2 border-gray-200 select-none dark:border-gray-700 ${
             isDragging() ? 'cursor-grabbing' : 'cursor-grab'
           }`}
