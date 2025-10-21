@@ -25,6 +25,9 @@ export const QRCodeHandler: Component<QRCodeHandlerProps> = props => {
   const [isScanning, setIsScanning] = createSignal(false)
   const [scannerError, setScannerError] = createSignal<string>('')
   let videoRef: HTMLVideoElement | undefined
+  const setVideoRef = (el: HTMLVideoElement | undefined) => {
+    videoRef = el
+  }
   let qrScanner: QrScanner | undefined
 
   // Generate QR code when value changes
@@ -180,7 +183,7 @@ export const QRCodeHandler: Component<QRCodeHandlerProps> = props => {
               <div class='scanner-container mb-4 overflow-hidden'>
                 <div class='mx-auto max-w-sm'>
                   <video
-                    ref={videoRef}
+                    ref={setVideoRef}
                     class='w-full rounded-lg border-2 border-gray-300 dark:border-gray-600'
                   ></video>
                 </div>
