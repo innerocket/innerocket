@@ -3,12 +3,28 @@ import Sqlds from 'sqids'
 import { WebRTCService } from '../utils/webrtc'
 import { usePeer } from '../contexts/PeerContext'
 import { verifyChecksum } from '../utils/checksum'
+import { createSHA256 } from 'hash-wasm'
 import { FileStorageService } from '../services/fileStorageService'
 import { createProgressAnimation, getFileTypeFromName } from '../utils/fileTransferUtils'
 import type { FileTransfer, FileTransferRequest, FileMetadata } from '../types'
 import { debugLog, debugError, logger } from '../utils/logger'
+import { ChunkBufferPool } from '../utils/webrtc/chunkPool'
 
 const sqlds = new Sqlds()
+
+const PROGRESSIVE_DOWNLOAD_THRESHOLD = 50 * 1024 * 1024 // 50MB
+const chunkPool = new ChunkBufferPool({ maxPerBucket: 16, minBucketSize: 128 * 1024 })
+
+interface ReceiverState {
+  metadata: FileMetadata
+  useProgressive: boolean
+  chunks?: Map<number, Uint8Array>
+  receivedBytes: number
+  seenIndices: Set<number>
+  hasherReady: Promise<void>
+  hasher?: Awaited<ReturnType<typeof createSHA256>>
+  pendingWrite: Promise<void>
+}
 
 interface UseWebRTCFileTransferProps {
   addTransfer: (transfer: FileTransfer) => void
@@ -50,6 +66,78 @@ export function useWebRTCFileTransfer({
     () => new WebRTCService(peerId(), addPrefixToId, removePrefixFromId)
   )
   const fileStorageService = new FileStorageService()
+  const receiverStates = new Map<string, ReceiverState>()
+
+  const initializeReceiverState = (metadata: FileMetadata): ReceiverState => {
+    const existing = receiverStates.get(metadata.id)
+    if (existing) {
+      return existing
+    }
+
+    const useProgressive = metadata.size >= PROGRESSIVE_DOWNLOAD_THRESHOLD
+    const state: ReceiverState = {
+      metadata,
+      useProgressive,
+      chunks: useProgressive ? undefined : new Map<number, Uint8Array>(),
+      receivedBytes: 0,
+      seenIndices: new Set<number>(),
+      hasherReady: Promise.resolve(),
+      pendingWrite: Promise.resolve(),
+    }
+
+    if (useProgressive) {
+      state.hasherReady = (async () => {
+        try {
+          const hasher = await createSHA256()
+          hasher.init()
+          state.hasher = hasher
+        } catch (error) {
+          logger.error('Failed to initialize checksum hasher:', error)
+          throw error
+        }
+
+        try {
+          await fileStorageService.prepareChunkStorage(metadata.id)
+        } catch (error) {
+          logger.error('Failed to prepare chunk storage:', error)
+          throw error
+        }
+      })()
+    }
+
+    receiverStates.set(metadata.id, state)
+    return state
+  }
+
+  const cleanupReceiverState = async (
+    fileId: string,
+    options?: { preserveChunks?: boolean }
+  ): Promise<void> => {
+    const state = receiverStates.get(fileId)
+    if (!state) return
+
+    if (!state.useProgressive && state.chunks) {
+      state.chunks.forEach(chunk => {
+        chunkPool.release(chunk)
+      })
+    }
+
+    if (state.useProgressive && !options?.preserveChunks) {
+      try {
+        await fileStorageService.prepareChunkStorage(fileId)
+      } catch (error) {
+        logger.error('Failed to clear chunk storage:', error)
+      }
+    }
+
+    receiverStates.delete(fileId)
+  }
+
+  const cloneToArrayBuffer = (view: Uint8Array): ArrayBuffer => {
+    const buffer = new ArrayBuffer(view.byteLength)
+    new Uint8Array(buffer).set(view)
+    return buffer
+  }
 
   const loadCompletedFiles = async () => {
     try {
@@ -80,8 +168,6 @@ export function useWebRTCFileTransfer({
 
   createEffect(
     on(webRTCService, service => {
-      const fileChunks = new Map<string, Map<number, ArrayBuffer>>()
-
       service.setOnPeerConnected(peer => {
         setConnectedPeersLocal(prev => {
           const newPeers = [...prev, peer.id]
@@ -113,6 +199,8 @@ export function useWebRTCFileTransfer({
           createdAt: Date.now(),
           checksum: metadata.checksum,
         })
+
+        initializeReceiverState(metadata)
 
         // Check all auto-accept conditions
         const isAutoAcceptEnabled = autoAcceptFiles?.()
@@ -155,7 +243,7 @@ export function useWebRTCFileTransfer({
       })
 
       service.setOnFileChunk(
-        (
+        async (
           _peerId,
           chunk,
           metadata,
@@ -172,17 +260,14 @@ export function useWebRTCFileTransfer({
             return
           }
 
-          if (!fileChunks.has(metadata.id)) {
-            fileChunks.set(metadata.id, new Map<number, ArrayBuffer>())
+          const state = initializeReceiverState(metadata)
+
+          // If we already processed this index successfully, skip duplicates.
+          if (state.seenIndices.has(chunkIndex)) {
+            return
           }
 
-          const chunksMap = fileChunks.get(metadata.id)
-          if (!chunksMap || chunksMap.has(chunkIndex)) {
-            return // Ignore duplicates
-          }
-
-          // If chunk is compressed, decompress it before storing
-          let processedChunk = chunk
+          let processedChunk: ArrayBuffer = chunk
           if (isCompressed) {
             try {
               const compressedData = new Uint8Array(chunk)
@@ -193,79 +278,156 @@ export function useWebRTCFileTransfer({
                 originalSize: originalChunkSize || 0,
                 compressionRatio,
               })
-              const newBuffer = new ArrayBuffer(decompressedData.length)
-              const newView = new Uint8Array(newBuffer)
-              newView.set(decompressedData)
-              processedChunk = newBuffer
+              const decompressedCopy = decompressedData.slice()
+              processedChunk = decompressedCopy.buffer
               debugLog(
                 `[COMPRESSION] Decompressed chunk ${chunkIndex}: ${chunk.byteLength} bytes → ${processedChunk.byteLength} bytes`
               )
             } catch (error) {
               debugError(`Failed to decompress chunk ${chunkIndex}:`, error)
+              await cleanupReceiverState(metadata.id)
+              updateTransfer(metadata.id, { status: 'failed' })
               return
             }
           }
 
-          chunksMap.set(chunkIndex, processedChunk)
+          const chunkView = new Uint8Array(processedChunk)
+          state.receivedBytes += chunkView.byteLength
 
-          updateTransferProgress(metadata.id, progress, 'transferring', transferSpeed, chunkSize)
+          if (state.useProgressive) {
+            try {
+              await state.hasherReady
+              state.hasher?.update(chunkView)
+
+              state.pendingWrite = state.pendingWrite
+                .then(() =>
+                  fileStorageService.appendChunkToFile(metadata.id, chunkIndex, chunkView)
+                )
+                .catch(error => {
+                  throw error
+                })
+              await state.pendingWrite
+            } catch (error) {
+              logger.error(`Failed to persist chunk ${chunkIndex} for ${metadata.name}:`, error)
+              await cleanupReceiverState(metadata.id)
+              updateTransfer(metadata.id, { status: 'failed' })
+              return
+            }
+          } else if (state.chunks) {
+            const pooledChunk = chunkPool.acquire(chunkView.byteLength)
+            pooledChunk.set(chunkView)
+            state.chunks.set(chunkIndex, pooledChunk)
+          }
+
+          state.seenIndices.add(chunkIndex)
+          updateTransferProgress(
+            metadata.id,
+            progress,
+            'transferring',
+            transferSpeed,
+            chunkSize ?? chunkView.byteLength
+          )
         }
       )
 
       service.setOnFileTransferComplete(async (_, metadata) => {
+        const state = receiverStates.get(metadata.id)
+
+        if (!state) {
+          logger.error(`No receiver state found for transfer ${metadata.id}`)
+          updateTransfer(metadata.id, { status: 'failed' })
+          return
+        }
+
         try {
-          const chunksMap = fileChunks.get(metadata.id)
-          if (!chunksMap) {
-            throw new Error(`No chunks found for completed transfer ${metadata.id}`)
-          }
+          if (state.useProgressive) {
+            await state.hasherReady
+            await state.pendingWrite
 
-          const sortedChunks = Array.from(chunksMap.entries())
-            .sort(([indexA], [indexB]) => indexA - indexB)
-            .map(([, chunkData]) => chunkData)
-
-          const blob = new Blob(sortedChunks, {
-            type: metadata.type || 'application/octet-stream',
-          })
-
-          fileChunks.delete(metadata.id)
-
-          if (blob.size !== metadata.size) {
-            logger.error(`File size mismatch for ${metadata.name}`)
-            updateTransfer(metadata.id, { status: 'failed' })
-            return
-          }
-
-          if (metadata.checksum) {
-            updateTransfer(metadata.id, {
-              progress: 100,
-              status: 'verifying',
-            })
-
-            const isValid = await verifyChecksum(blob, metadata.checksum)
-
-            if (!isValid) {
+            if (metadata.checksum && state.hasher) {
               updateTransfer(metadata.id, {
                 progress: 100,
-                status: 'integrity_error',
+                status: 'verifying',
               })
+
+              const digest = state.hasher.digest('hex')
+              if (digest !== metadata.checksum) {
+                logger.error(
+                  `Checksum mismatch for ${metadata.name}: expected ${metadata.checksum}, got ${digest}`
+                )
+                updateTransfer(metadata.id, {
+                  progress: 100,
+                  status: 'integrity_error',
+                })
+                await cleanupReceiverState(metadata.id)
+                return
+              }
+            }
+
+            await fileStorageService.finalizeChunkedFileMetadata(
+              metadata.id,
+              metadata.name,
+              metadata.size,
+              metadata.type || 'application/octet-stream',
+              metadata.checksum
+            )
+
+            updateTransfer(metadata.id, {
+              progress: 100,
+              status: 'completed',
+              checksum: metadata.checksum,
+            })
+          } else if (state.chunks) {
+            const sortedChunks = Array.from(state.chunks.entries()).sort(([a], [b]) => a - b)
+
+            const blobParts = sortedChunks.map(([, chunkView]) => cloneToArrayBuffer(chunkView))
+
+            const blob = new Blob(blobParts, {
+              type: metadata.type || 'application/octet-stream',
+            })
+
+            if (blob.size !== metadata.size) {
+              logger.error(`File size mismatch for ${metadata.name}`)
+              updateTransfer(metadata.id, { status: 'failed' })
+              await cleanupReceiverState(metadata.id)
               return
             }
+
+            if (metadata.checksum) {
+              updateTransfer(metadata.id, {
+                progress: 100,
+                status: 'verifying',
+              })
+
+              const isValid = await verifyChecksum(blob, metadata.checksum)
+              if (!isValid) {
+                updateTransfer(metadata.id, {
+                  progress: 100,
+                  status: 'integrity_error',
+                })
+                await cleanupReceiverState(metadata.id)
+                return
+              }
+            }
+
+            await fileStorageService.saveFile(metadata.id, blob, metadata.name, metadata.checksum)
+
+            addReceivedFile(metadata.id, blob)
+
+            updateTransfer(metadata.id, {
+              progress: 100,
+              status: 'completed',
+              checksum: metadata.checksum,
+            })
           }
-
-          await fileStorageService.saveFile(metadata.id, blob, metadata.name, metadata.checksum)
-
-          addReceivedFile(metadata.id, blob)
-
-          updateTransfer(metadata.id, {
-            progress: 100,
-            status: 'completed',
-            checksum: metadata.checksum,
-          })
         } catch (error) {
           logger.error('Error processing completed file transfer:', error)
           updateTransfer(metadata.id, { status: 'failed' })
-          fileChunks.delete(metadata.id)
+          await cleanupReceiverState(metadata.id)
+          return
         }
+
+        await cleanupReceiverState(metadata.id, { preserveChunks: state.useProgressive })
       })
 
       service.setOnFileTransferAccepted((peerId, metadata) => {
@@ -280,12 +442,17 @@ export function useWebRTCFileTransfer({
       service.setOnFileTransferRejected((_, metadata) => {
         updateTransfer(metadata.id, { status: 'rejected' })
         pendingOutgoing.delete(metadata.id)
+        void cleanupReceiverState(metadata.id)
       })
 
       onCleanup(() => {
         connectedPeersLocal().forEach(peerId => {
           service.disconnectFromPeer(peerId)
         })
+        receiverStates.forEach((_, fileId) => {
+          void cleanupReceiverState(fileId)
+        })
+        chunkPool.clear()
       })
     })
   )
