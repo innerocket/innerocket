@@ -273,6 +273,81 @@ export class FileStorageService {
     }
   }
 
+  async prepareChunkStorage(fileId: string): Promise<void> {
+    const db = await this.openDatabase()
+
+    try {
+      await this.runTransaction(db, ['file_chunks'], 'readwrite', transaction => {
+        const store = transaction.objectStore('file_chunks')
+        const index = store.index('fileId')
+        const request = index.openCursor(IDBKeyRange.only(fileId))
+
+        request.onsuccess = event => {
+          const cursor = (event.target as IDBRequest<IDBCursorWithValue>).result
+          if (!cursor) return
+          cursor.delete()
+          cursor.continue()
+        }
+      })
+    } finally {
+      db.close()
+    }
+  }
+
+  async appendChunkToFile(
+    fileId: string,
+    index: number,
+    chunk: Uint8Array | ArrayBuffer
+  ): Promise<void> {
+    const db = await this.openDatabase()
+
+    try {
+      await this.runTransaction(db, ['file_chunks'], 'readwrite', transaction => {
+        const store = transaction.objectStore('file_chunks')
+        const dataView = chunk instanceof Uint8Array ? chunk : new Uint8Array(chunk)
+        const buffer = new ArrayBuffer(dataView.byteLength)
+        new Uint8Array(buffer).set(dataView)
+
+        store.put({
+          fileId,
+          index,
+          data: new Blob([buffer]),
+          size: dataView.byteLength,
+        })
+      })
+    } finally {
+      db.close()
+    }
+  }
+
+  async finalizeChunkedFileMetadata(
+    fileId: string,
+    fileName: string,
+    totalSize: number,
+    fileType: string,
+    checksum?: string
+  ): Promise<void> {
+    const db = await this.openDatabase()
+
+    try {
+      await this.runTransaction(db, ['files'], 'readwrite', transaction => {
+        const fileStore = transaction.objectStore('files')
+
+        fileStore.put({
+          id: fileId,
+          fileName,
+          timestamp: Date.now(),
+          checksum,
+          isChunked: true,
+          totalSize,
+          fileType,
+        })
+      })
+    } finally {
+      db.close()
+    }
+  }
+
   private async clearTempChunksDB(): Promise<void> {
     return new Promise(resolve => {
       const request = indexedDB.open(TEMP_CHUNKS_DB_NAME)
