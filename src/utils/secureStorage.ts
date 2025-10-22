@@ -6,14 +6,14 @@ import { logger } from './logger'
 
 const STORAGE_VERSION_PREFIX = 'v2:'
 const LEGACY_STORAGE_PREFIX = 'v1:'
-const MIGRATION_FAILURE_MARKER_PREFIX = 'secureStorage:migration-failed:'
+const MIGRATION_FAILURE_MARKER_PREFIX = 'innerocket_securestorage_migration_failed:'
 const AES_GCM_IV_LENGTH = 12
 
 // PBKDF2 configuration keeps parameters visible for audits and tuning.
 const PBKDF2_ITERATIONS = 310_000
 const PBKDF2_SALT_LENGTH_BYTES = 16
 const KEY_MATERIAL_LENGTH_BYTES = 32
-const KEY_METADATA_STORAGE_KEY = 'secureStorage:key-metadata:v1'
+const KEY_METADATA_STORAGE_KEY = 'innerocket_securestorage_key_metadata_v1'
 
 const textEncoder = new TextEncoder()
 const textDecoder = new TextDecoder()
