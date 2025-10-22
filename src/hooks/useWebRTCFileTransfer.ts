@@ -24,6 +24,8 @@ interface ReceiverState {
   hasherReady: Promise<void>
   hasher?: Awaited<ReturnType<typeof createSHA256>>
   pendingWrite: Promise<void>
+  nextHashIndex: number
+  pendingHashChunks?: Map<number, Uint8Array>
 }
 
 interface UseWebRTCFileTransferProps {
@@ -83,6 +85,8 @@ export function useWebRTCFileTransfer({
       seenIndices: new Set<number>(),
       hasherReady: Promise.resolve(),
       pendingWrite: Promise.resolve(),
+      nextHashIndex: 0,
+      pendingHashChunks: useProgressive ? new Map<number, Uint8Array>() : undefined,
     }
 
     if (useProgressive) {
@@ -121,6 +125,8 @@ export function useWebRTCFileTransfer({
         chunkPool.release(chunk)
       })
     }
+
+    state.pendingHashChunks?.clear()
 
     if (state.useProgressive && !options?.preserveChunks) {
       try {
@@ -297,7 +303,19 @@ export function useWebRTCFileTransfer({
           if (state.useProgressive) {
             try {
               await state.hasherReady
-              state.hasher?.update(chunkView)
+              if (!state.pendingHashChunks) {
+                state.pendingHashChunks = new Map<number, Uint8Array>()
+              }
+
+              const chunkForHash = chunkView.slice()
+              state.pendingHashChunks.set(chunkIndex, chunkForHash)
+
+              while (state.pendingHashChunks.has(state.nextHashIndex)) {
+                const nextChunk = state.pendingHashChunks.get(state.nextHashIndex)!
+                state.pendingHashChunks.delete(state.nextHashIndex)
+                state.hasher?.update(nextChunk)
+                state.nextHashIndex++
+              }
 
               state.pendingWrite = state.pendingWrite
                 .then(() =>
@@ -343,6 +361,24 @@ export function useWebRTCFileTransfer({
           if (state.useProgressive) {
             await state.hasherReady
             await state.pendingWrite
+
+            if (state.pendingHashChunks && state.pendingHashChunks.size > 0) {
+              while (state.pendingHashChunks.has(state.nextHashIndex)) {
+                const nextChunk = state.pendingHashChunks.get(state.nextHashIndex)!
+                state.pendingHashChunks.delete(state.nextHashIndex)
+                state.hasher?.update(nextChunk)
+                state.nextHashIndex++
+              }
+
+              if (state.pendingHashChunks.size > 0) {
+                logger.error(
+                  `Hashing incomplete for ${metadata.name}: missing ${state.pendingHashChunks.size} chunks`
+                )
+                updateTransfer(metadata.id, { status: 'failed' })
+                await cleanupReceiverState(metadata.id)
+                return
+              }
+            }
 
             if (metadata.checksum && state.hasher) {
               updateTransfer(metadata.id, {
