@@ -149,8 +149,8 @@ export class FileTransferService {
         buffers.push(chunk)
         bufferedBytes += chunk.byteLength
 
-        while (bufferedBytes >= Math.max(1, Math.floor(chunkSizeRef.value))) {
-          const targetSize = Math.max(1, Math.floor(chunkSizeRef.value))
+        const targetSize = Math.max(1, Math.floor(chunkSizeRef.value));
+        while (bufferedBytes >= targetSize) {
           controller.enqueue(consume(targetSize))
         }
       },
