@@ -451,7 +451,7 @@ export function useWebRTCFileTransfer({
               compressionRatio,
             })
           } catch (error) {
-            const streamError = (error || state.streamError) as ChunkStreamError | undefined
+            const streamError = (error ?? state.streamError) as ChunkStreamError | undefined
             if (streamError?.chunkIndex !== undefined) {
               debugError(`Stream processing failed for chunk ${streamError.chunkIndex}:`, error)
             } else {
