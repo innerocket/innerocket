@@ -26,6 +26,28 @@ interface ReceiverState {
   pendingWrite: Promise<void>
   nextHashIndex: number
   pendingHashChunks?: Map<number, Uint8Array>
+  chunkWriter?: WritableStreamDefaultWriter<IncomingChunkPayload>
+  processingTask?: Promise<void>
+  streamError?: unknown
+}
+
+interface IncomingChunkPayload {
+  arrayBuffer: ArrayBuffer
+  chunkIndex: number
+  progress: number
+  chunkSize?: number
+  transferSpeed?: number
+  isCompressed?: boolean
+  originalChunkSize?: number
+  compressionRatio?: number
+}
+
+interface ProcessedIncomingChunk extends IncomingChunkPayload {
+  view: Uint8Array
+}
+
+interface ChunkStreamError extends Error {
+  chunkIndex?: number
 }
 
 interface UseWebRTCFileTransferProps {
@@ -115,7 +137,7 @@ export function useWebRTCFileTransfer({
 
   const cleanupReceiverState = async (
     fileId: string,
-    options?: { preserveChunks?: boolean }
+    options?: { preserveChunks?: boolean; abortStream?: boolean }
   ): Promise<void> => {
     const state = receiverStates.get(fileId)
     if (!state) return
@@ -127,6 +149,24 @@ export function useWebRTCFileTransfer({
     }
 
     state.pendingHashChunks?.clear()
+
+    try {
+      if (options?.abortStream) {
+        await state.chunkWriter?.abort?.('cleanup')
+      } else if (state.chunkWriter) {
+        await state.chunkWriter.close()
+      }
+    } catch (error) {
+      logger.error('Failed to close chunk stream during cleanup:', error)
+    }
+
+    if (state.processingTask) {
+      try {
+        await state.processingTask
+      } catch (error) {
+        logger.error('Chunk processing did not complete cleanly:', error)
+      }
+    }
 
     if (state.useProgressive && !options?.preserveChunks) {
       try {
@@ -189,6 +229,131 @@ export function useWebRTCFileTransfer({
           return newPeers
         })
       })
+
+      const processIncomingChunks = (
+        state: ReceiverState,
+        stream: ReadableStream<ProcessedIncomingChunk>
+      ): Promise<void> => {
+        const reader = stream.getReader()
+
+        const run = async () => {
+          try {
+            while (true) {
+              const { value, done } = await reader.read()
+              if (done) break
+              if (!value) continue
+
+              const { view, chunkIndex, progress, transferSpeed, chunkSize } = value
+
+              try {
+                if (state.useProgressive) {
+                  await state.hasherReady
+                  if (!state.pendingHashChunks) {
+                    state.pendingHashChunks = new Map<number, Uint8Array>()
+                  }
+
+                  const chunkForHash = view.slice()
+                  state.pendingHashChunks.set(chunkIndex, chunkForHash)
+
+                  while (state.pendingHashChunks.has(state.nextHashIndex)) {
+                    const nextChunk = state.pendingHashChunks.get(state.nextHashIndex)!
+                    state.pendingHashChunks.delete(state.nextHashIndex)
+                    state.hasher?.update(nextChunk)
+                    state.nextHashIndex++
+                  }
+
+                  state.pendingWrite = state.pendingWrite
+                    .then(() =>
+                      fileStorageService.appendChunkToFile(state.metadata.id, chunkIndex, view)
+                    )
+                    .catch(error => {
+                      throw error
+                    })
+                  await state.pendingWrite
+                } else if (state.chunks) {
+                  const pooledChunk = chunkPool.acquire(view.byteLength)
+                  pooledChunk.set(view)
+                  state.chunks.set(chunkIndex, pooledChunk)
+                }
+              } catch (error) {
+                const enhancedError = error instanceof Error ? error : new Error(String(error))
+                logger.error(
+                  `Failed to persist chunk ${chunkIndex} for ${state.metadata.name}:`,
+                  enhancedError
+                )
+                throw enhancedError
+              }
+
+              state.receivedBytes += view.byteLength
+              state.seenIndices.add(chunkIndex)
+              updateTransferProgress(
+                state.metadata.id,
+                progress,
+                'transferring',
+                transferSpeed,
+                chunkSize ?? view.byteLength
+              )
+            }
+          } finally {
+            reader.releaseLock()
+          }
+        }
+
+        return run()
+      }
+
+      const startChunkProcessing = (
+        state: ReceiverState
+      ): WritableStreamDefaultWriter<IncomingChunkPayload> => {
+        if (state.chunkWriter) {
+          return state.chunkWriter
+        }
+
+        state.streamError = undefined
+        const chunkStream = new TransformStream<IncomingChunkPayload, IncomingChunkPayload>()
+        const decompressedStream = chunkStream.readable.pipeThrough(
+          new TransformStream<IncomingChunkPayload, ProcessedIncomingChunk>({
+            transform: (incoming, controller) => {
+              const { chunkIndex, isCompressed, originalChunkSize, compressionRatio } = incoming
+              try {
+                let view: Uint8Array
+                if (isCompressed) {
+                  const compressedView = new Uint8Array(incoming.arrayBuffer)
+                  const decompressed = service.processReceivedChunk({
+                    data: compressedView,
+                    index: chunkIndex,
+                    isCompressed: true,
+                    originalSize: originalChunkSize || compressedView.byteLength,
+                    compressionRatio,
+                  })
+                  view = decompressed.slice()
+                  debugLog(
+                    `[COMPRESSION] Decompressed chunk ${chunkIndex}: ${incoming.arrayBuffer.byteLength} bytes → ${view.byteLength} bytes`
+                  )
+                } else {
+                  view = new Uint8Array(incoming.arrayBuffer)
+                }
+
+                controller.enqueue({ ...incoming, view })
+              } catch (error) {
+                debugError(`Failed to decompress chunk ${chunkIndex}:`, error)
+                const enhancedError = error instanceof Error ? error : new Error(String(error))
+                ;(enhancedError as ChunkStreamError).chunkIndex = chunkIndex
+                controller.error(enhancedError)
+              }
+            },
+          })
+        )
+
+        const processingTask = processIncomingChunks(state, decompressedStream)
+        state.processingTask = processingTask
+        processingTask.catch(error => {
+          state.streamError = error
+        })
+
+        state.chunkWriter = chunkStream.writable.getWriter()
+        return state.chunkWriter
+      }
 
       service.setOnFileTransferRequest(request => {
         const { metadata, from } = request
@@ -268,83 +433,33 @@ export function useWebRTCFileTransfer({
 
           const state = initializeReceiverState(metadata)
 
-          // If we already processed this index successfully, skip duplicates.
           if (state.seenIndices.has(chunkIndex)) {
             return
           }
 
-          let processedChunk: ArrayBuffer = chunk
-          if (isCompressed) {
-            try {
-              const compressedData = new Uint8Array(chunk)
-              const decompressedData = webRTCService().processReceivedChunk({
-                data: compressedData,
-                index: chunkIndex,
-                isCompressed: true,
-                originalSize: originalChunkSize || 0,
-                compressionRatio,
-              })
-              const decompressedCopy = decompressedData.slice()
-              processedChunk = decompressedCopy.buffer
-              debugLog(
-                `[COMPRESSION] Decompressed chunk ${chunkIndex}: ${chunk.byteLength} bytes → ${processedChunk.byteLength} bytes`
-              )
-            } catch (error) {
-              debugError(`Failed to decompress chunk ${chunkIndex}:`, error)
-              await cleanupReceiverState(metadata.id)
-              updateTransfer(metadata.id, { status: 'failed' })
-              return
+          const writer = startChunkProcessing(state)
+
+          try {
+            await writer.write({
+              arrayBuffer: chunk,
+              chunkIndex,
+              progress,
+              chunkSize,
+              transferSpeed,
+              isCompressed,
+              originalChunkSize,
+              compressionRatio,
+            })
+          } catch (error) {
+            const streamError = (error ?? state.streamError) as ChunkStreamError | undefined
+            if (streamError?.chunkIndex !== undefined) {
+              debugError(`Stream processing failed for chunk ${streamError.chunkIndex}:`, error)
+            } else {
+              logger.error('Stream processing failed for incoming chunk:', error)
             }
+            updateTransfer(metadata.id, { status: 'failed' })
+            await cleanupReceiverState(metadata.id, { abortStream: true })
           }
-
-          const chunkView = new Uint8Array(processedChunk)
-          state.receivedBytes += chunkView.byteLength
-
-          if (state.useProgressive) {
-            try {
-              await state.hasherReady
-              if (!state.pendingHashChunks) {
-                state.pendingHashChunks = new Map<number, Uint8Array>()
-              }
-
-              const chunkForHash = chunkView.slice()
-              state.pendingHashChunks.set(chunkIndex, chunkForHash)
-
-              while (state.pendingHashChunks.has(state.nextHashIndex)) {
-                const nextChunk = state.pendingHashChunks.get(state.nextHashIndex)!
-                state.pendingHashChunks.delete(state.nextHashIndex)
-                state.hasher?.update(nextChunk)
-                state.nextHashIndex++
-              }
-
-              state.pendingWrite = state.pendingWrite
-                .then(() =>
-                  fileStorageService.appendChunkToFile(metadata.id, chunkIndex, chunkView)
-                )
-                .catch(error => {
-                  throw error
-                })
-              await state.pendingWrite
-            } catch (error) {
-              logger.error(`Failed to persist chunk ${chunkIndex} for ${metadata.name}:`, error)
-              await cleanupReceiverState(metadata.id)
-              updateTransfer(metadata.id, { status: 'failed' })
-              return
-            }
-          } else if (state.chunks) {
-            const pooledChunk = chunkPool.acquire(chunkView.byteLength)
-            pooledChunk.set(chunkView)
-            state.chunks.set(chunkIndex, pooledChunk)
-          }
-
-          state.seenIndices.add(chunkIndex)
-          updateTransferProgress(
-            metadata.id,
-            progress,
-            'transferring',
-            transferSpeed,
-            chunkSize ?? chunkView.byteLength
-          )
         }
       )
 
@@ -358,6 +473,35 @@ export function useWebRTCFileTransfer({
         }
 
         try {
+          if (state.chunkWriter) {
+            try {
+              await state.chunkWriter.close()
+            } catch (error) {
+              logger.error('Failed to close chunk writer on completion:', error)
+            }
+          }
+
+          if (state.processingTask) {
+            try {
+              await state.processingTask
+            } catch (error) {
+              logger.error('Chunk processing did not finish successfully:', error)
+              updateTransfer(metadata.id, { status: 'failed' })
+              await cleanupReceiverState(metadata.id, { abortStream: true })
+              return
+            }
+          }
+
+          if (state.streamError) {
+            logger.error(
+              'Stream processing reported an error before completion:',
+              state.streamError
+            )
+            updateTransfer(metadata.id, { status: 'failed' })
+            await cleanupReceiverState(metadata.id, { abortStream: true })
+            return
+          }
+
           if (state.useProgressive) {
             await state.hasherReady
             await state.pendingWrite
@@ -375,7 +519,7 @@ export function useWebRTCFileTransfer({
                   `Hashing incomplete for ${metadata.name}: missing ${state.pendingHashChunks.size} chunks`
                 )
                 updateTransfer(metadata.id, { status: 'failed' })
-                await cleanupReceiverState(metadata.id)
+                await cleanupReceiverState(metadata.id, { abortStream: true })
                 return
               }
             }
@@ -395,7 +539,7 @@ export function useWebRTCFileTransfer({
                   progress: 100,
                   status: 'integrity_error',
                 })
-                await cleanupReceiverState(metadata.id)
+                await cleanupReceiverState(metadata.id, { abortStream: true })
                 return
               }
             }
@@ -425,7 +569,7 @@ export function useWebRTCFileTransfer({
             if (blob.size !== metadata.size) {
               logger.error(`File size mismatch for ${metadata.name}`)
               updateTransfer(metadata.id, { status: 'failed' })
-              await cleanupReceiverState(metadata.id)
+              await cleanupReceiverState(metadata.id, { abortStream: true })
               return
             }
 
@@ -441,7 +585,7 @@ export function useWebRTCFileTransfer({
                   progress: 100,
                   status: 'integrity_error',
                 })
-                await cleanupReceiverState(metadata.id)
+                await cleanupReceiverState(metadata.id, { abortStream: true })
                 return
               }
             }
@@ -459,11 +603,13 @@ export function useWebRTCFileTransfer({
         } catch (error) {
           logger.error('Error processing completed file transfer:', error)
           updateTransfer(metadata.id, { status: 'failed' })
-          await cleanupReceiverState(metadata.id)
+          await cleanupReceiverState(metadata.id, { abortStream: true })
           return
         }
 
-        await cleanupReceiverState(metadata.id, { preserveChunks: state.useProgressive })
+        await cleanupReceiverState(metadata.id, {
+          preserveChunks: state.useProgressive,
+        })
       })
 
       service.setOnFileTransferAccepted((peerId, metadata) => {
@@ -478,7 +624,7 @@ export function useWebRTCFileTransfer({
       service.setOnFileTransferRejected((_, metadata) => {
         updateTransfer(metadata.id, { status: 'rejected' })
         pendingOutgoing.delete(metadata.id)
-        void cleanupReceiverState(metadata.id)
+        void cleanupReceiverState(metadata.id, { abortStream: true })
       })
 
       onCleanup(() => {
@@ -486,7 +632,7 @@ export function useWebRTCFileTransfer({
           service.disconnectFromPeer(peerId)
         })
         receiverStates.forEach((_, fileId) => {
-          void cleanupReceiverState(fileId)
+          void cleanupReceiverState(fileId, { abortStream: true })
         })
         chunkPool.clear()
       })
