@@ -326,8 +326,7 @@ export function useWebRTCFileTransfer({
                     originalSize: originalChunkSize || compressedView.byteLength,
                     compressionRatio,
                   })
-                  const decompressedCopy = decompressed.slice()
-                  view = decompressedCopy
+                  view = decompressed.slice()
                   debugLog(
                     `[COMPRESSION] Decompressed chunk ${chunkIndex}: ${incoming.arrayBuffer.byteLength} bytes → ${view.byteLength} bytes`
                   )
