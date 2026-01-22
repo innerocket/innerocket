@@ -72,5 +72,6 @@
     "vite-plugin-sitemap": "^0.8.2",
     "vite-plugin-solid": "^2.11.10",
     "vitest": "^4.0.17"
-  }
+  },
+  "packageManager": "bun"
 }
