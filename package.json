@@ -27,6 +27,7 @@
     "qrcode": "^1.5.4",
     "solid-js": "^1.9.10",
     "sqids": "^0.3.0",
+    "tailwind-merge": "^2.5.5",
     "tailwind-variants": "^3.2.2",
     "tailwindcss": "^4.1.18"
   },
