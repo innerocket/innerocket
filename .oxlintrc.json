@@ -14,10 +14,5 @@
     "no-debugger": "warn",
     "eqeqeq": "warn",
     "no-console": "off"
-  },
-  "settings": {
-    "react": {
-      "version": "detect"
-    }
   }
 }
