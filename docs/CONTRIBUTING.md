@@ -6,8 +6,7 @@ We welcome contributions to Innerocket! Thank you for your interest in improving
 
 ### Prerequisites
 
-- Node.js (version 20 or higher)
-- pnpm package manager
+- Bun (latest version)
 - Git
 
 ### Setup
@@ -20,7 +19,7 @@ We welcome contributions to Innerocket! Thank you for your interest in improving
    ```
 3. Install dependencies:
    ```bash
-   pnpm install
+   bun install
    ```
 4. Create a new branch for your feature or bug fix:
    ```bash
@@ -40,9 +39,9 @@ Please use the following naming conventions for your branches:
 ### Code Style
 
 - Follow the existing code style and conventions
-- Run linting: `pnpm lint` or `pnpm lint:fix`
-- Run formatting: `pnpm format` or `pnpm format:check`
-- Build the project: `pnpm build`
+- Run linting: `bun run lint` or `bun run lint:fix`
+- Run formatting: `bun run format` or `bun run format:check`
+- Build the project: `bun run build`
 
 ### Commit Messages
 

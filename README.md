@@ -74,8 +74,7 @@ Innerocket uses WebRTC's data channels which are encrypted by default. No file d
 
 ### Prerequisites
 
-- Node.js (version 20 or higher)
-- pnpm package manager
+- Bun (latest version)
 
 ### Installation
 
@@ -85,16 +84,16 @@ git clone https://github.com/innerocket/innerocket.git
 cd innerocket
 
 # Install dependencies
-pnpm install
+bun install
 
 # Start the development server
-pnpm dev
+bun dev
 ```
 
 ### Building for Production
 
 ```bash
-pnpm build
+bun run build
 ```
 
 ### Analytics Configuration

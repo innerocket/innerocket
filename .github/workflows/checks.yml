@@ -15,28 +15,22 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          version: latest
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'pnpm'
+          bun-version: latest
 
       - name: Install dependencies
-        run: pnpm install
+        run: bun install
 
       - name: Run ESLint
-        run: pnpm lint
+        run: bun run lint
 
       - name: Check Prettier formatting
-        run: pnpm format:check
+        run: bun run format:check
 
       - name: Type check
-        run: pnpm typecheck
+        run: bun run typecheck
 
   commitlint:
     name: Commit Message Check
@@ -49,19 +43,13 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          version: latest
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'pnpm'
+          bun-version: latest
 
       - name: Install dependencies
-        run: pnpm install
+        run: bun install
 
       - name: Validate current commit (last commit)
-        run: pnpm commitlint --from HEAD~1 --to HEAD --verbose
+        run: bunx commitlint --from HEAD~1 --to HEAD --verbose
